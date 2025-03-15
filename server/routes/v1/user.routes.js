@@ -6,7 +6,7 @@ export default [
   {
     path: '/',
     method: 'get',
-    controller: controller.getALl,
+    controller: controller.getAll,
   },
   {
     path: '/:id',

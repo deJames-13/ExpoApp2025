@@ -7,7 +7,7 @@ export default class Controller {
   validator = utils.validate;
 
   // controller functions
-  getALl = async (req, res) => {
+  getAll = async (req, res) => {
     const data = await this.service?.getAll();
     if (!data.length) return this.error({ res, message: 'No data found!' });
 
