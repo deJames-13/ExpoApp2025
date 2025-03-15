@@ -1,1 +1,1 @@
-export { default as UserResource } from './userResource.js';
+export { default as UserResource } from './user.resource.js';

@@ -1,1 +1,1 @@
-export { default as UserController } from './userController.js';
+export { default as UserController } from './user.controller.js';

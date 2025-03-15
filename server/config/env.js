@@ -6,3 +6,4 @@ export const PORT = process.env.PORT || 5000;
 export const MONGO_URI = process.env.MONGO_URI || null;
 export const JWT_SECRET = process.env.JWT_SECRET || null;
 export const JWT_EXPIRE = process.env.JWT_EXPIRE || null;
+export const HOST = process.env.HOST || 'localhost'; 

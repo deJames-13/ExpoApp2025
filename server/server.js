@@ -2,12 +2,28 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import path from 'path';
 import { connectDB } from './config/db.js';
-import { MONGO_URI, PORT } from './config/env.js';
+import { MONGO_URI, PORT, HOST } from './config/env.js';
 import * as err from './middlewares/errorMiddleware.js';
 import router from './routes/index.js';
 
+const parseArgs = () => {
+  const args = process.argv.slice(2);
+  const params = {};
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i].startsWith('--')) {
+      const key = args[i].slice(2);
+      params[key] = args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : true;
+    }
+  }
+
+  return params;
+};
+
 const server = () => {
   const app = express();
+  const args = parseArgs();
+  const serverHost = args.host || HOST;
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
@@ -34,8 +50,8 @@ const server = () => {
   app.use(err.errorHandler);
 
   connectDB(MONGO_URI, () => {
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+    app.listen(PORT, serverHost, () => {
+      console.log(`Server is running on ${serverHost}:${PORT}`);
     });
   });
 };

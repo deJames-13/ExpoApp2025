@@ -1,3 +1,3 @@
-export { protect } from './authMiddleware.js';
-export * from './errorMiddleware.js';
-export { validate } from './validateMiddleware.js';
+export { protect } from './auth.middleware.js';
+export * from './error.middleware.js';
+export { validate } from './validate.middleware.js';
