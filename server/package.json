@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "plop": "plop"
+    "plop": "plop",
+    "generator": "plop api",
+    "seeder": "echo 'Seeder script not yet implemented'"
   },
   "repository": {
     "type": "git",
@@ -35,6 +37,7 @@
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
     "express-validator": "^7.1.0",
+    "faker": "^6.6.6",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.2"
   },
