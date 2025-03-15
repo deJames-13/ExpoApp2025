@@ -1,3 +1,4 @@
+import "dotenv/config";
 module.exports = {
     expo: {
         name: "EyeZone",
