@@ -2,6 +2,7 @@
 GoogleService-Info.plist
 google-services.json
 keystore.jks
+.env.development
 eyezone-723ab-firebase-adminsdk-fbsvc-a889953ac4.json
 # dependencies
 node_modules/
