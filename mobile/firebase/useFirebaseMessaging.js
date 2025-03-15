@@ -2,10 +2,13 @@ import React from 'react'
 import { getApp } from '@react-native-firebase/app'
 import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission as requestMessagingPermission, getInitialNotification, onNotificationOpenedApp, registerDeviceForRemoteMessages } from '@react-native-firebase/messaging'
 import Toast from 'react-native-toast-message'
+import { setIsChanging, storeFcmToken, setNotification } from "~/states/slices/firebase";
+import { useDispatch, useSelector } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function useFirebaseMessaging() {
-    const [fcmToken, setFcmToken] = React.useState(null)
-    const [notification, setNotification] = React.useState(null)
+    const dispatch = useDispatch();
+    const { fcmToken, notification } = useSelector((state) => state.firebase);
 
     const requestPermission = async () => {
         try {
@@ -29,6 +32,8 @@ export default function useFirebaseMessaging() {
 
     React.useEffect(() => {
         const setupMessaging = async () => {
+            dispatch(setIsChanging({ isChanging: true }));
+
             if (await requestPermission()) {
                 console.log('Permission granted. Getting token...')
                 const messaging = getMessaging(getApp())
@@ -36,21 +41,23 @@ export default function useFirebaseMessaging() {
                 // Existing token
                 const existingToken = await getToken(messaging);
                 if (existingToken) {
-                    setFcmToken(existingToken)
+                    dispatch(storeFcmToken({ fcmToken: existingToken }));
+                    await AsyncStorage.setItem('fcmToken', existingToken);
                     console.log('Existing token:', existingToken)
                 }
 
-
                 // Register for token refresh
-                const tokenUnsubscribe = onTokenRefresh(messaging, (token) => {
-                    console.log('Token refreshed:', token)
-                    setFcmToken(token)
-                })
+                const tokenUnsubscribe = onTokenRefresh(messaging, async (token) => {
+                    console.log('Token refreshed:', token);
+                    dispatch(storeFcmToken({ fcmToken: token }));
+                    await AsyncStorage.setItem('fcmToken', token);
+                });
 
                 // Get the initial token
                 const token = await getToken(messaging);
                 if (token) {
-                    setFcmToken(token);
+                    dispatch(storeFcmToken({ fcmToken: token }));
+                    await AsyncStorage.setItem('fcmToken', token);
                 }
 
                 // Handle other messaging events
@@ -61,7 +68,7 @@ export default function useFirebaseMessaging() {
                         text2: remoteMessage.notification?.body || 'You have a new message',
                         visibilityTime: 4000,
                     });
-                    setNotification(remoteMessage)
+                    dispatch(setNotification({ notification: remoteMessage }));
                 });
 
                 // Register the device for remote messages
@@ -70,7 +77,7 @@ export default function useFirebaseMessaging() {
                 // Handle initial notification
                 const initialMsg = await getInitialNotification(messaging);
                 if (initialMsg) {
-                    setNotification(initialMsg)
+                    dispatch(setNotification({ notification: initialMsg }));
                     Toast.show({
                         type: 'info',
                         text1: initialMsg.notification?.title || 'New Notification',
@@ -88,7 +95,10 @@ export default function useFirebaseMessaging() {
                         text2: remoteMessage.notification?.body || 'App was opened from notification',
                         visibilityTime: 4000,
                     });
+                    dispatch(setNotification({ notification: remoteMessage }));
                 });
+
+                dispatch(setIsChanging({ isChanging: false }));
 
                 return () => {
                     messageUnsubscribe();
@@ -96,12 +106,13 @@ export default function useFirebaseMessaging() {
                     notificationOpenedUnsubscribe();
                 };
             } else {
-                console.log('Permission denied')
+                console.log('Permission denied');
+                dispatch(setIsChanging({ isChanging: false }));
             }
         };
 
         setupMessaging();
-    }, [])
+    }, [dispatch]);
 
-    return { fcmToken, notification }
+    return { fcmToken, notification };
 }
