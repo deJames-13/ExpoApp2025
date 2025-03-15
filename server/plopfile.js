@@ -112,7 +112,7 @@ export default function (plop) {
                 type: 'modify',
                 path: 'validations/index.js',
                 pattern: /(export {)/,
-                template: 'export { default as {{camelCase name}}Rules } from \'./{{camelCase name}}.validation.js\';\n$1'
+                template: 'export * from \'./{{camelCase name}}.validation.js\';\n$1'
             }
         ]
     });
@@ -204,7 +204,7 @@ export default function (plop) {
                 type: 'modify',
                 path: 'validations/index.js',
                 pattern: /(export {)/,
-                template: 'export { default as {{camelCase name}}Rules } from \'./{{camelCase name}}.validation.js\';\n$1'
+                template: 'export * from \'./{{camelCase name}}.validation.js\';\n$1'
             },
 
             // Create controller

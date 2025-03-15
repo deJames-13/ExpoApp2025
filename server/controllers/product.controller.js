@@ -1,10 +1,16 @@
 import { ProductResource } from '#resources';
 import { ProductService } from '#services';
 import Controller from './controller.js';
+import { productCreateRules, productUpdateRules } from '../validations/product.validation.js';
+
 
 class ProductController extends Controller {
   service = ProductService;
   resource = ProductResource;
+  rules = {
+    create: productCreateRules,
+    update: productUpdateRules,
+  }
 
   /**
    * You can add custom methods or override existing methods from the base Controller class here.

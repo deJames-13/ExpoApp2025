@@ -1,2 +1,2 @@
-export { default as productRules } from './product.validation.js';
-export { userCreateRules, userUpdateRules } from './user.validation.js';
+export * from './product.validation.js';
+export * from './user.validation.js';
