@@ -3,7 +3,7 @@ import express from 'express';
 import path from 'path';
 import { connectDB } from './config/db.js';
 import { MONGO_URI, PORT, HOST } from './config/env.js';
-import * as err from './middlewares/errorMiddleware.js';
+import * as err from './middlewares/error.middleware.js';
 import router from './routes/index.js';
 
 const parseArgs = () => {

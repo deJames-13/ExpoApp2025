@@ -43,7 +43,8 @@
     "eslint": "^9.9.0",
     "globals": "^15.9.0",
     "nodemon": "^3.1.4",
-    "plop": "^4.0.1"
+    "plop": "^4.0.1",
+    "pluralize": "^8.0.0"
   },
   "keywords": [
     "express",

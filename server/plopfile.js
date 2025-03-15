@@ -1,6 +1,11 @@
+import pluralize from 'pluralize';
+
 export default function (plop) {
     // Add helpers for modifying the route index file
     plop.setHelper('toLowerCase', (text) => text.toLowerCase());
+
+    // Add pluralize helper using the npm package
+    plop.setHelper('pluralize', (text) => pluralize(text.toLowerCase()));
 
     // controller generator
     plop.setGenerator('controller', {
@@ -141,7 +146,7 @@ export default function (plop) {
                 type: 'modify',
                 path: 'routes/v1/index.js',
                 pattern: /(const v1 = \[)/,
-                template: '$1\n  {\n    url: \'/{{toLowerCase name}}s\',\n    router: {{camelCase name}}Routes,\n  },'
+                template: '$1\n  {\n    url: \'/{{pluralize name}}\',\n    router: {{camelCase name}}Routes,\n  },'
             }
         ]
     });
@@ -236,7 +241,7 @@ export default function (plop) {
                 type: 'modify',
                 path: 'routes/v1/index.js',
                 pattern: /(const v1 = \[)/,
-                template: '$1\n  {\n    url: \'/{{toLowerCase name}}s\',\n    router: {{camelCase name}}Routes,\n  },'
+                template: '$1\n  {\n    url: \'/{{pluralize name}}\',\n    router: {{camelCase name}}Routes,\n  },'
             }
         ]
     });
