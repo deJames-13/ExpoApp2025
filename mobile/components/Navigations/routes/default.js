@@ -25,7 +25,7 @@ export const tabRoutes = () => [
     },
     {
         name: 'Search',
-        component: Screens.Profile,
+        component: Screens.SearchedScreen,
         icon: 'search',
         options: {
             tabBarIcon: ({ color, size }) => (
@@ -34,7 +34,7 @@ export const tabRoutes = () => [
         },
         isTab: true,
         excludeInDrawer: true,
-    }
+    },
 ];
 
 export const defaultRoutes = () => [
@@ -45,6 +45,46 @@ export const defaultRoutes = () => [
         options: {
             tabBarIcon: ({ color, size }) => (
                 <Icon name="person" color={color} size={size} />
+            ),
+        },
+    },
+    {
+        name: 'Cart',
+        component: Screens.CartScreen,
+        icon: 'shopping-cart',  // Updated icon name for consistency
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="shopping-cart" color={color} size={size} />
+            ),
+        },
+    },
+    {
+        name: 'Checkout',
+        component: Screens.CheckoutScreen,
+        // icon: 'credit-card',
+        // options: {
+        //     tabBarIcon: ({ color, size }) => (
+        //         <Icon name="credit-card" color={color} size={size} />
+        //     ),
+        // },
+    },
+    {
+        name: 'Orders',
+        component: Screens.OrderScreen,
+        icon: 'cart',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="cart" color={color} size={size} />
+            ),
+        },
+    },
+    {
+        name: 'Notifications',
+        component: Screens.NotificationScreen,
+        icon: 'notifications',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="notifications" color={color} size={size} />
             ),
         },
     },

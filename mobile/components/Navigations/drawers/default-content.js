@@ -1,9 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Divider } from 'react-native-paper';
 import { defaultRoutes, tabRoutes } from '../routes/default';
+import { globalStyles } from '../../../styles/global';
+import navigationStyles from '../../../styles/navigationStyles';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getIconForRoute } from '../../../utils/iconHelper';
 
 export function DefaultDrawerContent() {
     const [curr, setCurr] = React.useState('Home');
@@ -13,23 +17,28 @@ export function DefaultDrawerContent() {
     const tabbedRoutes = tabRoutes();
 
     return (
-        <SafeAreaView className='flex h-full py-8 p-4'>
-            <View>
-                <Text className='text-2xl font-bold'>
-                    EyeZ*ne
-                </Text>
+        <SafeAreaView style={navigationStyles.drawerContainer}>
+            <View style={navigationStyles.drawerHeader}>
+                <View style={globalStyles.row}>
+                    <Icon name="eye-outline" size={28} color={navigationStyles.drawerLogo.color} />
+                    <Text style={[navigationStyles.drawerLogo, { marginLeft: 8 }]}>
+                        EyeZ*ne
+                    </Text>
+                </View>
             </View>
 
-            <Divider
-                className='my-4 bg-black'
-            />
+            <Divider style={globalStyles.divider} />
 
-            <View className='flex-1 flex flex-col gap-4'>
-                {/* Navigations */}
+            <View style={navigationStyles.drawerItemsContainer}>
+                {/* Tabbed Navigations */}
                 {tabbedRoutes.map((route) => (
                     <TouchableOpacity
                         key={route.name}
-                        className={`drop-shadow-md bg-base-100 text-black rounded p-4 border-gray-300 hover:bg-gray-200 ${curr === route.name ? 'bg-gray-100 border-b-2 font-bold ' : ''}`}
+                        style={[
+                            navigationStyles.drawerItem,
+                            curr === route.name && navigationStyles.drawerItemActive,
+                            globalStyles.row
+                        ]}
                         onPress={() => {
                             setCurr(route.name);
                             navigation.navigate("DefaultNav", {
@@ -38,14 +47,30 @@ export function DefaultDrawerContent() {
                             });
                         }}
                     >
-                        <Text className='text-lg'>{route.name}</Text>
+                        <Icon
+                            name={getIconForRoute(route.name)}
+                            size={22}
+                            color={curr === route.name ? navigationStyles.drawerItemTextActive.color : navigationStyles.drawerItemText.color}
+                            style={{ marginRight: 12 }}
+                        />
+                        <Text style={[
+                            navigationStyles.drawerItemText,
+                            curr === route.name && navigationStyles.drawerItemTextActive
+                        ]}>
+                            {route.name}
+                        </Text>
                     </TouchableOpacity>
                 ))}
 
-                {drawerRoutes.map((route) => (
+                {/* Drawer Navigations */}
+                {drawerRoutes.map((route) => route.icon && (
                     <TouchableOpacity
                         key={route.name}
-                        className={`drop-shadow-md bg-base-100 text-black rounded p-4 border-gray-300 hover:bg-gray-200 ${curr === route.name ? 'bg-gray-100 border-b-2 font-bold ' : ''}`}
+                        style={[
+                            navigationStyles.drawerItem,
+                            curr === route.name && navigationStyles.drawerItemActive,
+                            globalStyles.row
+                        ]}
                         onPress={() => {
                             setCurr(route.name);
                             navigation.navigate("DefaultNav", {
@@ -54,22 +79,28 @@ export function DefaultDrawerContent() {
                             });
                         }}
                     >
-                        <Text className='text-lg'>{route.name}</Text>
+                        <Icon
+                            name={getIconForRoute(route.name)}
+                            size={22}
+                            color={curr === route.name ? navigationStyles.drawerItemTextActive.color : navigationStyles.drawerItemText.color}
+                            style={{ marginRight: 12 }}
+                        />
+                        <Text style={[
+                            navigationStyles.drawerItemText,
+                            curr === route.name && navigationStyles.drawerItemTextActive
+                        ]}>
+                            {route.name}
+                        </Text>
                     </TouchableOpacity>
                 ))}
-
             </View>
 
+            <Divider style={globalStyles.divider} />
 
-
-            <Divider
-                className='my-4 bg-black'
-            />
-            <View>
-                {
-                    logged &&
+            <View style={navigationStyles.drawerFooter}>
+                {logged ? (
                     <TouchableOpacity
-                        className={`border border-red-500 rounded-lg p-4`}
+                        style={[navigationStyles.logoutButton, globalStyles.row, { justifyContent: 'center' }]}
                         onPress={() => {
                             setLogged(!logged);
                             navigation.navigate("GuestNav", {
@@ -77,15 +108,14 @@ export function DefaultDrawerContent() {
                             });
                         }}
                     >
-                        <Text className={`text-lg font-bold text-red-400`}>
+                        <Icon name="logout" size={20} color={navigationStyles.logoutText.color} style={{ marginRight: 8 }} />
+                        <Text style={navigationStyles.logoutText}>
                             Logout
                         </Text>
                     </TouchableOpacity>
-                }
-                {
-                    !logged &&
+                ) : (
                     <TouchableOpacity
-                        className={`border border-green-500 rounded-lg p-4`}
+                        style={[navigationStyles.loginButton, globalStyles.row, { justifyContent: 'center' }]}
                         onPress={() => {
                             setLogged(!logged);
                             navigation.navigate("GuestNav", {
@@ -93,11 +123,12 @@ export function DefaultDrawerContent() {
                             });
                         }}
                     >
-                        <Text className={`text-lg font-bold text-green-400`}>
+                        <Icon name="login" size={20} color={navigationStyles.loginText.color} style={{ marginRight: 8 }} />
+                        <Text style={navigationStyles.loginText}>
                             Login
                         </Text>
                     </TouchableOpacity>
-                }
+                )}
             </View>
         </SafeAreaView>
     );

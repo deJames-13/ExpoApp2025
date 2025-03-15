@@ -1,10 +1,10 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-export function SearchedScreen() {
+export default function AdminAccountScreen() {
     return (
         <View>
-            <Text>SearchedScreen</Text>
+            <Text>AdminAccount</Text>
         </View>
     )
 }

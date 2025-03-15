@@ -1,8 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Button, Text, TextInput, TouchableRipple } from 'react-native-paper';
+import { View, TouchableOpacity, Image, StatusBar, SafeAreaView } from 'react-native';
+import { Text, TextInput, TouchableRipple } from 'react-native-paper';
 import { H1 } from '~/components/ui/typography';
+import styles from '~/styles/auth';
 
 export default function Register() {
     const navigation = useNavigation();
@@ -12,78 +13,65 @@ export default function Register() {
     };
 
     return (
-        <View style={styles.container}>
-            <H1 style={styles.title}>Register</H1>
-            <TextInput
-                label="Email"
-                mode="outlined"
-                style={styles.input}
-                keyboardType="email-address"
-                autoCapitalize="none"
-            />
-            <TextInput
-                label="Password"
-                mode="outlined"
-                style={styles.input}
-                secureTextEntry
-            />
-            <TouchableRipple
-                style={styles.button}
-                onPress={handleRegister}
-            >
-                <Text style={styles.buttonText}>Register</Text>
-            </TouchableRipple>
-            <View style={styles.registerContainer}>
-                <Text>Already have an account?</Text>
-                <TouchableOpacity
-                    onPress={() => {
-                        navigation.navigate("GuestNav", {
-                            screen: 'Login',
-                        });
-                    }}
-                >
-                    <Text style={styles.registerText}>
-                        Login
-                    </Text>
-                </TouchableOpacity>
+        <SafeAreaView style={styles.safeArea}>
+            <StatusBar backgroundColor="#f8f8f8" barStyle="dark-content" />
+            <View style={styles.container}>
+                <View style={styles.logoContainer}>
+                    <Image
+                        source={require('../../assets/icon.png')}
+                        style={styles.logo}
+                        resizeMode="contain"
+                    />
+                </View>
+
+                <View style={styles.card}>
+                    <H1 style={styles.title}>Create Account</H1>
+                    <Text style={styles.subtitle}>Sign up to get started</Text>
+
+                    <TextInput
+                        label="Email"
+                        mode="outlined"
+                        style={styles.input}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        outlineColor="#ddd"
+                        activeOutlineColor="#6200ee"
+                        left={<TextInput.Icon icon="email" />}
+                    />
+
+                    <TextInput
+                        label="Password"
+                        mode="outlined"
+                        style={styles.input}
+                        secureTextEntry
+                        outlineColor="#ddd"
+                        activeOutlineColor="#6200ee"
+                        left={<TextInput.Icon icon="lock" />}
+                    />
+
+                    <TouchableRipple
+                        style={styles.button}
+                        onPress={handleRegister}
+                        borderless
+                        rippleColor="rgba(255, 255, 255, 0.2)"
+                    >
+                        <Text style={styles.buttonText}>REGISTER</Text>
+                    </TouchableRipple>
+                </View>
+
+                <View style={styles.loginContainer}>
+                    <Text style={styles.accountText}>Already have an account?</Text>
+                    <TouchableOpacity
+                        onPress={() => {
+                            navigation.replace("GuestNav", {
+                                screen: 'Login',
+                            });
+                        }}
+                    >
+                        <Text style={styles.loginText}>Login</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
-        </View>
+        </SafeAreaView>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 16,
-    },
-    title: {
-        marginBottom: 32,
-    },
-    input: {
-        width: '100%',
-        marginBottom: 16,
-    },
-    button: {
-        width: '100%',
-        padding: 16,
-        backgroundColor: '#6200ee',
-        borderRadius: 4,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-    },
-    registerContainer: {
-        flexDirection: 'row',
-        marginTop: 16,
-    },
-    registerText: {
-        marginLeft: 8,
-        fontWeight: 'bold',
-        color: '#6200ee',
-    },
-});
