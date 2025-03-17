@@ -8,16 +8,19 @@ import { NavigationContainer } from '@react-navigation/native'
 
 import store from '~/states/store';
 import MainNav from '~/components/Navigations';
+import { FirebaseAuthProvider } from '~/firebase/FirebaseAuthContext';
 
 export default function App() {
   return (
     <Provider store={store}>
-      <NavigationContainer>
-        <PaperProvider>
-          <MainNav />
-        </PaperProvider>
-      </NavigationContainer>
-      <Toast />
+      <FirebaseAuthProvider>
+        <NavigationContainer>
+          <PaperProvider>
+            <MainNav />
+          </PaperProvider>
+        </NavigationContainer>
+        <Toast />
+      </FirebaseAuthProvider>
     </Provider>
   );
 }

@@ -1,15 +1,63 @@
 import { useNavigation } from '@react-navigation/native';
-import React from 'react';
-import { View, TouchableOpacity, Image, StatusBar, SafeAreaView } from 'react-native';
-import { Text, TextInput, TouchableRipple } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, TouchableOpacity, Image, StatusBar, SafeAreaView, ActivityIndicator } from 'react-native';
+import { Text, TextInput, TouchableRipple, Button } from 'react-native-paper';
 import { H1 } from '~/components/ui/typography';
 import styles from '~/styles/auth';
+import { useAuth } from '~/firebase/FirebaseAuthContext';
 
 export default function Login() {
     const navigation = useNavigation();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
 
-    const handleLogin = () => {
-        navigation.navigate('DefaultNav');
+    const { loginWithEmail, signInWithGoogle, loading } = useAuth();
+
+    const validateForm = () => {
+        let isValid = true;
+
+        // Email validation
+        if (!email.trim()) {
+            setEmailError('Email is required');
+            isValid = false;
+        } else if (!/\S+@\S+\.\S+/.test(email)) {
+            setEmailError('Email is invalid');
+            isValid = false;
+        } else {
+            setEmailError('');
+        }
+
+        // Password validation
+        if (!password) {
+            setPasswordError('Password is required');
+            isValid = false;
+        } else {
+            setPasswordError('');
+        }
+
+        return isValid;
+    };
+
+    const handleLogin = async () => {
+        if (validateForm()) {
+            try {
+                await loginWithEmail(email, password);
+                navigation.navigate('DefaultNav');
+            } catch (error) {
+                // Error handling is done in useFirebaseAuth hook with Toast
+            }
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            await signInWithGoogle();
+            navigation.navigate('DefaultNav');
+        } catch (error) {
+            // Error handling is done in useFirebaseAuth hook with Toast
+        }
     };
 
     return (
@@ -37,7 +85,11 @@ export default function Login() {
                         outlineColor="#ddd"
                         activeOutlineColor="#6200ee"
                         left={<TextInput.Icon icon="email" />}
+                        value={email}
+                        onChangeText={setEmail}
+                        error={!!emailError}
                     />
+                    {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
                     <TextInput
                         label="Password"
@@ -47,9 +99,16 @@ export default function Login() {
                         outlineColor="#ddd"
                         activeOutlineColor="#6200ee"
                         left={<TextInput.Icon icon="lock" />}
+                        value={password}
+                        onChangeText={setPassword}
+                        error={!!passwordError}
                     />
+                    {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
-                    <TouchableOpacity style={styles.forgotPassword}>
+                    <TouchableOpacity
+                        style={styles.forgotPassword}
+                        onPress={() => navigation.navigate('ForgotPassword')}
+                    >
                         <Text style={styles.forgotText}>Forgot Password?</Text>
                     </TouchableOpacity>
 
@@ -58,8 +117,34 @@ export default function Login() {
                         onPress={handleLogin}
                         borderless
                         rippleColor="rgba(255, 255, 255, 0.2)"
+                        disabled={loading}
                     >
-                        <Text style={styles.buttonText}>LOGIN</Text>
+                        {loading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <Text style={styles.buttonText}>LOGIN</Text>
+                        )}
+                    </TouchableRipple>
+
+                    <View style={[styles.separator, { marginVertical: 20 }]}>
+                        <View style={styles.line} />
+                        <Text style={styles.separatorText}>OR</Text>
+                        <View style={styles.line} />
+                    </View>
+
+                    <TouchableRipple
+                        style={[styles.button, styles.googleButton]}
+                        onPress={handleGoogleLogin}
+                        borderless
+                        disabled={loading}
+                    >
+                        <View style={styles.googleButtonContent}>
+                            <Image
+                                source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }}
+                                style={styles.googleIcon}
+                            />
+                            <Text style={styles.googleButtonText}>Sign in with Google</Text>
+                        </View>
                     </TouchableRipple>
                 </View>
 

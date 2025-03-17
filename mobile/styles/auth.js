@@ -105,5 +105,46 @@ const styles = StyleSheet.create({
         color: colors.primary,
         fontSize: 15,
     },
+    errorText: {
+        color: '#B00020',
+        fontSize: 12,
+        marginLeft: 10,
+        marginTop: -5,
+        marginBottom: 5,
+    },
+    separator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 10,
+    },
+    line: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#E0E0E0',
+    },
+    separatorText: {
+        marginHorizontal: 10,
+        color: '#757575',
+    },
+    googleButton: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    googleButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    googleIcon: {
+        width: 24,
+        height: 24,
+        marginRight: 10,
+    },
+    googleButtonText: {
+        color: '#757575',
+        fontWeight: 'bold',
+    }
 });
+
 export default styles;

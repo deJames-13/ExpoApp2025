@@ -14,7 +14,8 @@ module.exports = {
             backgroundColor: "#ffffff"
         },
         ios: {
-            supportsTablet: true
+            supportsTablet: true,
+            bundleIdentifier: "com.eyezone.app",
         },
         android: {
             package: "com.eyezone.app",
@@ -30,7 +31,8 @@ module.exports = {
         experiments: {
             tsconfigPaths: true
         },
-        plugins: [],
+        plugins: [
+        ],
         extra: {
             eas: {
                 projectId: "851484ac-a9f8-4217-89af-b45f771a3953",
