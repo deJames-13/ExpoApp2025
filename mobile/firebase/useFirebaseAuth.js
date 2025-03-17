@@ -16,17 +16,42 @@ import Toast from 'react-native-toast-message';
 // Configure WebBrowser for OAuth flows
 WebBrowser.maybeCompleteAuthSession();
 
+// Validate required environment variables
+const validateEnvVariables = () => {
+    const requiredVariables = [
+        'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID',
+        'EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID',
+        'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'
+    ];
+
+    const missingVariables = requiredVariables.filter(
+        variable => !process.env[variable]
+    );
+
+    if (missingVariables.length > 0) {
+        console.error('Missing required environment variables:', missingVariables);
+        return false;
+    }
+
+    return true;
+};
+
 const useFirebaseAuth = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [envValidated] = useState(validateEnvVariables());
 
-    // Google OAuth configuration
+    // Google OAuth configuration - adding redirect URI for web
     const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest(
         {
             clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
             androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
             iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+            // Add redirect URI for web
+            redirectUri: Platform.select({
+                web: process.env.EXPO_PUBLIC_GOOGLE_REDIRECT_URI || window.location.origin
+            })
         }
     );
 
@@ -46,6 +71,7 @@ const useFirebaseAuth = () => {
                     });
                 })
                 .catch((error) => {
+                    console.error('Firebase credential error:', error);
                     setError(error.message);
                     Toast.show({
                         type: 'error',
@@ -56,6 +82,15 @@ const useFirebaseAuth = () => {
                 .finally(() => {
                     setLoading(false);
                 });
+        } else if (googleResponse?.type === 'error') {
+            console.error('Google OAuth error:', googleResponse.error);
+            setError(googleResponse.error?.message || 'Google sign-in failed');
+            Toast.show({
+                type: 'error',
+                text1: 'Google Sign-in Failed',
+                text2: googleResponse.error?.message || 'Authentication error'
+            });
+            setLoading(false);
         }
     }, [googleResponse]);
 
@@ -78,15 +113,31 @@ const useFirebaseAuth = () => {
 
     // Google Sign In
     const signInWithGoogle = async () => {
+        if (!envValidated) {
+            const errorMsg = 'Missing Google OAuth configuration';
+            setError(errorMsg);
+            Toast.show({
+                type: 'error',
+                text1: 'Configuration Error',
+                text2: errorMsg
+            });
+            return Promise.reject(new Error(errorMsg));
+        }
+
         setLoading(true);
         try {
+            console.log('Initiating Google sign-in...');
             const result = await promptGoogleAsync();
+            console.log('Google sign-in result type:', result.type);
+
             if (result.type !== 'success') {
-                throw new Error('Google sign in was cancelled or failed');
+                throw new Error(result.error?.message || 'Google sign in was cancelled or failed');
             }
+
             // The actual sign in will be handled by the useEffect above
             return result;
         } catch (error) {
+            console.error('Google sign-in error:', error);
             setError(error.message);
             Toast.show({
                 type: 'error',

@@ -7,10 +7,11 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   GoogleAuthProvider,
-  signInWithCredential
+  signInWithCredential,
+  // @ts-ignore
+  getReactNativePersistence
 } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getReactNativePersistence } from 'firebase/auth/react-native';
 
 // Initialize Firebase
 const firebaseConfig = {
