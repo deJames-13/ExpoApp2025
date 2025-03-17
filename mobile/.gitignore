@@ -4,7 +4,7 @@ ios
 
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 GoogleService-Info.plist
-google-services.json
+# google-services.json
 keystore.jks
 .env.development
 eyezone-723ab-firebase-adminsdk-fbsvc-a889953ac4.json
