@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-// import * as WebBrowser from 'expo-web-browser';
+import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import {
     auth,
@@ -14,7 +14,7 @@ import {
 import Toast from 'react-native-toast-message';
 
 // Configure WebBrowser for OAuth flows
-// WebBrowser.maybeCompleteAuthSession();
+WebBrowser.maybeCompleteAuthSession();
 
 const useFirebaseAuth = () => {
     const [user, setUser] = useState(null);
