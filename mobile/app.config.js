@@ -31,7 +31,14 @@ module.exports = {
         experiments: {
             tsconfigPaths: true
         },
-        plugins: [],
+        plugins: [
+            [
+                "@react-native-google-signin/google-signin",
+                {
+                    "iosUrlScheme": "com.googleusercontent.apps._some_id",
+                }
+            ]
+        ],
         extra: {
             eas: {
                 projectId: "851484ac-a9f8-4217-89af-b45f771a3953",
