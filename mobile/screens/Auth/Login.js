@@ -13,9 +13,8 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
-    const [googleLoading, setGoogleLoading] = useState(false);
 
-    const { loginWithEmail, signInWithGoogle, loading, error } = useAuth();
+    const { loginWithEmail, signInWithGoogle, loading } = useAuth();
 
     const validateForm = () => {
         let isValid = true;
@@ -53,35 +52,12 @@ export default function Login() {
         }
     };
 
-    const handleGoogleLogin = async () => {
+    const handleGoogleSignIn = async () => {
         try {
-            setGoogleLoading(true);
-            console.log('Starting Google sign-in process...');
-
-            // Check if environment variables are available
-            if (Platform.OS === 'web' && !process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
-                throw new Error('Google Web Client ID is not configured');
-            } else if (Platform.OS === 'android' && !process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID) {
-                throw new Error('Google Android Client ID is not configured');
-            } else if (Platform.OS === 'ios' && !process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID) {
-                throw new Error('Google iOS Client ID is not configured');
-            }
-
-            const result = await signInWithGoogle();
-            console.log('Google sign-in initiated successfully');
-
-            if (result?.type === 'success') {
-                navigation.navigate('DefaultNav');
-            }
+            await signInWithGoogle();
+            navigation.navigate('DefaultNav');
         } catch (error) {
-            console.error('Google login error:', error);
-            Toast.show({
-                type: 'error',
-                text1: 'Google Sign-in Error',
-                text2: error.message || 'Failed to authenticate with Google'
-            });
-        } finally {
-            setGoogleLoading(false);
+            // Error is handled in the FirebaseAuthContext
         }
     };
 
@@ -159,9 +135,9 @@ export default function Login() {
 
                     <TouchableRipple
                         style={[styles.button, styles.googleButton]}
-                        onPress={handleGoogleLogin}
+                        onPress={handleGoogleSignIn}
                         borderless
-                        disabled={loading || googleLoading}
+                        disabled={loading}
                     >
                         <View style={styles.googleButtonContent}>
                             <Image
@@ -169,7 +145,7 @@ export default function Login() {
                                 style={styles.googleIcon}
                             />
                             <Text style={styles.googleButtonText}>
-                                {googleLoading ? 'Signing in...' : 'Sign in with Google'}
+                                {loading ? 'Signing in...' : 'Sign in with Google'}
                             </Text>
                         </View>
                     </TouchableRipple>

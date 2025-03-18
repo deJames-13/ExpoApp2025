@@ -5,6 +5,7 @@ import { Text, TextInput, TouchableRipple } from 'react-native-paper';
 import { H1 } from '~/components/ui/typography';
 import styles from '~/styles/auth';
 import { useAuth } from '~/firebase/FirebaseAuthContext';
+import Toast from 'react-native-toast-message';
 
 export default function Register() {
     const navigation = useNavigation();
@@ -59,7 +60,7 @@ export default function Register() {
             await signInWithGoogle();
             navigation.navigate('DefaultNav');
         } catch (error) {
-            // Error handling is done in useFirebaseAuth hook with Toast
+            // Error is handled in the FirebaseAuthContext
         }
     };
 
