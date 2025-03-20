@@ -2,7 +2,7 @@ seeders
 generators
 # _examples
 examples
-
+firebase-service.json
 bin
 package-lock.json
 # Logs

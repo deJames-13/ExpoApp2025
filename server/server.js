@@ -1,4 +1,4 @@
-import { connectDB, MONGO_URI, PORT } from '#config';
+import { connectDB, MONGO_URI, PORT as PORTENV } from '#config';
 import * as error from '#middlewares/error.middleware';
 import cookieParser from 'cookie-parser';
 import express from 'express';
@@ -23,7 +23,7 @@ const production = (app) => {
   }
 };
 
-const server = () => {
+const server = (PORT, HOST) => {
   const app = express();
 
   app.use(morgan('dev'));
@@ -40,13 +40,12 @@ const server = () => {
 
 
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server is running on port ${PORT}`);
-    console
+  app.listen(PORT, HOST, () => {
+    console.log(`Server running in ${process.env.NODE_ENV} mode on http://${HOST}:${PORT}`); // eslint-disable-line no-value-in
   });
 };
 
-export const run = () => {
-    console.log('\n'.repeat(100));
-    connectDB(MONGO_URI, server);
+export const run = (HOST = 'localhost', PORT = PORTENV) => {
+  console.log('\n'.repeat(100));
+  connectDB(MONGO_URI, () => server(HOST, PORT));
 };
