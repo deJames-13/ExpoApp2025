@@ -10,7 +10,7 @@ import {
 } from './index';
 import { signInWithCredential } from 'firebase/auth';
 import Toast from 'react-native-toast-message';
-import { GoogleOneTapSignIn, isSuccessResponse } from '@react-native-google-signin/google-signin';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 // Create auth context
 const FirebaseAuthContext = createContext();
@@ -114,28 +114,24 @@ export const FirebaseAuthProvider = ({ children }) => {
         setLoading(true);
         setError(null);
         try {
-            await GoogleOneTapSignIn.configure({
-                webClientId: 'autoDetect',
+            await GoogleSignin.configure({
+                webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
             });
 
-            await GoogleOneTapSignIn.checkPlayServices();
-            const response = await GoogleOneTapSignIn.signIn();
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
 
-            if (isSuccessResponse(response)) {
-                const { idToken } = response.data;
-                const credential = GoogleAuthProvider.credential(idToken);
-                const result = await signInWithCredential(auth, credential);
+            const { idToken } = userInfo;
+            const credential = GoogleAuthProvider.credential(idToken);
+            const result = await signInWithCredential(auth, credential);
 
-                Toast.show({
-                    type: 'success',
-                    text1: 'Google Sign-in Successful',
-                    text2: 'You have successfully signed in with Google'
-                });
+            Toast.show({
+                type: 'success',
+                text1: 'Google Sign-in Successful',
+                text2: 'You have successfully signed in with Google'
+            });
 
-                return result;
-            } else {
-                throw new Error('Google sign-in was not successful');
-            }
+            return result;
         } catch (err) {
             setError(err);
             Toast.show({
@@ -143,6 +139,7 @@ export const FirebaseAuthProvider = ({ children }) => {
                 text1: 'Google Sign-in Error',
                 text2: err.message || 'Failed to authenticate with Google'
             });
+            console.log(err)
             throw err;
         } finally {
             setLoading(false);
@@ -166,6 +163,7 @@ export const FirebaseAuthProvider = ({ children }) => {
                 text1: 'Logout Error',
                 text2: 'Failed to logout. Please try again.'
             });
+
             throw err;
         } finally {
             setLoading(false);

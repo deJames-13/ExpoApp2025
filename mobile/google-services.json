@@ -45,6 +45,13 @@
             {
               "client_id": "30159689923-289e9bi2fvvbl9cgq2v046gj1a9ornl4.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "30159689923-smgoi9h65q5q63jqh5ju7rbf1c51erdk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.eyezone.app"
+              }
             }
           ]
         }
