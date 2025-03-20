@@ -1,10 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import * as changeCase from "change-case";
+import { setResource, toggleRefresh } from '@/states/slices/resources';
 import { useNavigation } from '@react-navigation/native';
 import { Alert } from 'react-native';
+
+import * as changeCase from "change-case";
 import resourceEndpoints from '../states/api/resources';
-import { setResource, toggleRefresh } from '../states/slices/resources';
 
 export default function useResource(resourceName) {
     const navigation = useNavigation();
@@ -18,11 +19,12 @@ export default function useResource(resourceName) {
     const pascalCaseName = changeCase.pascalCase(resourceName);
     const capitalizeName = changeCase.capitalCase(resourceName);
 
-    // API endpoints - adjusted for new naming convention
+    // API endpoints - adjusted to match resource.js naming convention
     const resource = resourceEndpoints;
-    const [getList] = resource[`get${pascalCaseName}List`] ? resource[`get${pascalCaseName}List`]() : [() => { }];
+    const [getList] = resource[`getAll${pascalCaseName}`] ? resource[`getAll${pascalCaseName}`]() : [() => { }];
     const [getById] = resource[`get${pascalCaseName}ById`] ? resource[`get${pascalCaseName}ById`]() : [() => { }];
-    const [create] = resource[`create${pascalCaseName}`] ? resource[`create${pascalCaseName}`]() : [() => { }];
+    const [getBySlug] = resource[`get${pascalCaseName}BySlug`] ? resource[`get${pascalCaseName}BySlug`]() : [() => { }];
+    const [create] = resource[`store${pascalCaseName}`] ? resource[`store${pascalCaseName}`]() : [() => { }];
     const [update] = resource[`update${pascalCaseName}`] ? resource[`update${pascalCaseName}`]() : [() => { }];
     const [deleteItem] = resource[`delete${pascalCaseName}`] ? resource[`delete${pascalCaseName}`]() : [() => { }];
 
@@ -96,6 +98,37 @@ export default function useResource(resourceName) {
                 return error;
             });
     }, [getById, resourceName, dispatch]);
+
+    // Add fetchBySlug function
+    const fetchBySlug = useCallback(async ({
+        slug,
+        qStr = '',
+        doRefresh = false
+    } = {}) => {
+        setLoading(true);
+        return await getBySlug({ slug, qStr })
+            .unwrap()
+            .then((response) => {
+                setCurrent(response);
+                dispatch(setResource({
+                    resource: resourceName,
+                    data: response,
+                    type: 'detail'
+                }));
+                setLoading(false);
+                doRefresh && dispatch(toggleRefresh(false));
+                return response;
+            })
+            .catch((error) => {
+                setLoading(false);
+                if (error.status === 404) {
+                    Alert.alert('Not Found', 'The requested resource was not found.');
+                } else {
+                    Alert.alert('Error', error?.data?.message || 'A server error occurred');
+                }
+                return error;
+            });
+    }, [getBySlug, resourceName, dispatch]);
 
     // CRUD operations
     const doStore = useCallback(async (data, silence = false) => {
@@ -202,6 +235,7 @@ export default function useResource(resourceName) {
         actions: {
             fetchDatas,
             fetchData,
+            fetchBySlug,
             doStore,
             doUpdate,
             doDestroy

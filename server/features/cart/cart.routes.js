@@ -3,7 +3,7 @@ import { protectAndPermit } from '#middlewares/auth.middleware';
 import controller from './cart.controller.js';
 export default [
   {
-    url: '/carts',
+    url: '/cart',
     router: [
       {
         path: PATHS.ALL,
