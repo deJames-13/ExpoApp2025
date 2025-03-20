@@ -1,7 +1,5 @@
-generators
-seeders
 
-
+bin
 package-lock.json
 # Logs
 logs
@@ -31,3 +29,4 @@ dist-ssr
 *.sw?
 .vs
 .idea
+.vercel
