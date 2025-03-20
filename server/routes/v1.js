@@ -6,7 +6,6 @@ const v1 = [
   ...features.notificationRoutes,
   ...features.orderRoutes,
   ...features.cartRoutes,
-  ...features._exampleRoutes,
 
   ...features.brandRoutes,
   ...features.productRoutes,

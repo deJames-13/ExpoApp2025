@@ -23,7 +23,7 @@ const production = (app) => {
   }
 };
 
-const server = (PORT, HOST) => {
+const server = (HOST, PORT) => {
   const app = express();
 
   app.use(morgan('dev'));
