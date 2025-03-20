@@ -1,4 +1,4 @@
-export * from './_examples/index.js';
+export * from '../generators/_examples/index.js';
 export * from './brands/index.js';
 export * from './couriers/index.js';
 export * from './product/index.js';
