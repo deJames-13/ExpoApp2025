@@ -1,9 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { startLoading, stopLoading } from "../slices/theme.js"
-const API = process.env.VITE_API_URL;
+
+const API = process.env.EXPO_PUBLIC_API_URL;
+console.log(API)
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: `${API}/api`,
+  baseUrl: `${API}/api/v1`,
   credentials: 'include',
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.accessToken;
