@@ -38,14 +38,14 @@ const server = (HOST, PORT) => {
   app.use(error.notFound);
   app.use(error.errorMiddleware);
 
-
-
-  app.listen(PORT, HOST, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on http://${HOST}:${PORT}`); // eslint-disable-line no-value-in
+  const serverInstance = app.listen(PORT, HOST, () => {
+    console.log(`Server running in ${process.env.NODE_ENV} mode on http://${HOST}:${PORT}`);
   });
+
+  return serverInstance;
 };
 
-export const run = (HOST = 'localhost', PORT = PORTENV) => {
+export const run = (HOST = 'localhost', PORT = PORTENV, options = {}) => {
   console.log('\n'.repeat(100));
   connectDB(MONGO_URI, () => server(HOST, PORT));
 };

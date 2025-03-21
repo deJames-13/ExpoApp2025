@@ -14,6 +14,7 @@ const baseQuery = fetchBaseQuery({
     headers.set('Referer', window.location.origin);
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Content-Type', 'application/json');
+    header.set('ngrok-skip-browser-warning', '1')
 
 
 
