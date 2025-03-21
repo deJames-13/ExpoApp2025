@@ -67,7 +67,7 @@ class ProductController extends Controller {
     let data = await this.service?.create(validData);
     if (!data._id) return this.error({ res, message: 'Invalid data!' });
 
-    console.log('files', req.files);
+    // console.log('Found files', req.files);
     if (req.file || req.files || this.service.hasField('images')) {
       const images = this.addImage(req);
       data.images = [...(data.images || []), ...images];
@@ -109,7 +109,7 @@ class ProductController extends Controller {
       data.images = [...(data.images || []), ...newImages];
       data = await data.save();
     }
-    console.log('files', data);
+    // console.log('files', data);
 
     const resource = (await this.resource?.make(data)) || data;
     this.success({ res, message: 'Data updated!', resource });

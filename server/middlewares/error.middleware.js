@@ -20,7 +20,7 @@ export const errorMiddleware = async (err, req, res, next) => {
       await utils.deleteFiles(publicIds);
     }
   } catch (error) {
-    console.log(error);    
+    console.error(error);
   }
 
   if (err.name === 'CastError' && err.kind === 'ObjectId') {

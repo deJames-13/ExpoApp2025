@@ -56,9 +56,9 @@ class UserService extends Service {
   }
 
   async updateUser(id, body) {
-    let {role, password, confirm_password, ...rest} = body;
+    let { role, password, confirm_password, ...rest } = body;
     body = rest;
-    
+
     const userExists = await this.checkIfExists({
       email: body.email,
       _id: { $ne: id },
@@ -73,10 +73,10 @@ class UserService extends Service {
   }
 
   async contactExists(contact, exceptUser) {
-    const user = await this.info?.findOne({ 
+    const user = await this.info?.findOne({
       contact,
       _id: { $ne: exceptUser.info },
-     });
+    });
 
     if (user) throw new Errors.BadRequest('Contact already exists!');
   }
@@ -88,7 +88,7 @@ class UserService extends Service {
       const userInfo = await this.info?.create(data);
       user.info = userInfo._id;
       await user.save();
-    return userInfo;
+      return userInfo;
     } catch (err) {
       throw new Errors.BadRequest('Error creating user info!');
     }
@@ -154,7 +154,7 @@ class UserService extends Service {
     const { code } = user.getOTP();
     user.emailVerifiedAt = null;
     await user.save({ validateBeforeSave: false, new: true });
-    
+
     let redirect = redirectUrl ? `${redirectUrl}?verifyToken=${token}&otp=${code}` : '';
     const message = `Your OTP is <strong> ${code} </strong> `;
     const altMessage = redirectUrl
@@ -209,7 +209,7 @@ class UserService extends Service {
     let user = await this.model.findOne({ email });
     if (!user) throw new Errors.BadRequest('Invalid verify token!');
 
-    console.log(user.otp, user.verifyEmail, OTP, user.otp.code != parseInt(OTP));
+    // console.log(user.otp, user.verifyEmail, OTP, user.otp.code != parseInt(OTP));
     if (user.otp.code != parseInt(OTP)) throw new Errors.BadRequest('Invalid OTP!');
     if (user.otp.expire < dt) throw new Errors.BadRequest('Your OTP expired! Please try again!');
 
