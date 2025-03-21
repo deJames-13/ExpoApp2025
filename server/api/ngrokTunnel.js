@@ -1,28 +1,39 @@
 import ngrok from 'ngrok';
 
-export const startTunnel = async (port, options = {}) => {
+export const startTunnel = async (host, port, options = {}) => {
     try {
         const tunnelConfig = {
             addr: port,
-            region: options.region || 'us',
+            authtoken: options.authtoken ?? process.env.NGROK_TOKEN,
+            session_metadata: 'EyeZone Tunnel',
         };
 
-        // Add permanent URL configuration if provided
         if (options.subdomain) {
             console.log(`Attempting to use reserved subdomain: ${options.subdomain}`);
             tunnelConfig.subdomain = options.subdomain;
+            delete tunnelConfig.domain;
         }
 
         if (options.domain) {
             console.log(`Attempting to use custom domain: ${options.domain}`);
-            tunnelConfig.domain = options.domain;
+            tunnelConfig.hostname = options.domain;
+            delete tunnelConfig.domain;
         }
 
-        if (options.authtoken) {
-            tunnelConfig.authtoken = options.authtoken;
+        if (options.region && options.region !== 'us') {
+            console.log(`Setting region to: ${options.region}`);
+            tunnelConfig.region = options.region;
+            delete tunnelConfig.server_addr;
         }
 
+        // Use authtoken if provided
+        if (options.authtoken || process.env.NGROK_TOKEN) {
+            tunnelConfig.authtoken = options.authtoken || process.env.NGROK_TOKEN;
+        }
+
+        // Connect using the original ngrok package
         const url = await ngrok.connect(tunnelConfig);
+
         console.log(`Tunnel created! Your server is accessible at: ${url}`);
 
         if (options.subdomain || options.domain) {
@@ -41,7 +52,7 @@ export const startTunnel = async (port, options = {}) => {
 
 export const stopTunnel = async () => {
     try {
-        await ngrok.kill();
+        await ngrok.disconnect();
         console.log('Ngrok tunnel closed successfully');
     } catch (err) {
         console.error('Error closing ngrok tunnel:', err);

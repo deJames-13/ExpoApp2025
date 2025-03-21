@@ -8,7 +8,7 @@ run(params.host, params.port);
 
 if (params.isTunnel) {
     console.log('Starting ngrok tunnel...');
-    startTunnel(params.port, params.ngrokOptions);
+    startTunnel(params.host, params.port, params.ngrokOptions);
 
     process.on('SIGINT', async () => {
         console.log('Closing ngrok tunnel and shutting down server...');

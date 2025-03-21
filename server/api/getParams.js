@@ -39,7 +39,7 @@ export function getParams() {
 
     const validHostRegex = /^(localhost|127\.0\.0\.1|(\d{1,3}\.){3}\d{1,3}|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+)$/;
     if (params.host && !validHostRegex.test(params.host)) {
-        params.host = undefined
+        params.host = 'localhost'
         console.error("Invalid host value.")
     };
 
@@ -47,11 +47,11 @@ export function getParams() {
     if (params.port && validPortRegex.test(params.port)) {
         const portNum = parseInt(params.port, 10);
         if (portNum < 0 || portNum > 65535) {
-            params.port = undefined
+            params.port = process.env.PORT ?? 5000
             console.error("Invalid port value.")
         }
     } else if (params.port) {
-        params.port = undefined
+        params.port = process.env.PORT ?? 5000
         console.error("Invalid port format")
     }
 
