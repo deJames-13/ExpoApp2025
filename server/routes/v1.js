@@ -14,6 +14,7 @@ const v1 = [
   ...features.userRoutes,
   ...features.reviewRoutes,
   ...features.chartRoutes,
+  ...features.healthRoutes,
   // NEW ROUTE HERE ->
 ];
 

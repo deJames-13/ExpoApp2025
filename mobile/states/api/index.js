@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { startLoading, stopLoading } from "../slices/theme.js"
 
 const API = process.env.EXPO_PUBLIC_API_URL;
-console.log(API)
+
 
 const baseQuery = fetchBaseQuery({
   baseUrl: `${API}/api/v1`,

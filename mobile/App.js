@@ -11,6 +11,7 @@ import MainNav from '~/components/Navigations';
 import { FirebaseAuthProvider } from '~/firebase/FirebaseAuthContext';
 
 const App = () => {
+
   return (
     <Provider store={store}>
       <FirebaseAuthProvider>

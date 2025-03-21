@@ -1,3 +1,4 @@
+export { healthRoutes } from './health/health.routes.js';
 
 export * from './cart/index.js';
 export * from './orders/index.js';
