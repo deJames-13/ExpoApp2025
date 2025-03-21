@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node api/index.js",
-    "dev": "nodemon api/index.js -e js,ts,json",
+    "dev": "npx nodemon api/index.js -e js,ts,json",
     "test": "echo \"Error: no test specified\" && exit 1",
     "plop": "npx plop",
     "lint": "eslint . "

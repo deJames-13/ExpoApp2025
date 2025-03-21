@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "NODE_ENV=production expo start",
-    "dev": "NODE_ENV=development expo start",
-    "android": "NODE_ENV=development expo run:android",
-    "ios": "NODE_ENV=development expo run:ios",
-    "web": "NODE_ENV=development expo start --web"
+    "start": "set NODE_ENV=production && npx expo start",
+    "dev": "set NODE_ENV=development && npx expo start",
+    "android": "set NODE_ENV=development && npx expo run:android",
+    "ios": "set NODE_ENV=development && npx expo run:ios",
+    "web": "set NODE_ENV=development && npx expo start --web"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
