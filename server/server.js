@@ -5,6 +5,8 @@ import express from 'express';
 import morgan from 'morgan';
 import path from 'path';
 import router from './routes/index.js';
+import cors from 'cors'
+
 
 const production = (app) => {
   if (process.env.NODE_ENV === 'production') {
@@ -26,6 +28,7 @@ const production = (app) => {
 const server = (HOST, PORT) => {
   const app = express();
 
+  // app.use(cors());                
   app.use(morgan('dev'));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));

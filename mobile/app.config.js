@@ -23,6 +23,9 @@ module.exports = {
                 foregroundImage: "./assets/adaptive-icon.png",
                 backgroundColor: "#ffffff"
             },
+            permissions: [
+              "INTERNET"
+            ],
             googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json"
         },
         web: {

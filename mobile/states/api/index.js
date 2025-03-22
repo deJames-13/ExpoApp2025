@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { startLoading, stopLoading } from "../slices/theme.js"
 
 const API = process.env.EXPO_PUBLIC_API_URL;
-
+console.log('Inititilizing API' + API)
 
 const baseQuery = fetchBaseQuery({
   baseUrl: `${API}/api/v1`,
@@ -14,7 +14,8 @@ const baseQuery = fetchBaseQuery({
     headers.set('Referer', window.location.origin);
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Content-Type', 'application/json');
-    header.set('ngrok-skip-browser-warning', '1')
+    headers.set('ngrok-skip-browser-warning', '1');
+    headers.set('mode', 'no-cors');
 
 
 

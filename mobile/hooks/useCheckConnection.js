@@ -3,15 +3,16 @@ import Toast from 'react-native-toast-message';
 import { Platform } from 'react-native';
 
 const PRIMARY_API = process.env.EXPO_PUBLIC_API_URL;
-// Backup options if the primary fails (try both localhost and IP variants)
 const BACKUP_APIS = Platform.OS === 'web'
     ? ['http://localhost:3000']
-    : ['http://10.0.2.2:3000']; // 10.0.2.2 is localhost for Android emulator
+    : [
+        process.env.EXPO_PUBLIC_LAN_URL
+    ];
+const TIMEOUT = 60000
 
 export const testConnection = async (apiUrl = PRIMARY_API) => {
-    // Create an AbortController with a timeout of 10 seconds
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), TIMEOUT);
 
     console.log(`Attempting to connect to: ${apiUrl}`);
 
@@ -21,11 +22,12 @@ export const testConnection = async (apiUrl = PRIMARY_API) => {
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': '1',
+                mode: 'no-cors'
             },
-            signal: controller.signal, // Add the abort signal
+            signal: controller.signal
         });
 
-        // Clear the timeout since the request completed
         clearTimeout(timeout);
 
         if (!response.ok) {
@@ -35,13 +37,11 @@ export const testConnection = async (apiUrl = PRIMARY_API) => {
 
         return { success: true, message: 'API connection successful', apiUrl };
     } catch (error) {
-        // Clear the timeout on error too
         clearTimeout(timeout);
 
-        // Check if the error was due to the timeout
         if (error.name === 'AbortError') {
-            console.error(`API connection to ${apiUrl} timed out after 10 seconds`);
-            return { success: false, error: 'Connection timed out after 10 seconds', apiUrl };
+            console.error(`API connection to ${apiUrl} timed out after ${parseFloat(TIMEOUT / 1000).toFixed(2)} seconds`);
+            return { success: false, error: `Connection timed out after ${parseFloat(TIMEOUT / 1000).toFixed(2)} seconds`, apiUrl };
         }
 
         console.error(`API connection test to ${apiUrl} failed:`, error);
