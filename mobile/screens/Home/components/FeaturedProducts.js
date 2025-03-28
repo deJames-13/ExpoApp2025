@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, FlatList, TouchableOpacity, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { Text } from '~/components/ui';
 import ProductCard from '~/components/Cards/product';
-import api from '../api';
+import api from '~/axios.config';
 
 export default function FeaturedProducts({ navigation, initialProducts = [] }) {
     const [products, setProducts] = useState(initialProducts);

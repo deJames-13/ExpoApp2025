@@ -1,16 +1,15 @@
-
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import { createStackNavigator } from '@react-navigation/stack';
 import { DefaultDrawerContent } from '../drawers/default-content';
 import { defaultOptions } from './_options';
 import { defaultRoutes, tabRoutes } from './_routes';
+import ProductDetailView from '~/screens/Home/components/ProductDetailView';
 
 const USER_DEFAULT = 'Home';
 const Tabs = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
-
 
 const DefaultTabs = ({ initialRouteName = USER_DEFAULT }) => {
     const routes = tabRoutes();
@@ -48,6 +47,11 @@ export function DefaultRoutes() {
                     options={route.options}
                 />
             ))}
+            <Stack.Screen
+                name="ProductDetailView"
+                component={ProductDetailView}
+                options={{ headerShown: false }}
+            />
         </Stack.Navigator>
     );
 }

@@ -1,1 +1,2 @@
-- [ ] figure out navigation
+- [ ] Fix useResource
+- [ ] add component testing area
