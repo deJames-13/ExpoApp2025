@@ -12,13 +12,11 @@ export default function resourceBuilder(resource, customEndpoints = (builder) =>
                 url: `${resource}${qStr ? `?${qStr}` : ''}`,
                 method: 'GET',
             }),
-            invalidatesTags: (result) =>
-                result
-                    ? [
-                        ...result.map(({ id }) => ({ type: TAG_TYPE, id })),
-                        { type: TAG_TYPE, id: 'LIST' }
-                    ]
-                    : [{ type: TAG_TYPE, id: 'LIST' }]
+            // Simplify tag invalidation to ensure basic functionality
+            providesTags: (result) => {
+                console.log(`[${resource}] getAll result:`, result);
+                return [{ type: TAG_TYPE, id: 'LIST' }];
+            }
         }),
         [`get${capitalizedName}ById`]: builder.mutation({
             query: ({ id, qStr }) => ({
@@ -44,7 +42,7 @@ export default function resourceBuilder(resource, customEndpoints = (builder) =>
                 const method = isOptionsObject && payload.method ? payload.method : 'POST';
 
                 return {
-                    url: `${resource}/${qStr}`,
+                    url: `${resource}${qStr}`,
                     method,
                     body: data,
                     headers,

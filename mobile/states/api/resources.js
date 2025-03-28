@@ -1,16 +1,8 @@
 import * as changeCase from "change-case";
 import resourceBuilder from '../base/resource.js';
 import apiSlice from './index';
-
-const resources = [
-    'users',
-    'products',
-    'categories',
-    'orders',
-    'cart',
-    'notifications',
-    'reviews',
-];
+import { resources, addResource } from '../constants/resources';
+import { addTagType } from './index';
 
 const customEndpoints = {
     // TODO: Notifications custom endpoints
@@ -24,14 +16,38 @@ const customEndpoints = {
 
     // TODO: Cart custom endpoints
 
-}
+};
 
-const resourceEndpoints = resources.reduce((acc, resource) => {
-    let name = changeCase.camelCase(resource);
+// Create a combined endpoints object with all resource endpoints
+let resourceEndpoints = {};
 
-    return apiSlice.injectEndpoints({
-        endpoints: resourceBuilder(resource, customEndpoints[name]),
+// Inject endpoints for each resource
+resources.forEach(resource => {
+    const name = changeCase.camelCase(resource);
+    const customEndpointsForResource = customEndpoints[name] || (() => ({}));
+
+    const injectedEndpoints = apiSlice.injectEndpoints({
+        endpoints: resourceBuilder(resource, customEndpointsForResource),
+        overrideExisting: false,
     });
-}, {});
+    resourceEndpoints = { ...resourceEndpoints, ...injectedEndpoints };
+});
+
+// Export a helper function to create new resource endpoints on the fly
+export const createResourceEndpoint = (resource) => {
+    addResource(resource);
+    addTagType(resource.toUpperCase());
+
+    const name = changeCase.camelCase(resource);
+    const customEndpointsForResource = customEndpoints[name] || (() => ({}));
+
+    const injectedEndpoints = apiSlice.injectEndpoints({
+        endpoints: resourceBuilder(resource, customEndpointsForResource),
+        overrideExisting: false,
+    });
+
+    resourceEndpoints = { ...resourceEndpoints, ...injectedEndpoints };
+    return injectedEndpoints;
+};
 
 export default resourceEndpoints;
