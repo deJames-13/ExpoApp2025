@@ -1,13 +1,11 @@
 import * as Screens from '~/screens';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-export { defaultOptions } from './_options';
 import { createStackNavigator } from '@react-navigation/stack';
 import { defaultOptions } from './_options';
-
+import ProductDetailView from '~/screens/Home/components/ProductDetailView';
 
 const Stack = createStackNavigator();
 const GUEST_DEFAULT = 'Onboarding';
-
 
 export const guestRoutes = () => [
     {
@@ -40,7 +38,6 @@ export const guestRoutes = () => [
     },
 ];
 
-
 export function GuestNav({ initialRouteName = GUEST_DEFAULT }) {
     const routes = guestRoutes();
     return (
@@ -56,6 +53,11 @@ export function GuestNav({ initialRouteName = GUEST_DEFAULT }) {
                     options={route.options}
                 />
             ))}
+            <Stack.Screen
+                name="ProductDetailView"
+                component={ProductDetailView}
+                options={{ headerShown: false }}
+            />
         </Stack.Navigator>
     );
 }

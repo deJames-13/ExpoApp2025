@@ -139,20 +139,20 @@ export default function FeaturedProducts({ navigation, initialProducts = [] }) {
                 item={productData}
                 itemWidth={itemWidth}
                 onPress={() => {
-                    console.log(`Attempting to navigate directly to IndivProduct with ID: ${productId}`);
+                    console.log(`Attempting to navigate directly to ProductDetailView with ID: ${productId}`);
 
                     if (!productId) {
                         console.error('Product ID is missing, unable to navigate to product details');
                         return;
                     }
 
-                    // Direct navigation to IndivProduct instead of nested navigation
+                    // Direct navigation to ProductDetailView instead of nested navigation
                     try {
-                        console.log('NAVIGATION - Direct navigation to IndivProduct with productId:', productId);
+                        console.log('NAVIGATION - Direct navigation to ProductDetailView with productId:', productId);
 
-                        navigation.navigate('IndivProduct', {
+                        navigation.navigate('ProductDetailView', {
                             productId: productId,
-                            _t: new Date().getTime() // Add timestamp to prevent caching
+                            _t: new Date().getTime()
                         });
                     } catch (error) {
                         console.error('Navigation error:', error);
