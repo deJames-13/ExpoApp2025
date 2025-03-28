@@ -1,324 +1,255 @@
-import { View, StyleSheet, SafeAreaView, Image } from 'react-native'
-import React, { useState, useEffect } from 'react'
-import { Text, Button, Chip } from 'react-native-paper'
-import DashboardTable from '../../components/table'
-import AdminModal, { useAdminModal } from '../../components/modal'
-import FormComponent from '../../components/form'
-import * as Yup from 'yup'
+import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native'
+import React, { useState, useCallback, useEffect } from 'react'
+import { ResourceTable } from '../../components/ResourceTable'
+import { Ionicons } from '@expo/vector-icons'
 
 export function Products() {
-    const [products, setProducts] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [formVisible, setFormVisible] = useState(false)
-    const [currentProduct, setCurrentProduct] = useState(null)
-    const { openModal } = useAdminModal()
+    // Sample data - in a real app, this would likely come from an API
+    const [products, setProducts] = useState([
+        { id: '1', name: 'Ray-Ban Aviator', price: '150.00', category: 'Sunglasses', stock: 24, image: 'https://via.placeholder.com/50' },
+        { id: '2', name: 'Oakley Holbrook', price: '129.99', category: 'Sunglasses', stock: 15, image: 'https://via.placeholder.com/50' },
+        { id: '3', name: 'Gucci Optical', price: '310.00', category: 'Eyeglasses', stock: 8, image: 'https://via.placeholder.com/50' },
+        { id: '4', name: 'Contact Lens Solution', price: '12.99', category: 'Accessories', stock: 42, image: 'https://via.placeholder.com/50' },
+        { id: '5', name: 'Anti-fog Cloth', price: '7.99', category: 'Accessories', stock: 56, image: 'https://via.placeholder.com/50' },
+        { id: '6', name: 'Prada PR 17WS', price: '280.00', category: 'Sunglasses', stock: 12, image: 'https://via.placeholder.com/50' },
+        { id: '7', name: 'Burberry BE2325', price: '220.00', category: 'Eyeglasses', stock: 18, image: 'https://via.placeholder.com/50' },
+        { id: '8', name: 'Lens Cleaning Kit', price: '15.99', category: 'Accessories', stock: 35, image: 'https://via.placeholder.com/50' },
+        { id: '9', name: 'Eyeglass Case', price: '24.99', category: 'Accessories', stock: 47, image: 'https://via.placeholder.com/50' },
+        { id: '10', name: 'Tom Ford FT5634-B', price: '395.00', category: 'Eyeglasses', stock: 9, image: 'https://via.placeholder.com/50' },
+        { id: '11', name: 'Maui Jim Honi', price: '329.99', category: 'Sunglasses', stock: 11, image: 'https://via.placeholder.com/50' },
+        { id: '12', name: 'Vision Test Chart', price: '49.99', category: 'Equipment', stock: 7, image: 'https://via.placeholder.com/50' },
+    ]);
 
-    // Form validation schema
-    const productSchema = Yup.object().shape({
-        name: Yup.string().required('Product name is required'),
-        category: Yup.string().required('Category is required'),
-        price: Yup.number().required('Price is required').positive('Price must be positive'),
-        stock: Yup.number().required('Stock is required').min(0, 'Stock cannot be negative'),
-        status: Yup.string().required('Status is required')
-    })
+    // State for table operations (client-side)
+    const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+    const [filteredProducts, setFilteredProducts] = useState(products);
+    const [currentSort, setCurrentSort] = useState({ field: 'name', direction: 'asc' });
+    const [searchText, setSearchText] = useState('');
 
-    // Table columns configuration
+    // Column definitions for the table with improved configuration
     const columns = [
         {
-            key: 'name',
+            id: 'main',
             title: 'Product',
-            numeric: false,
-            render: (value, item) => (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {item.image && (
-                        <Image
-                            source={{ uri: item.image }}
-                            style={{ width: 40, height: 40, marginRight: 10, borderRadius: 4 }}
-                        />
-                    )}
-                    <Text>{value}</Text>
-                </View>
-            )
+            field: 'name',
+            textAlign: 'left',
+            flex: 1,
+            priority: 1,
+            sortable: true
         },
-        { key: 'category', title: 'Category', numeric: false },
         {
-            key: 'price',
+            id: 'price',
             title: 'Price',
-            numeric: true,
-            render: (value) => `$${parseFloat(value).toFixed(2)}`
+            field: 'price',
+            textAlign: 'right',
+            priority: 1,
+            sortable: true,
+            render: (item) => `$${item.price}`
         },
-        { key: 'stock', title: 'Stock', numeric: true },
         {
-            key: 'status',
-            title: 'Status',
-            numeric: false,
-            render: (value) => {
-                let color;
-                switch (value) {
-                    case 'Active':
-                        color = 'green';
-                        break;
-                    case 'Inactive':
-                        color = 'orange';
-                        break;
-                    case 'Out of Stock':
-                        color = 'red';
-                        break;
-                    default:
-                        color = 'black';
-                }
-                return <Chip textStyle={{ color }} style={{ backgroundColor: `${color}10` }}>{value}</Chip>;
-            }
-        }
-    ]
+            id: 'stock',
+            title: 'Stock',
+            field: 'stock',
+            width: 80, // Wider for better readability
+            textAlign: 'center', // Center-aligned for better appearance
+            priority: 2,
+            sortable: true
+        },
+        {
+            id: 'category',
+            title: 'Category',
+            field: 'category',
+            textAlign: 'left',
+            priority: 3,
+            sortable: true
+        },
+    ];
 
-    // Simulate fetching products
+    // Update filtered products when sorting or searching changes (client-side implementation)
     useEffect(() => {
-        // Simulate API call
-        setTimeout(() => {
-            const mockProducts = [
-                {
-                    key: 1,
-                    name: 'Designer Sunglasses XYZ',
-                    category: 'Sunglasses',
-                    price: 149.99,
-                    stock: 23,
-                    status: 'Active',
-                    image: 'https://picsum.photos/seed/sunglasses1/200/200',
-                    description: 'High-quality designer sunglasses with UV protection.'
-                },
-                {
-                    key: 2,
-                    name: 'Reading Glasses ABC',
-                    category: 'Reading',
-                    price: 79.99,
-                    stock: 45,
-                    status: 'Active',
-                    image: 'https://picsum.photos/seed/glasses2/200/200',
-                    description: 'Comfortable reading glasses with blue light protection.'
-                },
-                {
-                    key: 3,
-                    name: 'Sports Eyewear PRO',
-                    category: 'Sports',
-                    price: 129.99,
-                    stock: 0,
-                    status: 'Out of Stock',
-                    image: 'https://picsum.photos/seed/sports3/200/200',
-                    description: 'Durable sports eyewear for active lifestyles.'
-                },
-                {
-                    key: 4,
-                    name: 'Vintage Frames Collection',
-                    category: 'Frames',
-                    price: 199.99,
-                    stock: 12,
-                    status: 'Active',
-                    image: 'https://picsum.photos/seed/vintage4/200/200',
-                    description: 'Classic vintage frames for a timeless look.'
-                },
-                {
-                    key: 5,
-                    name: 'Kids Eyewear Happy',
-                    category: 'Kids',
-                    price: 59.99,
-                    stock: 30,
-                    status: 'Active',
-                    image: 'https://picsum.photos/seed/kids5/200/200',
-                    description: 'Fun and durable eyewear for children.'
-                },
-                {
-                    key: 6,
-                    name: 'Prescription Lenses Premium',
-                    category: 'Lenses',
-                    price: 89.99,
-                    stock: 8,
-                    status: 'Inactive',
-                    image: 'https://picsum.photos/seed/lenses6/200/200',
-                    description: 'High-quality prescription lenses with anti-glare coating.'
+        let result = [...products];
+
+        // Apply search filter if search text exists
+        if (searchText) {
+            result = result.filter(item =>
+                Object.values(item).some(val =>
+                    val && String(val).toLowerCase().includes(searchText.toLowerCase())
+                )
+            );
+        }
+
+        // Apply sorting if sort field exists
+        if (currentSort.field) {
+            result.sort((a, b) => {
+                const aValue = a[currentSort.field] ?? '';
+                const bValue = b[currentSort.field] ?? '';
+
+                // Handle string vs number comparison
+                if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    return currentSort.direction === 'asc'
+                        ? aValue.localeCompare(bValue)
+                        : bValue.localeCompare(aValue);
                 }
-            ]
-            setProducts(mockProducts)
-            setLoading(false)
-        }, 1000)
-    }, [])
 
-    // CRUD Operations
-    const handleSave = (newProduct) => {
-        setProducts([...products, { ...newProduct, key: Date.now() }])
-        setFormVisible(false)
-    }
+                return currentSort.direction === 'asc'
+                    ? aValue - bValue
+                    : bValue - aValue;
+            });
+        }
 
-    const handleUpdate = (updatedProduct) => {
-        setProducts(products.map(product => product.key === updatedProduct.key ? updatedProduct : product))
-        setFormVisible(false)
-    }
+        setFilteredProducts(result);
+    }, [products, currentSort, searchText]);
+
+    // Action handlers
+    const handleEdit = (product) => {
+        console.log('Edit product:', product.id);
+        // Navigation or modal logic would go here
+    };
 
     const handleDelete = (product) => {
-        openModal({
-            title: 'Confirm Deletion',
-            children: <Text>Are you sure you want to delete product "{product.name}"?</Text>,
-            primaryAction: {
-                label: 'Delete',
-                onPress: () => {
-                    setProducts(products.filter(p => p.key !== product.key))
-                },
-                color: '#ef4444',
-            },
-            secondaryAction: {
-                label: 'Cancel',
-                onPress: () => { },
-            },
-            size: 'small',
-        })
-    }
-
-    // View product details
-    const handleViewProduct = (product) => {
-        openModal({
-            title: 'Product Details',
-            size: 'medium',
-            children: (
-                <View>
-                    {product.image && (
-                        <Image
-                            source={{ uri: product.image }}
-                            style={styles.productImage}
-                            resizeMode="contain"
-                        />
-                    )}
-
-                    <Text variant="titleMedium" style={styles.detailLabel}>Name:</Text>
-                    <Text style={styles.detailText}>{product.name}</Text>
-
-                    <Text variant="titleMedium" style={styles.detailLabel}>Category:</Text>
-                    <Text style={styles.detailText}>{product.category}</Text>
-
-                    <Text variant="titleMedium" style={styles.detailLabel}>Price:</Text>
-                    <Text style={styles.detailText}>${parseFloat(product.price).toFixed(2)}</Text>
-
-                    <Text variant="titleMedium" style={styles.detailLabel}>Stock:</Text>
-                    <Text style={styles.detailText}>{product.stock}</Text>
-
-                    <Text variant="titleMedium" style={styles.detailLabel}>Status:</Text>
-                    <Text style={styles.detailText}>{product.status}</Text>
-
-                    <Text variant="titleMedium" style={styles.detailLabel}>Description:</Text>
-                    <Text style={styles.detailText}>{product.description}</Text>
-                </View>
-            ),
-            primaryAction: {
-                label: 'Edit',
-                onPress: () => {
-                    setCurrentProduct(product)
-                    setFormVisible(true)
-                },
-            },
-            secondaryAction: {
-                label: 'Close',
-                onPress: () => { },
-            },
-        })
-    }
-
-    // Form fields configuration
-    const formFields = [
-        { name: 'name', label: 'Product Name', type: 'text' },
-        {
-            name: 'category',
-            label: 'Category',
-            type: 'select',
-            options: [
-                { label: 'Sunglasses', value: 'Sunglasses' },
-                { label: 'Reading', value: 'Reading' },
-                { label: 'Sports', value: 'Sports' },
-                { label: 'Frames', value: 'Frames' },
-                { label: 'Kids', value: 'Kids' },
-                { label: 'Lenses', value: 'Lenses' }
+        Alert.alert(
+            "Delete Product",
+            `Are you sure you want to delete ${product.name}?`,
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        // Filter out the deleted product
+                        setProducts(products.filter(p => p.id !== product.id));
+                    }
+                }
             ]
-        },
-        { name: 'price', label: 'Price', type: 'text', keyboardType: 'numeric' },
-        { name: 'stock', label: 'Stock', type: 'text', keyboardType: 'numeric' },
-        {
-            name: 'status',
-            label: 'Status',
-            type: 'select',
-            options: [
-                { label: 'Active', value: 'Active' },
-                { label: 'Inactive', value: 'Inactive' },
-                { label: 'Out of Stock', value: 'Out of Stock' }
-            ]
-        },
-        { name: 'image', label: 'Image URL', type: 'text' },
-        { name: 'description', label: 'Description', type: 'textarea' }
-    ]
+        );
+    };
+
+    // Actions configuration
+    const actions = [
+        { id: 'edit', icon: 'create-outline', color: '#4B5563', onPress: handleEdit },
+        { id: 'delete', icon: 'trash-outline', color: '#EF4444', onPress: handleDelete },
+    ];
+
+    // Refresh handler
+    const handleRefresh = useCallback(async () => {
+        setRefreshing(true);
+
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('Refreshed products');
+
+        // In a real app, you'd fetch fresh data here
+        // const response = await fetch('/api/products');
+        // const data = await response.json();
+        // setProducts(data);
+
+        setRefreshing(false);
+    }, []);
+
+    // Search handler (client-side)
+    const handleSearch = useCallback((query) => {
+        console.log('Searching for:', query);
+        setSearchText(query);
+
+        /* 
+        // Server-side search example (commented out)
+        setLoading(true);
+        
+        // This would be your API call with the search parameter
+        // const response = await fetch(`/api/products?search=${query}`);
+        // const data = await response.json();
+        // setProducts(data);
+        
+        setLoading(false);
+        */
+    }, []);
+
+    // Pagination handler (client-side)
+    const handlePageChange = useCallback((page, itemsPerPage) => {
+        console.log(`Page changed to ${page}, items per page: ${itemsPerPage}`);
+
+        /* 
+        // Server-side pagination example (commented out)
+        setLoading(true);
+        
+        // This would be your API call with pagination parameters
+        // const response = await fetch(`/api/products?page=${page}&limit=${itemsPerPage}`);
+        // const data = await response.json();
+        // setProducts(data.items);
+        // setTotalItems(data.total);
+        
+        setLoading(false);
+        */
+    }, []);
+
+    // Sorting handler (client-side)
+    const handleSortChange = useCallback((sortConfig) => {
+        console.log(`Sorting by ${sortConfig.field} (${sortConfig.direction})`);
+        setCurrentSort(sortConfig);
+
+        /* 
+        // Server-side sorting example (commented out)
+        setLoading(true);
+        
+        // This would be your API call with sorting parameters
+        // const response = await fetch(`/api/products?sortBy=${sortConfig.field}&order=${sortConfig.direction}`);
+        // const data = await response.json();
+        // setProducts(data);
+        
+        setLoading(false);
+        */
+    }, []);
 
     return (
-        <SafeAreaView style={styles.container}>
-            <Text variant="headlineMedium" style={styles.header}>Product Management</Text>
+        <SafeAreaView className="flex-1 bg-gray-50">
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+            <View className="flex-1 px-4 pt-4">
+                {/* Header */}
+                <View className="flex-row justify-between items-center mb-6">
+                    <Text className="text-2xl font-bold text-gray-800">Products</Text>
+                    <TouchableOpacity
+                        className="bg-blue-600 px-4 py-2 rounded-lg flex-row items-center"
+                        onPress={() => console.log('Add product')}
+                    >
+                        <Ionicons name="add" size={20} color="white" />
+                        <Text className="text-white font-medium ml-1">Add Product</Text>
+                    </TouchableOpacity>
+                </View>
 
-            <DashboardTable
-                title="Products"
-                initialData={products}
-                columns={columns}
-                onSave={handleSave}
-                onUpdate={handleUpdate}
-                onDelete={handleDelete}
-                searchable={true}
-                editable={true}
-                deletable={true}
-                addable={true}
-            />
+                {/* Table with client-side operations */}
+                <View className="flex-1 bg-white rounded-lg shadow-sm">
+                    <ResourceTable
+                        data={filteredProducts}
+                        columns={columns}
+                        actions={actions}
+                        title="Products"
+                        emptyText="No products found"
+                        imageField="image"
+                        subtitleField="category"
+                        onRefresh={handleRefresh}
+                        refreshing={refreshing}
+                        loading={loading}
 
-            <AdminModal
-                visible={formVisible}
-                onDismiss={() => setFormVisible(false)}
-                title={currentProduct ? "Edit Product" : "Add New Product"}
-                size="medium"
-            >
-                <FormComponent
-                    initialValues={currentProduct || {
-                        name: '',
-                        category: 'Sunglasses',
-                        price: '',
-                        stock: '',
-                        status: 'Active',
-                        image: '',
-                        description: ''
-                    }}
-                    validationSchema={productSchema}
-                    fields={formFields}
-                    onSubmit={currentProduct ? handleUpdate : handleSave}
-                    submitButtonText={currentProduct ? "Update Product" : "Add Product"}
-                    onCancel={() => setFormVisible(false)}
-                />
-            </AdminModal>
+                        // Client-side pagination
+                        pagination={true}
+                        initialItemsPerPage={5}
+                        onPageChange={handlePageChange}
+
+                        // Client-side search
+                        searchEnabled={true}
+                        onSearch={handleSearch}
+
+                        // Client-side sorting
+                        initialSort={currentSort}
+                        onSortChange={handleSortChange}
+
+                    // Server-side mode is disabled for now
+                    // serverSide={false}
+                    // totalServerItems={products.length}
+                    />
+                </View>
+            </View>
         </SafeAreaView>
     )
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: '#f5f5f5',
-    },
-    header: {
-        marginBottom: 16,
-    },
-    productImage: {
-        width: '100%',
-        height: 200,
-        marginBottom: 16,
-        borderRadius: 8,
-    },
-    detailLabel: {
-        fontWeight: 'bold',
-        marginTop: 8,
-        marginBottom: 4,
-    },
-    detailText: {
-        fontSize: 16,
-        marginBottom: 8,
-    }
-})

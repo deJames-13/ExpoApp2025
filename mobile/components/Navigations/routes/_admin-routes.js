@@ -3,17 +3,6 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export const tabRoutes = () => [
     {
-        name: 'Home',
-        component: AdminScreens.Home,
-        icon: 'home',
-        options: {
-            tabBarIcon: ({ color, size }) => (
-                <Icon name="home" color={color} size={size} />
-            ),
-        },
-        isTab: true,
-    },
-    {
         name: 'Dashboard',
         component: AdminScreens.Dashboard,
         icon: 'dashboard',
@@ -24,17 +13,28 @@ export const tabRoutes = () => [
         },
         isTab: true,
     },
-    // {
-    //     name: 'Products',
-    //     component: AdminScreens.Products,
-    //     icon: 'shopping-bag',
-    //     options: {
-    //         tabBarIcon: ({ color, size }) => (
-    //             <Icon name="shopping-bag" color={color} size={size} />
-    //         ),
-    //     },
-    //     isTab: true,
-    // },
+    {
+        name: 'Products',
+        component: AdminScreens.Products,
+        icon: 'shopping-bag',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="shopping-bag" color={color} size={size} />
+            ),
+        },
+        isTab: true,
+    },
+    {
+        name: 'Account',
+        component: AdminScreens.AdminAccount,
+        icon: 'account-circle',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="account-circle" color={color} size={size} />
+            ),
+        },
+        isTab: true,
+    },
 ];
 
 export const adminRoutes = () => [
@@ -65,16 +65,6 @@ export const adminRoutes = () => [
     //     options: {
     //         tabBarIcon: ({ color, size }) => (
     //             <Icon name="feedback" color={color} size={size} />
-    //         ),
-    //     },
-    // },
-    // {
-    //     name: 'Account',
-    //     component: AdminScreens.AdminAccount,
-    //     icon: 'account-circle',
-    //     options: {
-    //         tabBarIcon: ({ color, size }) => (
-    //             <Icon name="account-circle" color={color} size={size} />
     //         ),
     //     },
     // },

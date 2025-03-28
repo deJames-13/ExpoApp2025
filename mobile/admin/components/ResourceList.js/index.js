@@ -1,10 +1,10 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-export function Orders() {
+export function ResourceList() {
     return (
         <View>
-            <Text>Orders</Text>
+            <Text>ResourceList</Text>
         </View>
     )
 }

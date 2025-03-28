@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, DataTable, Button } from 'react-native-paper';
 import { adminStyles, adminColors } from '../../../styles/adminTheme';
 import { Text, View } from 'react-native';
+import { getStatusColor } from '../../../styles/adminThemeUtils';
 
 const RecentOrders = ({ orders, onViewAllPress }) => {
     // Custom header style to improve visibility
@@ -35,7 +36,7 @@ const RecentOrders = ({ orders, onViewAllPress }) => {
                                 <Text style={{ color: adminColors.text.primary }}>${order.amount.toFixed(2)}</Text>
                             </DataTable.Cell>
                             <DataTable.Cell style={{ flex: 2, paddingLeft: 16 }}>
-                                <Text style={[adminStyles.statusText(order.status), { fontSize: 13 }]}>
+                                <Text style={{ color: getStatusColor(order.status).text, fontSize: 13, fontWeight: '600' }}>
                                     {order.status}
                                 </Text>
                             </DataTable.Cell>

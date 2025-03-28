@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, SafeAreaView, StyleSheet } from 'react-native';
+import { Text } from 'react-native-paper';
 import DashboardTable from '../../components/table';
+import { getStatusChipStyle } from '../../styles/adminThemeUtils';
 
 export default function ExampleTable() {
     const initialData = [
@@ -47,23 +49,9 @@ export default function ExampleTable() {
             key: 'status',
             title: 'Status',
             numeric: false,
-
             render: (value) => {
-                let color;
-                switch (value) {
-                    case 'In Stock':
-                        color = 'green';
-                        break;
-                    case 'Low Stock':
-                        color = 'orange';
-                        break;
-                    case 'Out of Stock':
-                        color = 'red';
-                        break;
-                    default:
-                        color = 'black';
-                }
-                return <Text style={{ color }}>{value}</Text>;
+                const { text } = getStatusChipStyle(value);
+                return <Text style={text}>{value}</Text>;
             }
         }
     ];

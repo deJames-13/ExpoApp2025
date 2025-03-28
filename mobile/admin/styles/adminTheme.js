@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { globalStyles } from '../../styles/global';
 import { colors } from '../../theme/colors';
 import { theme } from '../../core/theme';
+import { statusColors, getStatusColor } from './adminThemeUtils';
 
 // Admin-specific color palette extending the main theme
 export const adminColors = {
@@ -14,14 +15,7 @@ export const adminColors = {
         secondary: '#424242',
         light: '#757575',
     },
-    status: {
-        active: '#00C853', // Brighter green
-        inactive: '#FF9100', // Brighter orange
-        error: '#D50000',   // Brighter red
-        warning: '#FFD600', // Brighter yellow
-        info: '#2979FF',    // Brighter blue
-        success: '#00C853', // Brighter green
-    },
+    status: statusColors,
     card: {
         stats: {
             users: '#E1F5FE',    // Lighter blue with better visibility
@@ -149,29 +143,9 @@ export const adminStyles = StyleSheet.create({
 
     // Status indicators
     statusText: (status) => {
-        let color;
-        switch (status.toLowerCase()) {
-            case 'active':
-            case 'delivered':
-                color = adminColors.status.success;
-                break;
-            case 'inactive':
-            case 'pending':
-            case 'processing':
-            case 'shipped':
-                color = adminColors.status.warning;
-                break;
-            case 'cancelled':
-            case 'failed':
-            case 'out of stock':
-            case 'suspended':
-                color = adminColors.status.error;
-                break;
-            default:
-                color = adminColors.text.primary;
-        }
+        const { text } = getStatusColor(status);
         return {
-            color,
+            color: text,
             fontWeight: '600', // Make status text bold for better visibility
         };
     },

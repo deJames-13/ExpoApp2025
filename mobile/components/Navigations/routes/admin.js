@@ -2,29 +2,32 @@ import * as AdminScreens from '~/admin/screens';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { defaultOptions } from './_options';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AdminDrawerContent } from '../drawers/admin-content';
 import { tabRoutes, adminRoutes } from './_admin-routes';
 import ProductDetailView from '~/screens/Home/components/ProductDetailView';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
-const Tab = createStackNavigator();
-const ADMIN_DEFAULT = 'Home';
+const Tab = createBottomTabNavigator();
+const ADMIN_DEFAULT = 'Dashboard';
 
-// Stack for tab routes
 function AdminTabStack() {
     const routes = tabRoutes();
     return (
-        <Stack.Navigator screenOptions={defaultOptions}>
-            {routes.map((route) => (
-                <Stack.Screen
+        <Tab.Navigator
+            initialRouteName={ADMIN_DEFAULT}
+            screenOptions={defaultOptions}
+        >
+            {routes.map((route) => route?.isTab && (
+                <Tab.Screen
                     key={route.name}
                     name={route.name}
                     component={route.component}
                     options={route.options}
                 />
             ))}
-        </Stack.Navigator>
+        </Tab.Navigator>
     );
 }
 
