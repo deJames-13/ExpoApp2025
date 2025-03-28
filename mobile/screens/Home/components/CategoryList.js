@@ -3,15 +3,30 @@ import { View, FlatList, TouchableOpacity, ActivityIndicator } from 'react-nativ
 import { Text } from '~/components/ui';
 import Icon from 'react-native-vector-icons/Ionicons';
 import useResource from '~/hooks/useResource.js';
+import { useNavigation } from '@react-navigation/native';
 
 export default function CategoryList({ categories = [], onSelectCategory }) {
     const resource = useResource('categories');
     const { states: { data, loading }, actions: { fetchDatas } } = resource;
+    const navigation = useNavigation();
+
+    const handleCategoryPress = (category) => {
+        // If onSelectCategory prop exists, call it
+        if (onSelectCategory) {
+            onSelectCategory(category);
+        }
+
+        // Navigate to CategorizedProducts with the selected category
+        navigation.navigate('CategorizedProducts', {
+            category,
+            _t: new Date().getTime() // Add timestamp to force refresh
+        });
+    };
 
     const renderCategory = ({ item }) => (
         <TouchableOpacity
             className="items-center mx-3"
-            onPress={() => onSelectCategory ? onSelectCategory(item) : null}
+            onPress={() => handleCategoryPress(item)}
         >
             <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-2">
                 <Icon name={item.icon || 'grid-outline'} size={28} color="#3b82f6" />

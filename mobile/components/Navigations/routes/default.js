@@ -5,6 +5,7 @@ import { DefaultDrawerContent } from '../drawers/default-content';
 import { defaultOptions } from './_options';
 import { defaultRoutes, tabRoutes } from './_routes';
 import ProductDetailView from '~/screens/Home/components/ProductDetailView';
+import CategorizedProducts from '~/screens/Home/components/CategorizedProducts';
 
 const USER_DEFAULT = 'Home';
 const Tabs = createBottomTabNavigator();
@@ -50,6 +51,11 @@ export function DefaultRoutes() {
             <Stack.Screen
                 name="ProductDetailView"
                 component={ProductDetailView}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="CategorizedProducts"
+                component={CategorizedProducts}
                 options={{ headerShown: false }}
             />
         </Stack.Navigator>

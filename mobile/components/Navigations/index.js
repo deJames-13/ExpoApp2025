@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import useFirebaseMessaging from "~/firebase/useFirebaseMessaging";
 import useCheckConnection from '~/hooks/useCheckConnection';
 import ProductDetailView from '~/screens/Home/components/ProductDetailView';
+import CategorizedProducts from '~/screens/Home/components/CategorizedProducts';
 
 const Stack = createStackNavigator();
 
@@ -31,6 +32,10 @@ export default function MainNav({ initialRouteName }) {
             <Stack.Screen
                 name="ProductDetailView"
                 component={ProductDetailView}
+            />
+            <Stack.Screen
+                name="CategorizedProducts"
+                component={CategorizedProducts}
             />
         </Stack.Navigator>
     )
