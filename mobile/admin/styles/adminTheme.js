@@ -11,7 +11,7 @@ export const adminColors = {
     background: colors.background,
     cardBackground: '#FFFFFF', // Making card background pure white for better visibility
     text: {
-        primary: '#212121', // Darker text color for better readability
+        primary: '#212121',
         secondary: '#424242',
         light: '#757575',
     },

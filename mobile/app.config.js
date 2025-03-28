@@ -16,6 +16,9 @@ module.exports = {
         ios: {
             supportsTablet: true,
             bundleIdentifier: "com.eyezone.app",
+            infoPlist: {
+                NSCameraUsageDescription: "Allow $(PRODUCT_NAME) to access your camera."
+            }
         },
         android: {
             package: "com.eyezone.app",
@@ -24,7 +27,8 @@ module.exports = {
                 backgroundColor: "#ffffff"
             },
             permissions: [
-              "INTERNET"
+                "INTERNET",
+                "CAMERA"
             ],
             googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json"
         },
@@ -39,6 +43,12 @@ module.exports = {
                 "@react-native-google-signin/google-signin",
                 {
                     "iosUrlScheme": "com.googleusercontent.apps._some_id",
+                }
+            ],
+            [
+                "expo-camera",
+                {
+                    "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
                 }
             ]
         ],

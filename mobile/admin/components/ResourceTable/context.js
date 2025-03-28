@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { sortData, filterData } from './tableUtils';
 
 const TableContext = createContext();
 
@@ -61,32 +62,12 @@ export function TableProvider({
 
         // Apply search if searchQuery exists (client-side searching)
         if (searchQuery && searchEnabled && !onSearch) {
-            result = result.filter(item =>
-                Object.values(item).some(val =>
-                    val && String(val).toLowerCase().includes(searchQuery.toLowerCase())
-                )
-            );
+            result = filterData(result, searchQuery);
         }
 
         // Apply sorting if sortConfig.field exists (client-side sorting)
         if (sortConfig?.field && !onSortChange) {
-            result.sort((a, b) => {
-                // Get values, defaulting to empty string/0 if undefined
-                let aValue = a[sortConfig.field] ?? '';
-                let bValue = b[sortConfig.field] ?? '';
-
-                // Handle string comparison
-                if (typeof aValue === 'string' && typeof bValue === 'string') {
-                    return sortConfig.direction === 'asc'
-                        ? aValue.localeCompare(bValue)
-                        : bValue.localeCompare(aValue);
-                }
-
-                // Handle number comparison
-                return sortConfig.direction === 'asc'
-                    ? aValue - bValue
-                    : bValue - aValue;
-            });
+            result = sortData(result, sortConfig);
         }
 
         return result;
