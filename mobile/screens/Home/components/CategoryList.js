@@ -1,9 +1,15 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { View, FlatList, TouchableOpacity } from 'react-native';
 import { Text } from '~/components/ui';
 import Icon from 'react-native-vector-icons/Ionicons';
+import useResource from '~/hooks/useResource.js';
 
 export default function CategoryList({ categories = [], onSelectCategory }) {
+    const resource = useResource('categories')
+    const { states: { data }, actions: { fetchDatas, setData } } = resource;
+
+
+
     const renderCategory = ({ item }) => (
         <TouchableOpacity
             className="items-center mx-3"
@@ -16,11 +22,20 @@ export default function CategoryList({ categories = [], onSelectCategory }) {
         </TouchableOpacity>
     );
 
+
+    useEffect(() => {
+        if (data?.length) setProducts(data)
+    }, [data])
+
+    useEffect(() => {
+        fetchDatas()
+    }, [])
+
     return (
         <View className="mb-6">
             <Text className="text-lg font-bold px-4 mb-3">Categories</Text>
             <FlatList
-                data={categories}
+                data={data}
                 renderItem={renderCategory}
                 keyExtractor={(item) => item.id}
                 horizontal

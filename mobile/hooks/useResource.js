@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setResource, toggleRefresh } from '@/states/slices/resources';
+import { setResource, toggleRefresh } from '~/states/slices/resources';
 import { useNavigation } from '@react-navigation/native';
 import { Alert } from 'react-native';
 
 import * as changeCase from "change-case";
-import resourceEndpoints from '../states/api/resources';
+import resourceEndpoints from '~/states/api/resources';
 
 export default function useResource(resourceName) {
     const navigation = useNavigation();
@@ -15,18 +15,17 @@ export default function useResource(resourceName) {
 
     // Name formats
     const camelCaseName = changeCase.camelCase(resourceName);
-    const kebabCaseName = changeCase.kebabCase(resourceName);
+    const kebabCaseName = changeCase.snakeCase(resourceName).replace('_', '-');
     const pascalCaseName = changeCase.pascalCase(resourceName);
     const capitalizeName = changeCase.capitalCase(resourceName);
 
-    // API endpoints - adjusted to match resource.js naming convention
     const resource = resourceEndpoints;
-    const [getList] = resource[`getAll${pascalCaseName}`] ? resource[`getAll${pascalCaseName}`]() : [() => { }];
-    const [getById] = resource[`get${pascalCaseName}ById`] ? resource[`get${pascalCaseName}ById`]() : [() => { }];
-    const [getBySlug] = resource[`get${pascalCaseName}BySlug`] ? resource[`get${pascalCaseName}BySlug`]() : [() => { }];
-    const [create] = resource[`store${pascalCaseName}`] ? resource[`store${pascalCaseName}`]() : [() => { }];
-    const [update] = resource[`update${pascalCaseName}`] ? resource[`update${pascalCaseName}`]() : [() => { }];
-    const [deleteItem] = resource[`delete${pascalCaseName}`] ? resource[`delete${pascalCaseName}`]() : [() => { }];
+    const [getAll] = resource[`useGetAll${pascalCaseName}Mutation`]();
+    const [getById] = resource[`useGet${pascalCaseName}ByIdMutation`]();
+    const [getBySlug] = resource[`useGet${pascalCaseName}BySlugMutation`]();
+    const [create] = resource[`useStore${pascalCaseName}Mutation`]();
+    const [update] = resource[`useUpdate${pascalCaseName}Mutation`]();
+    const [deleteItem] = resource[`useDelete${pascalCaseName}Mutation`]();
 
     // States
     const [data, setData] = useState([]);
@@ -44,7 +43,7 @@ export default function useResource(resourceName) {
             setData(resources?.list[resourceName]);
         }
         setLoading(true);
-        return await getList(qStr)
+        return await getAll(qStr)
             .unwrap()
             .then((response) => {
                 const results = Array.isArray(response) ? response : response.results || response.data || [];
@@ -64,7 +63,7 @@ export default function useResource(resourceName) {
                 Alert.alert('Error', error?.data?.message || 'A server error occurred');
                 return error;
             });
-    }, [getList, resourceName, dispatch]);
+    }, [getAll, resourceName, dispatch]);
 
     const fetchData = useCallback(async ({
         id,
@@ -250,7 +249,8 @@ export default function useResource(resourceName) {
             loading,
             setMeta,
             setCurrent,
-            setSelected
+            setSelected,
+            setData
         },
         events: {
             onStore,

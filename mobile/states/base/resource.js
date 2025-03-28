@@ -12,7 +12,6 @@ export default function resourceBuilder(resource, customEndpoints = (builder) =>
                 url: `${resource}${qStr ? `?${qStr}` : ''}`,
                 method: 'GET',
             }),
-            transformResponse: (response) => response,
             invalidatesTags: (result) =>
                 result
                     ? [
@@ -26,7 +25,6 @@ export default function resourceBuilder(resource, customEndpoints = (builder) =>
                 url: `${resource}/${id}${qStr ? `?${qStr}` : ''}`,
                 method: 'GET',
             }),
-            transformResponse: (response) => response,
             invalidatesTags: (result, error, { id }) => [{ type: TAG_TYPE, id }]
         }),
         [`get${capitalizedName}BySlug`]: builder.mutation({
@@ -34,7 +32,6 @@ export default function resourceBuilder(resource, customEndpoints = (builder) =>
                 url: `${resource}/${slug}${qStr ? `?${qStr}` : ''}`,
                 method: 'GET',
             }),
-            transformResponse: (response) => response,
             invalidatesTags: (result, error, { slug }) => result ? [{ type: TAG_TYPE, id: result.id }] : []
         }),
         [`store${capitalizedName}`]: builder.mutation({

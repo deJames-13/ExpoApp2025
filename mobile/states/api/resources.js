@@ -1,6 +1,6 @@
 import * as changeCase from "change-case";
 import resourceBuilder from '../base/resource.js';
-import { apiSlice } from './index';
+import apiSlice from './index';
 
 const resources = [
     'users',
