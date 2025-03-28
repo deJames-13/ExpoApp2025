@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { createSelector } from '@reduxjs/toolkit';
 import { setResource, toggleRefresh } from '~/states/slices/resources';
 import { useNavigation } from '@react-navigation/native';
 import { Alert } from 'react-native';
@@ -10,8 +11,21 @@ import resourceEndpoints from '~/states/api/resources';
 export default function useResource(resourceName) {
     const navigation = useNavigation();
     const dispatch = useDispatch();
-    const resources = useSelector((state) => state?.resources || {});
-    const refresh = resources?.refresh;
+
+    const selectResourceData = useMemo(() =>
+        createSelector(
+            [(state) => state.resources || { list: {}, detail: {}, refresh: false }],
+            (resources) => ({
+                list: resources.list[resourceName] || [],
+                detail: resources.detail[resourceName] || null,
+                refresh: resources.refresh
+            })
+        ),
+        [resourceName]);
+
+    // Use the transformed data
+    const resourceData = useSelector(selectResourceData);
+    const refresh = resourceData.refresh;
 
     // Name formats
     const camelCaseName = changeCase.camelCase(resourceName);
@@ -28,20 +42,27 @@ export default function useResource(resourceName) {
     const [deleteItem] = resource[`useDelete${pascalCaseName}Mutation`]();
 
     // States
-    const [data, setData] = useState([]);
+    const [data, setData] = useState(resourceData.list || []);
     const [meta, setMeta] = useState({});
-    const [current, setCurrent] = useState(null);
+    const [current, setCurrent] = useState(resourceData.detail || null);
     const [selected, setSelected] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    // Update local state when redux state changes
+    useEffect(() => {
+        if (resourceData.list && resourceData.list.length > 0) {
+            setData(resourceData.list);
+        }
+        if (resourceData.detail) {
+            setCurrent(resourceData.detail);
+        }
+    }, [resourceData]);
 
     // Fetch functions
     const fetchDatas = useCallback(async ({
         qStr = '',
         doRefresh = false
     } = {}) => {
-        if (resources?.list[resourceName]) {
-            setData(resources?.list[resourceName]);
-        }
         setLoading(true);
         return await getAll(qStr)
             .unwrap()
@@ -70,9 +91,6 @@ export default function useResource(resourceName) {
         qStr = '',
         doRefresh = false
     } = {}) => {
-        if (resources?.detail[resourceName]) {
-            setCurrent(resources?.detail[resourceName]);
-        }
         setLoading(true);
         return await getById({ id, qStr })
             .unwrap()
@@ -98,7 +116,6 @@ export default function useResource(resourceName) {
             });
     }, [getById, resourceName, dispatch]);
 
-    // Add fetchBySlug function
     const fetchBySlug = useCallback(async ({
         slug,
         qStr = '',

@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { startLoading, stopLoading } from "../slices/theme.js"
+import { setCredentials, logout } from "../slices/auth.js"
 
 const API = process.env.EXPO_PUBLIC_API_URL;
 console.log('Inititilizing API ' + API)
@@ -11,7 +12,6 @@ const baseQuery = fetchBaseQuery({
     const token = getState().auth.accessToken;
 
     headers.set('Accept', 'application/json');
-    headers.set('Referer', window.location.origin);
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Content-Type', 'application/json');
     headers.set('ngrok-skip-browser-warning', '1');

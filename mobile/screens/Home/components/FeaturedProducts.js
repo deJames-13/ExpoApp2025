@@ -4,6 +4,20 @@ import { Text } from '~/components/ui';
 import ProductCard from '~/components/Cards/product';
 import api from '~/axios.config';
 
+const DEBUG = false;
+
+const debugLog = (...args) => {
+    if (DEBUG) {
+        console.log(...args);
+    }
+};
+
+const debugError = (...args) => {
+    if (DEBUG) {
+        console.error(...args);
+    }
+};
+
 export default function FeaturedProducts({ navigation, initialProducts = [] }) {
     const [products, setProducts] = useState(initialProducts);
     const [loading, setLoading] = useState(false);
@@ -45,18 +59,18 @@ export default function FeaturedProducts({ navigation, initialProducts = [] }) {
             if (response.data && response.data.resource) {
                 // Log the first product to examine its structure
                 if (response.data.resource.length > 0) {
-                    console.log('First product structure:', JSON.stringify(response.data.resource[0]));
+                    debugLog('First product structure:', JSON.stringify(response.data.resource[0]));
                 }
 
                 setProducts(response.data.resource);
                 setPage(2);
                 setHasMore(response.data.resource.length >= limit);
-                console.log(`Fetched ${response.data.resource.length} products successfully`);
+                debugLog(`Fetched ${response.data.resource.length} products successfully`);
             } else {
-                console.log('No products found in response:', response.data);
+                debugLog('No products found in response:', response.data);
             }
         } catch (error) {
-            console.error('Error fetching products:', error);
+            debugError('Error fetching products:', error);
             setError('Failed to load products. Please try again later.');
         } finally {
             setLoading(false);
@@ -70,7 +84,7 @@ export default function FeaturedProducts({ navigation, initialProducts = [] }) {
         setLoading(true);
 
         try {
-            console.log(`Fetching more products, page ${page}`);
+            debugLog(`Fetching more products, page ${page}`);
 
             const response = await api.get(`/api/v1/products`, {
                 params: {
@@ -84,14 +98,14 @@ export default function FeaturedProducts({ navigation, initialProducts = [] }) {
                 if (newProducts.length > 0) {
                     setProducts(prevProducts => [...prevProducts, ...newProducts]);
                     setPage(prevPage => prevPage + 1);
-                    console.log(`Added ${newProducts.length} more products`);
+                    debugLog(`Added ${newProducts.length} more products`);
                 } else {
-                    console.log('No more products to fetch');
+                    debugLog('No more products to fetch');
                 }
                 setHasMore(newProducts.length >= limit);
             }
         } catch (error) {
-            console.error('Error fetching more products:', error);
+            debugError('Error fetching more products:', error);
             // Don't set error state here to avoid UI disruption, just log it
         } finally {
             setLoading(false);
@@ -113,7 +127,7 @@ export default function FeaturedProducts({ navigation, initialProducts = [] }) {
         const itemWidth = (width / numColumns) - 16;
 
         // Debug the product data structure
-        console.log('Product item structure:', JSON.stringify(item));
+        debugLog('Product item structure:', JSON.stringify(item));
 
         // Safely extract product ID - check for different possible ID field names
         const productId = item._id || item.id || item.productId;
@@ -139,23 +153,23 @@ export default function FeaturedProducts({ navigation, initialProducts = [] }) {
                 item={productData}
                 itemWidth={itemWidth}
                 onPress={() => {
-                    console.log(`Attempting to navigate directly to ProductDetailView with ID: ${productId}`);
+                    debugLog(`Attempting to navigate directly to ProductDetailView with ID: ${productId}`);
 
                     if (!productId) {
-                        console.error('Product ID is missing, unable to navigate to product details');
+                        debugError('Product ID is missing, unable to navigate to product details');
                         return;
                     }
 
                     // Direct navigation to ProductDetailView instead of nested navigation
                     try {
-                        console.log('NAVIGATION - Direct navigation to ProductDetailView with productId:', productId);
+                        debugLog('NAVIGATION - Direct navigation to ProductDetailView with productId:', productId);
 
                         navigation.navigate('ProductDetailView', {
                             productId: productId,
                             _t: new Date().getTime()
                         });
                     } catch (error) {
-                        console.error('Navigation error:', error);
+                        debugError('Navigation error:', error);
                     }
                 }}
             />
