@@ -5,10 +5,10 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Divider } from 'react-native-paper';
-import { defaultRoutes, tabRoutes } from '../routes/_routes';
-import { globalStyles } from '../../../styles/global';
-import { getIconForRoute } from '../../../utils/iconHelper';
-import navigationStyles from '../../../styles/navigationStyles';
+import { defaultRoutes, tabRoutes } from '../routes/_default-routes';
+import { globalStyles } from '~/styles/global';
+import { getIconForRoute } from '~/utils/iconHelper';
+import navigationStyles from '~/styles/navigationStyles';
 
 export function DefaultDrawerContent() {
     const [curr, setCurr] = React.useState('Home');

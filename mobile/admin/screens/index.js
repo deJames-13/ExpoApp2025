@@ -1,6 +1,7 @@
-
 export * from './Account'
 export * from './Feedbacks'
 export * from './Orders'
 export * from './Products'
 export * from './Users'
+export * from './Dashboard'
+export * from './Home'

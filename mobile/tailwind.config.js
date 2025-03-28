@@ -4,8 +4,10 @@ const { hairlineWidth } = require('nativewind/theme');
 module.exports = {
     darkMode: 'class',
     content: [
-        './components/**/*.{ts,tsx,js,jsx}',
-        './screens/**/*.{ts,tsx,js,jsx}',
+        './App.{js,jsx,ts,tsx}',
+        './screens/**/*.{js,jsx,ts,tsx}',
+        './components/**/*.{js,jsx,ts,tsx}',
+        './admin/**/*.{js,jsx,ts,tsx}',
         './styles/**/*.{ts,tsx,js,jsx}',
         './global.css'
     ],
@@ -16,14 +18,14 @@ module.exports = {
                 border: 'hsl(var(--border))',
                 input: 'hsl(var(--input))',
                 ring: 'hsl(var(--ring))',
-                background: 'hsl(var(--background))',
+                background: '#f5f5f5',
                 foreground: 'hsl(var(--foreground))',
                 primary: {
-                    DEFAULT: 'hsl(var(--primary))',
+                    DEFAULT: '#600EE6',
                     foreground: 'hsl(var(--primary-foreground))',
                 },
                 secondary: {
-                    DEFAULT: 'hsl(var(--secondary))',
+                    DEFAULT: '#414757',
                     foreground: 'hsl(var(--secondary-foreground))',
                 },
                 destructive: {
@@ -43,9 +45,13 @@ module.exports = {
                     foreground: 'hsl(var(--popover-foreground))',
                 },
                 card: {
-                    DEFAULT: 'hsl(var(--card))',
+                    DEFAULT: '#ffffff',
                     foreground: 'hsl(var(--card-foreground))',
                 },
+                error: '#f13a59',
+                success: '#4CAF50',
+                warning: '#FF9800',
+                info: '#2196F3',
             },
             borderWidth: {
                 hairline: hairlineWidth(),

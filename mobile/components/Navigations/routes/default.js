@@ -1,9 +1,9 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import { createStackNavigator } from '@react-navigation/stack';
-import { DefaultDrawerContent } from '../drawers/default-content';
+import { DefaultDrawerContent } from '../drawers';
 import { defaultOptions } from './_options';
-import { defaultRoutes, tabRoutes } from './_routes';
+import { defaultRoutes, tabRoutes } from './_default-routes';
 import ProductDetailView from '~/screens/Home/components/ProductDetailView';
 import CategorizedProducts from '~/screens/Home/components/CategorizedProducts';
 

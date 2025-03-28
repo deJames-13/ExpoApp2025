@@ -1,31 +1,35 @@
-import * as Screens from '~/screens';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import * as AdminScreens from '~/admin/screens';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { defaultOptions } from './_options';
-import ProductDetailView from '~/screens/Home/components/ProductDetailView';
 import { createStackNavigator } from '@react-navigation/stack';
+import { AdminDrawerContent } from '../drawers/admin-content';
+import { tabRoutes, adminRoutes } from './_admin-routes';
+import ProductDetailView from '~/screens/Home/components/ProductDetailView';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
-const ADMIN_DEFAULT = 'AdminDashboard';
+const Tab = createStackNavigator();
+const ADMIN_DEFAULT = 'Home';
 
-export const adminRoutes = () => [
-    {
-        name: 'Onboarding',
-        component: Screens.Onboarding,
-    },
-    {
-        name: 'Home',
-        component: Screens.Home,
-    },
-    {
-        name: 'Profile',
-        component: Screens.Profile,
-    },
-];
+// Stack for tab routes
+function AdminTabStack() {
+    const routes = tabRoutes();
+    return (
+        <Stack.Navigator screenOptions={defaultOptions}>
+            {routes.map((route) => (
+                <Stack.Screen
+                    key={route.name}
+                    name={route.name}
+                    component={route.component}
+                    options={route.options}
+                />
+            ))}
+        </Stack.Navigator>
+    );
+}
 
-// Create a stack navigator to handle admin routes and the product detail view
-function AdminStack() {
+// Stack for admin management routes
+function AdminRoutesStack() {
     const routes = adminRoutes();
     return (
         <Stack.Navigator screenOptions={defaultOptions}>
@@ -46,13 +50,36 @@ function AdminStack() {
     );
 }
 
-export function AdminNav({ initialRouteName = ADMIN_DEFAULT }) {
+// Main Admin Navigation setup
+export function AdminNav() {
     return (
-        <Drawer.Navigator>
+        <Drawer.Navigator
+            drawerContent={props => <AdminDrawerContent {...props} />}
+            screenOptions={{
+                headerShown: true,
+                headerTitle: 'EyeZone Admin',
+                drawerStyle: { width: 280 },
+                swipeEdgeWidth: 100,
+            }}
+        >
             <Drawer.Screen
-                name="AdminStack"
-                component={AdminStack}
+                name="AdminTabsRoute"
+                component={AdminTabStack}
+                options={{
+                    title: 'Admin Dashboard'
+                }}
+            />
+            <Drawer.Screen
+                name="AdminRoutesStack"
+                component={AdminRoutesStack}
+                options={{
+                    title: 'Admin Management'
+                }}
             />
         </Drawer.Navigator>
     );
 }
+
+// Export the routes for use elsewhere
+export { adminRoutes } from './_admin-routes';
+

@@ -14,7 +14,7 @@ export default function MainNav({ initialRouteName }) {
 
     return (
         <Stack.Navigator
-            initialRouteName={initialRouteName || 'DefaultNav'}
+            initialRouteName={initialRouteName || 'AdminNav'}
             screenOptions={{ headerShown: false }}
         >
             <Stack.Screen
