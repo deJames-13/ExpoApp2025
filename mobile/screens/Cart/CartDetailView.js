@@ -93,21 +93,17 @@ const CartDetailView = ({ route, navigation }) => {
         try {
             // Update the cart item with new quantity AND total price
             const updatedTotal = Number(itemPrice) * Number(quantity);
-            const response = await updateCart(cartItemId, {
+            let response = await updateCart(cartItemId, {
                 product: itemId,
                 quantity: Number(quantity),
                 price: Number(itemPrice),
                 total: updatedTotal
             });
+            response = response.resource
 
             if (response && (response.id || response._id)) {
-                // Calculate the total price
                 const total = itemPrice * quantity;
-
-                // Format the currency amount
                 const formattedPrice = process.env.EXPO_PUBLIC_APP_CURRENCY + ' ' + total.toFixed(2);
-
-                // Enhanced success toast with more detail
                 Toast.show({
                     type: 'success',
                     text1: 'Cart Updated Successfully',
@@ -116,6 +112,7 @@ const CartDetailView = ({ route, navigation }) => {
                     position: 'bottom'
                 });
             }
+
         } catch (error) {
             console.error('Cart update error:', error);
             Toast.show({
