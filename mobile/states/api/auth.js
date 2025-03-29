@@ -1,6 +1,7 @@
 import apiSlice from './index';
 import { setCredentials, updateOnboardingStatus } from '../slices/auth';
 import { persistCredentials } from '../utils/authUtils';
+import { resetOnboarding } from '../slices/onboarding';
 
 const authApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -156,6 +157,9 @@ const authApi = apiSlice.injectEndpoints({
                             userInfo: data.user,
                             token: data.token || arg.token
                         }));
+
+                        // Clear onboarding form data while keeping completion status
+                        dispatch(resetOnboarding());
                     }
                 } catch (error) {
                     console.error('Email verification error:', error);

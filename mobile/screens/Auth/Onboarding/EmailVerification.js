@@ -11,7 +11,8 @@ import {
     selectAddressInfo,
     selectIsEmailVerified,
     setEmailVerified,
-    setCurrentStep
+    setCurrentStep,
+    resetOnboarding
 } from '~/states/slices/onboarding';
 import { adminColors } from '~/styles/adminTheme';
 import { useSendVerificationEmailMutation, useVerifyEmailMutation } from '~/states/api/auth';
@@ -143,7 +144,7 @@ export default function EmailVerification() {
                 return;
             }
 
-            await verifyEmail({
+            const result = await verifyEmail({
                 userId: currentUser.id,
                 otp: otpValue,
                 token
@@ -151,6 +152,9 @@ export default function EmailVerification() {
 
             // Update onboarding state
             dispatch(setEmailVerified(true));
+
+            // Clear onboarding state
+            dispatch(resetOnboarding());
 
             // Clear the pending verification flag
             AsyncStorage.removeItem('pendingEmailVerification');
@@ -162,6 +166,10 @@ export default function EmailVerification() {
             });
 
             // Navigation will happen automatically due to the useEffect that watches isEmailVerified
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'DefaultNav' }],
+            });
         } catch (error) {
             console.error('Error verifying email:', error);
             Toast.show({
@@ -244,7 +252,8 @@ export default function EmailVerification() {
                                             onChangeText={(text) => handleOtpChange(text.replace(/[^0-9]/g, ''), index)}
                                             onKeyPress={(e) => handleOtpKeyPress(e, index)}
                                             keyboardType="numeric"
-                                            textColor={adminColors.text.primary}
+                                            textColor={adminColors.background}
+                                            color={adminColors.background}
                                             maxLength={1}
                                             selectTextOnFocus
                                         />
@@ -273,6 +282,7 @@ export default function EmailVerification() {
                                     style={styles.verifyButton}
                                     loading={isLoading}
                                     disabled={isLoading || otp.join('').length !== 6}
+                                    textColor={adminColors.background}
                                 >
                                     Verify Email
                                 </Button>
