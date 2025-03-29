@@ -1,7 +1,20 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
-import { Button } from 'react-native-paper';
+import { Button, Text } from 'react-native-paper';
 import { adminColors } from '~/styles/adminTheme';
+
+/**
+ * Helper function to ensure URI is a valid string
+ */
+const validateUri = (uri) => {
+    if (!uri) return null;
+    // If uri is an object with a uri property, extract it
+    if (typeof uri === 'object' && uri !== null) {
+        return uri.uri || uri.path || null;
+    }
+    // Ensure uri is a string
+    return typeof uri === 'string' ? uri : null;
+};
 
 /**
  * Component for displaying image previews with action buttons
@@ -17,10 +30,35 @@ export const ImagePreviewer = ({
     showCamera = false,
     style,
 }) => {
+    // Validate and normalize the URI
+    const validUri = validateUri(uri);
+
+    if (!validUri) {
+        return (
+            <View style={styles.previewContainer}>
+                <View style={[styles.noImageContainer, { width, height }]}>
+                    <Text>Invalid image source</Text>
+                </View>
+                {!disabled && onChangePress && (
+                    <View style={styles.actionButtons}>
+                        <Button
+                            mode="contained"
+                            onPress={onChangePress}
+                            style={styles.button}
+                            icon="upload"
+                        >
+                            Select Image
+                        </Button>
+                    </View>
+                )}
+            </View>
+        );
+    }
+
     return (
         <View style={styles.previewContainer}>
             <Image
-                source={{ uri }}
+                source={{ uri: validUri }}
                 style={[
                     styles.imagePreview,
                     { width, height },
@@ -87,5 +125,14 @@ const styles = StyleSheet.create({
     button: {
         marginHorizontal: 5,
         marginVertical: 5,
-    }
+    },
+    noImageContainer: {
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        borderStyle: 'dashed',
+    },
 });

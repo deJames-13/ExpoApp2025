@@ -50,6 +50,12 @@ module.exports = {
                 {
                     "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
                 }
+            ],
+            [
+                "expo-image-picker",
+                {
+                    "photosPermission": "The app accesses your photos to let you share them."
+                }
             ]
         ],
         extra: {

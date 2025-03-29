@@ -1,9 +1,24 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Text, ActivityIndicator, Button } from 'react-native-paper';
+import { View, TouchableOpacity, StyleSheet, Alert, Platform, Linking } from 'react-native';
+import { Text, ActivityIndicator } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { adminColors } from '~/styles/adminTheme';
 import { ImagePreviewer } from './ImagePreviewer';
+import { MultiImagePreviewer } from './MultiImagePreviewer';
 import { CameraCapture } from './CameraCapture';
+
+/**
+ * Helper function to ensure URI is a valid string
+ */
+const validateUri = (uri) => {
+    if (!uri) return null;
+    if (typeof uri === 'object' && uri !== null) {
+        return uri.uri || uri.path || null;
+    }
+    return typeof uri === 'string' ? uri : null;
+};
 
 /**
  * Unified ImageField component that supports both upload and camera capture
@@ -24,6 +39,7 @@ export const ImageField = ({
     maxWidth = 1200,
     aspectRatio = 4 / 3,
     onImageChanged,
+    multiple = false,
     ...props
 }) => {
     const [loading, setLoading] = useState(false);
@@ -35,22 +51,112 @@ export const ImageField = ({
         if (disabled) return;
 
         try {
+            // Request permission to access the photo library
+            const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+            if (!permissionResult.granted) {
+                Alert.alert(
+                    "Permission Required",
+                    "You need to grant access to your photo library to upload images.",
+                    [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                            text: "Open Settings",
+                            onPress: () => {
+                                Platform.OS === 'ios'
+                                    ? Linking.openURL('app-settings:')
+                                    : Linking.openSettings();
+                            }
+                        }
+                    ]
+                );
+                return;
+            }
+
             setLoading(true);
 
-            // Placeholder for image selection logic
-            // This would typically use expo-image-picker or react-native-image-picker
-            console.log('Image selection would happen here');
+            // Launch the image picker with multiple selection if enabled
+            const result = await ImagePicker.launchImageLibraryAsync({
+                // Use MediaType instead of deprecated MediaTypeOptions
+                mediaTypes: ImagePicker.MediaType.Images,
+                allowsEditing: !multiple,
+                aspect: [aspectRatio === 1 ? 1 : 4, aspectRatio === 1 ? 1 : 3],
+                quality: quality,
+                allowsMultipleSelection: multiple,
+            });
 
-            // Simulate a selection with a demo URL (replace with actual selection logic)
-            setTimeout(() => {
-                const imageUri = 'https://picsum.photos/200';
-                setFieldValue(field, imageUri);
-                if (onImageChanged) onImageChanged(imageUri);
-                setLoading(false);
-            }, 1000);
+            if (!result.canceled) {
+                if (multiple) {
+                    // Process multiple images
+                    const processedImages = await Promise.all(
+                        result.assets.map(async (asset) => {
+                            if (maxWidth && asset.width > maxWidth) {
+                                const manipResult = await manipulateAsync(
+                                    asset.uri,
+                                    [{ resize: { width: maxWidth } }],
+                                    { compress: quality, format: SaveFormat.JPEG }
+                                );
 
+                                // Check file size and compress if needed
+                                const fileInfo = await FileSystem.getInfoAsync(manipResult.uri);
+                                if (fileInfo.size > 5 * 1024 * 1024) {
+                                    const compressedResult = await manipulateAsync(
+                                        manipResult.uri,
+                                        [],
+                                        { compress: 0.5, format: SaveFormat.JPEG }
+                                    );
+                                    return compressedResult.uri;
+                                }
+                                return manipResult.uri;
+                            }
+                            return asset.uri;
+                        })
+                    );
+
+                    // Update with the new array of image URIs
+                    const currentImages = Array.isArray(value) ? value : (value ? [value] : []);
+                    const updatedImages = [...currentImages, ...processedImages];
+                    setFieldValue(field, updatedImages);
+                    if (onImageChanged) onImageChanged(updatedImages);
+                } else {
+                    // Original single image process
+                    const selectedAsset = result.assets[0];
+
+                    // Process the image - resize if too large
+                    if (maxWidth && selectedAsset.width > maxWidth) {
+                        const manipResult = await manipulateAsync(
+                            selectedAsset.uri,
+                            [{ resize: { width: maxWidth } }],
+                            { compress: quality, format: SaveFormat.JPEG }
+                        );
+
+                        // Check file size - if over 5MB, compress further
+                        const fileInfo = await FileSystem.getInfoAsync(manipResult.uri);
+                        if (fileInfo.size > 5 * 1024 * 1024) {
+                            // Further compress if large
+                            const compressedResult = await manipulateAsync(
+                                manipResult.uri,
+                                [],
+                                { compress: 0.5, format: SaveFormat.JPEG }
+                            );
+                            setFieldValue(field, compressedResult.uri);
+                            if (onImageChanged) onImageChanged(compressedResult.uri);
+                        } else {
+                            setFieldValue(field, manipResult.uri);
+                            if (onImageChanged) onImageChanged(manipResult.uri);
+                        }
+                    } else {
+                        // Use original if small enough
+                        setFieldValue(field, selectedAsset.uri);
+                        if (onImageChanged) onImageChanged(selectedAsset.uri);
+                    }
+                }
+            }
+
+            setLoading(false);
         } catch (error) {
             console.error('Error selecting image:', error);
+            Alert.alert("Error", "Failed to select image. Please try again.");
             setLoading(false);
         }
     };
@@ -65,39 +171,84 @@ export const ImageField = ({
     };
 
     const handleCaptureImage = (imageUri) => {
-        setFieldValue(field, imageUri);
-        if (onImageChanged) onImageChanged(imageUri);
+        const validUri = validateUri(imageUri);
+        if (!validUri) {
+            console.error("Invalid image URI captured");
+            return;
+        }
+
+        if (multiple) {
+            // Add captured image to the existing array
+            const currentImages = Array.isArray(value) ? value : (value ? [value] : []);
+            // Validate existing images
+            const validCurrentImages = currentImages
+                .map(validateUri)
+                .filter(uri => uri !== null);
+
+            const updatedImages = [...validCurrentImages, validUri];
+            setFieldValue(field, updatedImages);
+            if (onImageChanged) onImageChanged(updatedImages);
+        } else {
+            setFieldValue(field, validUri);
+            if (onImageChanged) onImageChanged(validUri);
+        }
         setCameraVisible(false);
     };
 
-    const handleRemoveImage = () => {
+    const handleRemoveImage = (index) => {
         if (disabled) return;
-        setFieldValue(field, null);
-        if (onImageChanged) onImageChanged(null);
+
+        if (multiple && Array.isArray(value)) {
+            // Remove specific image from array
+            const updatedImages = value.filter((_, i) => i !== index);
+            setFieldValue(field, updatedImages.length > 0 ? updatedImages : null);
+            if (onImageChanged) onImageChanged(updatedImages.length > 0 ? updatedImages : null);
+        } else {
+            // Clear single image
+            setFieldValue(field, null);
+            if (onImageChanged) onImageChanged(null);
+        }
     };
 
     // Determine which actions to show based on mode
     const showUploadOption = mode === 'upload' || mode === 'both';
     const showCameraOption = mode === 'camera' || mode === 'both';
 
+    const hasImages = multiple ?
+        (Array.isArray(value) && value.length > 0 && value.some(uri => validateUri(uri) !== null)) :
+        !!validateUri(value);
+
     return (
         <View style={styles.fieldContainer}>
             <Text style={styles.fieldLabel}>{label}</Text>
 
-            {value ? (
-                // When we have an image, show the ImagePreviewer with appropriate buttons
-                <ImagePreviewer
-                    uri={value}
-                    width={width}
-                    height={height}
-                    disabled={disabled}
-                    onChangePress={showUploadOption ? handleImageUpload : undefined}
-                    onRetakePress={showCameraOption ? handleOpenCamera : undefined}
-                    onRemovePress={handleRemoveImage}
-                    showCamera={showCameraOption}
-                />
+            {hasImages ? (
+                // Show appropriate previewer based on multiple flag
+                multiple ? (
+                    <MultiImagePreviewer
+                        uris={Array.isArray(value) ? value : [value]}
+                        width={width}
+                        height={height}
+                        disabled={disabled}
+                        onAddMorePress={handleImageUpload}
+                        onCameraPress={showCameraOption ? handleOpenCamera : undefined}
+                        onRemovePress={handleRemoveImage}
+                        showCamera={showCameraOption}
+                    />
+                ) : (
+                    <ImagePreviewer
+                        uri={value}
+                        width={width}
+                        height={height}
+                        disabled={disabled}
+                        onChangePress={showUploadOption ? handleImageUpload : undefined}
+                        onRetakePress={showCameraOption ? handleOpenCamera : undefined}
+                        onRemovePress={() => handleRemoveImage(0)}
+                        showCamera={showCameraOption}
+                    />
+                )
             ) : (
-                // When we don't have an image, show the options (upload/camera)
+                // When we don't have images, show the options (upload/camera)
                 <View style={styles.optionsContainer}>
                     {showUploadOption && (
                         <TouchableOpacity
@@ -116,7 +267,9 @@ export const ImageField = ({
                             ) : (
                                 <>
                                     <Text style={styles.placeholderIcon}>📤</Text>
-                                    <Text style={styles.placeholderText}>Upload Image</Text>
+                                    <Text style={styles.placeholderText}>
+                                        {multiple ? "Upload Images" : "Upload Image"}
+                                    </Text>
                                 </>
                             )}
                         </TouchableOpacity>
