@@ -36,13 +36,12 @@ export default function CategoryList({ categories = [], onSelectCategory }) {
     );
 
     useEffect(() => {
-        console.log('CategoryList: Fetching categories...');
         fetchDatas();
     }, []);
 
-    useEffect(() => {
-        console.log('CategoryList: Data updated:', data);
-    }, [data]);
+    // useEffect(() => {
+    // console.log('CategoryList: Data updated:', data);
+    // }, [data]);
 
     return (
         <View className="mb-6">

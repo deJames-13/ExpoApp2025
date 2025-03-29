@@ -17,7 +17,7 @@ const ALERT_LEVEL = {
 };
 
 // Default level - use console alerts by default
-const DEFAULT_ALERT_LEVEL = ALERT_LEVEL.CONSOLE;
+const DEFAULT_ALERT_LEVEL = ALERT_LEVEL.NONE;
 
 /**
  * Logging utility that handles different levels of alerts
@@ -129,13 +129,10 @@ export default function useResource(resourceName) {
         try {
             console.log(`[${resourceName}] Fetching data...`);
             const response = await getAll(qStr).unwrap();
-            console.log(`[${resourceName}] API response:`, response);
-
             const results = Array.isArray(response)
                 ? response
                 : response.results || response.resource || [];
 
-            console.log(`[${resourceName}] Processed results:`, results);
 
             setData(results);
             setMeta(response.meta || {});
