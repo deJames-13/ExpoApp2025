@@ -2,11 +2,10 @@ import { useNavigation } from '@react-navigation/native';
 import { View, TouchableOpacity, Image, StatusBar, SafeAreaView, ActivityIndicator, Platform } from 'react-native';
 import { Text, TextInput, TouchableRipple, Button } from 'react-native-paper';
 import { H1 } from '~/components/ui/typography';
-import { useAuth } from '~/firebase/FirebaseAuthContext';
 import styles from '~/styles/auth';
 import { useState } from 'react';
 import Toast from 'react-native-toast-message';
-import api from '~/axios.config'
+import { useLoginMutation } from '~/states/api/auth';
 
 export default function Login() {
     const navigation = useNavigation();
@@ -15,7 +14,7 @@ export default function Login() {
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
-    const { loginWithEmail, signInWithGoogle, loading } = useAuth();
+    const [login, { isLoading }] = useLoginMutation();
 
     const validateForm = () => {
         let isValid = true;
@@ -45,20 +44,20 @@ export default function Login() {
     const handleLogin = async () => {
         if (validateForm()) {
             try {
-                await loginWithEmail(email, password);
+                const result = await login({ email, password }).unwrap();
+                Toast.show({
+                    type: 'success',
+                    text1: 'Success',
+                    text2: 'You have successfully logged in!',
+                });
                 navigation.navigate('DefaultNav');
             } catch (error) {
-                // Error handling is done in useFirebaseAuth hook with Toast
+                Toast.show({
+                    type: 'error',
+                    text1: 'Login Failed',
+                    text2: error.data?.message || 'An error occurred during login.',
+                });
             }
-        }
-    };
-
-    const handleGoogleSignIn = async () => {
-        try {
-            await signInWithGoogle();
-            navigation.navigate('DefaultNav');
-        } catch (error) {
-            // Error is handled in the FirebaseAuthContext
         }
     };
 
@@ -119,37 +118,24 @@ export default function Login() {
                         onPress={handleLogin}
                         borderless
                         rippleColor="rgba(255, 255, 255, 0.2)"
-                        disabled={loading}
+                        disabled={isLoading}
                     >
-                        {loading ? (
+                        {isLoading ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
                             <Text style={styles.buttonText}>LOGIN</Text>
                         )}
                     </TouchableRipple>
 
-                    <View style={[styles.separator, { marginVertical: 20 }]}>
-                        <View style={styles.line} />
-                        <Text style={styles.separatorText}>OR</Text>
-                        <View style={styles.line} />
+                    <View style={styles.guestButtonContainer}>
+                        <Button
+                            mode="text"
+                            onPress={() => navigation.navigate('Home')}
+                            uppercase={false}
+                        >
+                            Browse Shop as Guest
+                        </Button>
                     </View>
-
-                    <TouchableRipple
-                        style={[styles.button, styles.googleButton]}
-                        onPress={handleGoogleSignIn}
-                        borderless
-                        disabled={loading}
-                    >
-                        <View style={styles.googleButtonContent}>
-                            <Image
-                                source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }}
-                                style={styles.googleIcon}
-                            />
-                            <Text style={styles.googleButtonText}>
-                                {loading ? 'Signing in...' : 'Sign in with Google'}
-                            </Text>
-                        </View>
-                    </TouchableRipple>
                 </View>
 
                 <View style={styles.registerContainer}>

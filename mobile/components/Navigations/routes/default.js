@@ -3,15 +3,9 @@ import { createDrawerNavigator } from '@react-navigation/drawer'
 import { createStackNavigator } from '@react-navigation/stack';
 import { DefaultDrawerContent } from '../drawers';
 import { defaultOptions } from './_options';
-import { tabRoutes } from './_default-routes';
+import { tabRoutes, defaultRoutes } from './_default-routes';
 import ProductDetailView from '~/screens/Home/components/ProductDetailView';
 import CategorizedProducts from '~/screens/Home/components/CategorizedProducts';
-
-export const defaultRoutes = [
-  // Add your default routes here
-  // Example:
-  { name: 'Home', component: 'HomeScreen', icon: 'home' }
-];
 
 const USER_DEFAULT = 'Home';
 const Tabs = createBottomTabNavigator();
@@ -42,11 +36,12 @@ const DefaultTabs = ({ initialRouteName = USER_DEFAULT }) => {
 }
 
 export function DefaultRoutes() {
+    const routes = defaultRoutes();
     return (
         <Stack.Navigator
             screenOptions={defaultOptions}
         >
-            {defaultRoutes.map((route) => (
+            {routes.map((route) => (
                 <Stack.Screen
                     key={route.name}
                     name={route.name}

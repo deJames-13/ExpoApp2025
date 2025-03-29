@@ -12,10 +12,9 @@ const store = configureStore({
       serializableCheck: false,
       immutableCheck: false,
     }).concat(apiSlice.middleware),
-  devTools: true, // Enable Redux DevTools
+  devTools: process.env.EXPO_DEBUG ? true : false,
 });
 
-// Enable refetchOnFocus and other RTK Query features
 setupListeners(store.dispatch);
 
 export default store;

@@ -144,7 +144,11 @@ const styles = StyleSheet.create({
     googleButtonText: {
         color: '#757575',
         fontWeight: 'bold',
-    }
+    },
+    guestButtonContainer: {
+        marginTop: 16,
+        alignItems: 'center',
+    },
 });
 
 export default styles;

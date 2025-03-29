@@ -1,23 +1,38 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Image, StatusBar, SafeAreaView, ActivityIndicator } from 'react-native';
-import { Text, TextInput, TouchableRipple } from 'react-native-paper';
+import { Text, TextInput, TouchableRipple, Button } from 'react-native-paper';
 import { H1 } from '~/components/ui/typography';
 import styles from '~/styles/auth';
-import { useAuth } from '~/firebase/FirebaseAuthContext';
 import Toast from 'react-native-toast-message';
+import { useRegisterMutation } from '~/states/api/auth';
+import { useSelector } from 'react-redux';
+import { selectHasBasicInfo, selectIsEmailVerified } from '~/states/slices/auth';
 
 export default function Register() {
     const navigation = useNavigation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const [usernameError, setUsernameError] = useState('');
 
-    const { registerWithEmail, signInWithGoogle, loading } = useAuth();
+    const hasBasicInfo = useSelector(selectHasBasicInfo);
+    const isEmailVerified = useSelector(selectIsEmailVerified);
+
+    const [register, { isLoading }] = useRegisterMutation();
 
     const validateForm = () => {
         let isValid = true;
+
+        // Username validation
+        if (!username.trim()) {
+            setUsernameError('Username is required');
+            isValid = false;
+        } else {
+            setUsernameError('');
+        }
 
         // Email validation
         if (!email.trim()) {
@@ -47,20 +62,36 @@ export default function Register() {
     const handleRegister = async () => {
         if (validateForm()) {
             try {
-                await registerWithEmail(email, password);
-                navigation.navigate('DefaultNav');
+                const result = await register({ email, password, username }).unwrap();
+                Toast.show({
+                    type: 'success',
+                    text1: 'Success',
+                    text2: 'Account created successfully! Complete your profile.',
+                });
+
+                // Navigate to the appropriate onboarding step
+                navigateToNextOnboardingStep();
             } catch (error) {
-                // Error handling is done in useFirebaseAuth hook with Toast
+                Toast.show({
+                    type: 'error',
+                    text1: 'Registration Failed',
+                    text2: error.data?.message || 'An error occurred during registration.',
+                });
             }
         }
     };
 
-    const handleGoogleSignUp = async () => {
-        try {
-            await signInWithGoogle();
-            navigation.navigate('DefaultNav');
-        } catch (error) {
-            // Error is handled in the FirebaseAuthContext
+    const navigateToNextOnboardingStep = () => {
+        if (!hasBasicInfo) {
+            navigation.navigate("BasicInformation");
+        } else if (!isEmailVerified) {
+            navigation.navigate("EmailVerification");
+        } else {
+            // If somehow all steps are complete, go to main app
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'DefaultNav' }],
+            });
         }
     };
 
@@ -79,6 +110,20 @@ export default function Register() {
                 <View style={styles.card}>
                     <H1 style={styles.title}>Create Account</H1>
                     <Text style={styles.subtitle}>Sign up to get started</Text>
+
+                    <TextInput
+                        label="Username"
+                        mode="outlined"
+                        style={styles.input}
+                        autoCapitalize="none"
+                        outlineColor="#ddd"
+                        activeOutlineColor="#6200ee"
+                        left={<TextInput.Icon icon="account" />}
+                        value={username}
+                        onChangeText={setUsername}
+                        error={!!usernameError}
+                    />
+                    {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
 
                     <TextInput
                         label="Email"
@@ -114,35 +159,24 @@ export default function Register() {
                         onPress={handleRegister}
                         borderless
                         rippleColor="rgba(255, 255, 255, 0.2)"
-                        disabled={loading}
+                        disabled={isLoading}
                     >
-                        {loading ? (
+                        {isLoading ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
                             <Text style={styles.buttonText}>REGISTER</Text>
                         )}
                     </TouchableRipple>
 
-                    <View style={[styles.separator, { marginVertical: 20 }]}>
-                        <View style={styles.line} />
-                        <Text style={styles.separatorText}>OR</Text>
-                        <View style={styles.line} />
+                    <View style={styles.guestButtonContainer}>
+                        <Button
+                            mode="text"
+                            onPress={() => navigation.navigate('Home')}
+                            uppercase={false}
+                        >
+                            Browse Shop
+                        </Button>
                     </View>
-
-                    <TouchableRipple
-                        style={[styles.button, styles.googleButton]}
-                        onPress={handleGoogleSignUp}
-                        borderless
-                        disabled={loading}
-                    >
-                        <View style={styles.googleButtonContent}>
-                            <Image
-                                source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }}
-                                style={styles.googleIcon}
-                            />
-                            <Text style={styles.googleButtonText}>Sign up with Google</Text>
-                        </View>
-                    </TouchableRipple>
                 </View>
 
                 <View style={styles.loginContainer}>

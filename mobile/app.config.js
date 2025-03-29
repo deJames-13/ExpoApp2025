@@ -39,6 +39,7 @@ module.exports = {
             tsconfigPaths: true
         },
         plugins: [
+            "expo-secure-store",
             [
                 "@react-native-google-signin/google-signin",
                 {
