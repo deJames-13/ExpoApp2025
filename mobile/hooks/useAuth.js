@@ -8,9 +8,42 @@ import {
     selectHasBasicInfo,
     selectHasAddressInfo,
     selectIsEmailVerified,
-    logout
+    logout,
+    hydrate
 } from '~/states/slices/auth';
 import { useGetProfileQuery, useRefreshTokenQuery } from '~/states/api/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS, persistCredentials, clearCredentials } from '~/states/utils/authUtils';
+
+export const useLoadUser = () => {
+    const dispatch = useDispatch();
+    const [isHydrated, setIsHydrated] = useState(false);
+
+    // Load authentication state from AsyncStorage
+    useEffect(() => {
+        async function loadAuthState() {
+            try {
+                const [tokenValue, userValue] = await Promise.all([
+                    AsyncStorage.getItem(STORAGE_KEYS.TOKEN),
+                    AsyncStorage.getItem(STORAGE_KEYS.USER)
+                ]);
+
+                if (tokenValue && userValue) {
+                    const user = JSON.parse(userValue);
+                    dispatch(hydrate({ token: tokenValue, user }));
+                }
+            } catch (e) {
+                console.error('Failed to load auth state:', e);
+            } finally {
+                setIsHydrated(true);
+            }
+        }
+
+        loadAuthState();
+    }, [dispatch]);
+
+    return { isHydrated };
+}
 
 export default function useAuth({
     requireAuth = false,
@@ -23,6 +56,7 @@ export default function useAuth({
     const dispatch = useDispatch();
     const navigation = useNavigation();
     const [isReady, setIsReady] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     // Auth selectors
     const isAuthenticated = useSelector(selectIsAuthenticated);
@@ -35,22 +69,74 @@ export default function useAuth({
     // Check if user is admin
     const isAdmin = currentUser?.role === 'ADMIN';
 
+    // Initialize auth state from storage (runs only once)
+    useEffect(() => {
+        const initializeAuth = async () => {
+            if (isInitialized) return;
+
+            try {
+                const [tokenValue, userValue] = await Promise.all([
+                    AsyncStorage.getItem(STORAGE_KEYS.TOKEN),
+                    AsyncStorage.getItem(STORAGE_KEYS.USER)
+                ]);
+
+                if (tokenValue && userValue) {
+                    const user = JSON.parse(userValue);
+                    dispatch(hydrate({ token: tokenValue, user }));
+                }
+            } catch (e) {
+                console.error('Failed to initialize auth state:', e);
+            } finally {
+                setIsInitialized(true);
+                setIsReady(true);
+            }
+        };
+
+        initializeAuth();
+    }, [dispatch, isInitialized]);
+
     // Get latest profile data
     const { data: profileData, error: profileError, refetch: refetchProfile } =
         useGetProfileQuery(undefined, {
-            skip: !isAuthenticated || !accessToken,
+            skip: !isAuthenticated || !accessToken || !isInitialized,
             refetchOnMountOrArgChange: true
         });
 
-    // Token refresh hook - lazily loaded
-    const [triggerRefreshToken, { isLoading: isRefreshing }] = useRefreshTokenQuery(undefined, {
+    // Token refresh hook - with safety checks for non-iterable return
+    const refreshTokenResult = useRefreshTokenQuery(undefined, {
         skip: true
     });
 
+    // Safely extract values with fallbacks
+    const triggerRefreshToken = refreshTokenResult && typeof refreshTokenResult[0] === 'function'
+        ? refreshTokenResult[0]
+        : () => Promise.resolve(false);
+
+    const isRefreshing = refreshTokenResult &&
+        refreshTokenResult[1] &&
+        refreshTokenResult[1].isLoading || false;
+
+    // Handle logout
+    const handleLogout = useCallback(async () => {
+        // Use the centralized clearCredentials function
+        await clearCredentials();
+
+        // Update Redux state
+        dispatch(logout());
+
+        // Navigate to login
+        navigation.navigate('GuestNav', { screen: 'Login' });
+    }, [dispatch, navigation]);
+
+    // Refresh token function
     const refreshToken = useCallback(async () => {
         try {
-            const result = await triggerRefreshToken().unwrap();
-            return !!result?.token;
+            // Only call triggerRefreshToken if it's a function
+            if (typeof triggerRefreshToken === 'function') {
+                const result = await triggerRefreshToken().unwrap();
+                return !!result?.token;
+            }
+            return false;
         } catch (error) {
             console.error('Failed to refresh token:', error);
             return false;
@@ -136,12 +222,11 @@ export default function useAuth({
             refreshToken().then(success => {
                 if (!success) {
                     // If refresh fails, log the user out
-                    dispatch(logout());
-                    navigation.navigate('GuestNav', { screen: 'Login' });
+                    handleLogout();
                 }
             });
         }
-    }, [profileError, refreshToken, dispatch, navigation, isAuthenticated]);
+    }, [profileError, refreshToken, handleLogout, isAuthenticated]);
 
     return {
         isAuthenticated,
@@ -156,9 +241,6 @@ export default function useAuth({
         refetchProfile,
         validateRequirements,
         isRefreshing,
-        handleLogout: () => {
-            dispatch(logout());
-            navigation.navigate('GuestNav', { screen: 'Login' });
-        }
+        handleLogout
     };
 }

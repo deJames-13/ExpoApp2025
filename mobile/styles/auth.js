@@ -151,4 +151,5 @@ const styles = StyleSheet.create({
     },
 });
 
+export { colors }
 export default styles;

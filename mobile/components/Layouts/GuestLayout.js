@@ -3,6 +3,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { globalStyles } from '~/styles/global';
 import useAuth from '~/hooks/useAuth';
+import LoadingScreen from '~/screens/LoadingScreen';
 
 export function GuestLayout({
     children,
@@ -24,11 +25,7 @@ export function GuestLayout({
 
     // Show loading while auth state is being determined
     if (!isReady) {
-        return (
-            <View style={[globalStyles.container, globalStyles.centered]}>
-                <ActivityIndicator size="large" color="#007aff" />
-            </View>
-        );
+        return <LoadingScreen />
     }
 
     // If guest or explicitly allowing authenticated users, render children

@@ -72,6 +72,7 @@ export const DateField = ({
                     style={[styles.input, styles.dateInput]}
                     editable={false}
                     mode="outlined"
+                    textColor={adminColors.text.primary}
                     right={
                         <TextInput.Icon
                             icon={mode === 'time' ? 'clock-outline' : 'calendar'}

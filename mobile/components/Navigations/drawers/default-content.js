@@ -1,19 +1,21 @@
 import React from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Divider } from 'react-native-paper';
+import { Divider, ActivityIndicator } from 'react-native-paper';
 import { defaultRoutes, tabRoutes } from '../routes/_default-routes';
 import { globalStyles } from '~/styles/global';
 import { getIconForRoute } from '~/utils/iconHelper';
 import navigationStyles from '~/styles/navigationStyles';
+import useAuth from '~/hooks/useAuth';
+import useLogout from '~/hooks/useLogout';
 
 export function DefaultDrawerContent() {
     const [curr, setCurr] = React.useState('Home');
-    const [logged, setLogged] = React.useState(true);
     const navigation = useNavigation();
+    const { isAuthenticated, currentUser } = useAuth();
+    const { logout, isLoading } = useLogout();
     const drawerRoutes = defaultRoutes();
     const tabbedRoutes = tabRoutes();
 
@@ -26,6 +28,17 @@ export function DefaultDrawerContent() {
                         EyeZ*ne
                     </Text>
                 </View>
+
+                {/* {isAuthenticated && currentUser && (
+                    <View style={navigationStyles.userInfoContainer}>
+                        <Text style={navigationStyles.userNameText}>
+                            {currentUser?.username || 'User'}
+                        </Text>
+                        <Text style={navigationStyles.userEmailText}>
+                            {currentUser?.email || ''}
+                        </Text>
+                    </View>
+                )} */}
             </View>
 
             <Divider style={globalStyles.divider} />
@@ -99,17 +112,17 @@ export function DefaultDrawerContent() {
             <Divider style={globalStyles.divider} />
 
             <View style={navigationStyles.drawerFooter}>
-                {logged ? (
+                {isAuthenticated ? (
                     <TouchableOpacity
                         style={[navigationStyles.logoutButton, globalStyles.row, { justifyContent: 'center' }]}
-                        onPress={() => {
-                            setLogged(!logged);
-                            navigation.navigate("GuestNav", {
-                                screen: 'Login',
-                            });
-                        }}
+                        onPress={logout}
+                        disabled={isLoading}
                     >
-                        <Icon name="logout" size={20} color={navigationStyles.logoutText.color} style={{ marginRight: 8 }} />
+                        {isLoading ? (
+                            <ActivityIndicator size="small" color="#000" style={{ marginRight: 8 }} />
+                        ) : (
+                            <Icon name="logout" size={20} color={navigationStyles.logoutText.color} style={{ marginRight: 8 }} />
+                        )}
                         <Text style={navigationStyles.logoutText}>
                             Logout
                         </Text>
@@ -118,7 +131,6 @@ export function DefaultDrawerContent() {
                     <TouchableOpacity
                         style={[navigationStyles.loginButton, globalStyles.row, { justifyContent: 'center' }]}
                         onPress={() => {
-                            setLogged(!logged);
                             navigation.navigate("GuestNav", {
                                 screen: 'Login',
                             });

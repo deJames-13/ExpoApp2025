@@ -1,14 +1,22 @@
-import React from 'react';
-import { View, SafeAreaView, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, SafeAreaView, StyleSheet, ScrollView, BackHandler, Platform } from 'react-native';
 import { Button, Text, ProgressBar } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
 import * as Yup from 'yup';
 import { ResourceForm } from '~/components/ResourceForm';
 import Toast from 'react-native-toast-message';
 import { selectCurrentUser } from '~/states/slices/auth';
 import { useUpdateProfileMutation } from '~/states/api/auth';
+import {
+    selectBasicInfo,
+    selectAddressInfo,
+    selectIsEmailVerified,
+    setAddressInfo,
+    setCurrentStep
+} from '~/states/slices/onboarding';
 import { adminColors } from '~/styles/adminTheme';
+import { createFormDataWithImages } from '~/utils/imageUpload';
 
 const AddressInformationSchema = Yup.object().shape({
     address: Yup.string().required('Address is required'),
@@ -19,14 +27,72 @@ const AddressInformationSchema = Yup.object().shape({
 
 export default function AddressInformation() {
     const navigation = useNavigation();
+    const dispatch = useDispatch();
     const currentUser = useSelector(selectCurrentUser);
+    const basicInfo = useSelector(selectBasicInfo);
+    const addressInfo = useSelector(selectAddressInfo);
+    const isEmailVerified = useSelector(selectIsEmailVerified);
     const [updateProfile, { isLoading }] = useUpdateProfileMutation();
+    const [formValues, setFormValues] = useState({});
+    const [submitForm, setSubmitForm] = useState(null);
+
+    // Modified redirect logic - only check if basic info is completed
+    useEffect(() => {
+        if (!basicInfo.isCompleted) {
+            navigation.navigate('BasicInformation');
+            return;
+        }
+        dispatch(setCurrentStep('AddressInformation'));
+    }, [basicInfo.isCompleted, navigation, dispatch]);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            const onBackPress = () => {
+                navigation.navigate('BasicInformation');
+                return true;
+            };
+
+            BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+            navigation.setOptions({
+                headerLeft: () => (
+                    <Button
+                        onPress={() => navigation.navigate('BasicInformation')}
+                        mode="text"
+                        compact
+                        style={{ marginLeft: 8 }}
+                    >
+                        Back
+                    </Button>
+                ),
+            });
+
+            return () => {
+                BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+            };
+        }, [navigation])
+    );
+
+    // Ensure address info is saved even when navigating back
+    useFocusEffect(
+        React.useCallback(() => {
+            return () => {
+                // When leaving this screen, save form values to Redux
+                if (formValues && Object.keys(formValues).length > 0) {
+                    dispatch(setAddressInfo({
+                        ...formValues,
+                        isCompleted: false
+                    }));
+                }
+            };
+        }, [formValues, dispatch])
+    );
 
     const initialValues = {
-        address: '',
-        city: '',
-        region: '',
-        zip_code: '',
+        address: addressInfo.address || '',
+        city: addressInfo.city || '',
+        region: addressInfo.region || '',
+        zip_code: addressInfo.zip_code || '',
     };
 
     const fieldConfig = [
@@ -60,37 +126,78 @@ export default function AddressInformation() {
         },
     ];
 
+    const handleFieldChange = (field, value) => {
+        setFormValues(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
     const handleSubmit = async (values) => {
         try {
-            const formData = new FormData();
-            
-            // Add address info as stringified JSON
+            // Combine basic and address info
             const userInfo = {
+                id: currentUser.id,
+                first_name: basicInfo.first_name,
+                last_name: basicInfo.last_name,
+                contact: basicInfo.contact,
+                birthdate: basicInfo.birthdate,
                 address: values.address,
                 city: values.city,
                 region: values.region,
                 zip_code: values.zip_code,
             };
-            
-            formData.append('info', JSON.stringify(userInfo));
-            
+
+            // Create FormData with JSON data and avatar image
+            const formData = createFormDataWithImages(
+                userInfo,
+                { avatar: basicInfo.avatar }
+            );
+
+            console.log('User ID:', currentUser.id);
+            console.log('Sending formData with ID');
+
             // Update profile
-            await updateProfile(formData).unwrap();
-            
+            const result = await updateProfile(formData).unwrap();
+            console.log('Profile update success:', result);
+
             Toast.show({
                 type: 'success',
-                text1: 'Address Saved',
-                text2: 'Your address information has been saved.',
+                text1: 'Profile Updated',
+                text2: 'Your profile information has been saved.',
             });
-            
-            // Navigate to email verification step
+
+            // Save address info to redux store
+            dispatch(setAddressInfo(values));
+
+            // Navigate to email verification
             navigation.navigate('EmailVerification');
         } catch (error) {
-            console.error('Error updating address:', error);
+            console.error('Error updating profile:', JSON.stringify(error, null, 2));
             Toast.show({
                 type: 'error',
                 text1: 'Update Failed',
-                text2: error.data?.message || 'Failed to update your address information.',
+                text2: error.data?.message || 'Failed to update your information.',
+            });
+        }
+    };
+
+    // This function gets the submit function from the form
+    const getFormSubmitRef = (submitFn) => {
+        setSubmitForm(() => submitFn);
+    };
+
+    // Function to validate and submit the form
+    const validateAndContinue = async () => {
+        try {
+            if (submitForm && !isLoading) {
+                await submitForm();
+            }
+        } catch (error) {
+            Toast.show({
+                type: 'error',
+                text1: 'Validation Error',
+                text2: 'Please complete all required fields correctly.',
             });
         }
     };
@@ -103,27 +210,31 @@ export default function AddressInformation() {
                     <Text style={styles.subtitle}>Step 2 of 3: Address Information</Text>
                     <ProgressBar progress={0.66} color={adminColors.primary} style={styles.progressBar} />
                 </View>
-                
+
                 <ResourceForm
                     initialValues={initialValues}
                     validationSchema={AddressInformationSchema}
                     onSubmit={handleSubmit}
                     fieldConfig={fieldConfig}
+                    getSubmitRef={getFormSubmitRef}
+                    onFieldChange={handleFieldChange}
                 />
-                
+
                 <View style={styles.buttonContainer}>
                     <Button
                         mode="outlined"
-                        onPress={() => navigation.goBack()}
+                        onPress={() => navigation.navigate('BasicInformation')}
                         style={styles.backButton}
                     >
                         Back
                     </Button>
                     <Button
                         mode="contained"
-                        onPress={() => navigation.navigate('EmailVerification')}
+                        onPress={validateAndContinue}
                         style={styles.skipButton}
                         loading={isLoading}
+                        disabled={isLoading}
+                        textColor={adminColors.background}
                     >
                         Continue
                     </Button>

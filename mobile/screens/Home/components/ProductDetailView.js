@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import api from '~/axios.config';
+import HttpErrorView from '~/components/Errors/HttpErrorView';
 
 const ProductDetailView = ({ route, navigation }) => {
     // Log the route params to debug what's coming through
@@ -12,44 +13,49 @@ const ProductDetailView = ({ route, navigation }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [quantity, setQuantity] = useState(1);
+    const [statusCode, setStatusCode] = useState(404); // Default status code
 
     useEffect(() => {
-        const fetchProductDetails = async () => {
-            if (!productId) {
-                console.error('No productId provided in route params');
-                setError('Product ID is missing');
-                setLoading(false);
-                return;
-            }
-
-            try {
-                console.log(`PRODUCT DETAIL - Fetching product with ID: ${productId}`);
-                setLoading(true);
-
-                // Use only the productId for the API call
-                const endpoint = `/api/v1/products/${productId}`;
-                console.log(`PRODUCT DETAIL - API endpoint: ${endpoint}`);
-
-                const response = await api.get(endpoint);
-                console.log('PRODUCT DETAIL - API response:', JSON.stringify(response.data));
-
-                if (response.data && response.data.resource) {
-                    setProduct(response.data.resource);
-                    console.log('PRODUCT DETAIL - Product data loaded successfully');
-                } else {
-                    console.error('PRODUCT DETAIL - No resource in response data');
-                    setError('Product details not found');
-                }
-            } catch (err) {
-                console.error('PRODUCT DETAIL - Error fetching product details:', err);
-                setError(`Failed to load product details: ${err.message}`);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchProductDetails();
     }, [productId]);
+
+    const fetchProductDetails = async () => {
+        if (!productId) {
+            console.error('No productId provided in route params');
+            setError('Product ID is missing');
+            setStatusCode(404);
+            setLoading(false);
+            return;
+        }
+
+        try {
+            console.log(`PRODUCT DETAIL - Fetching product with ID: ${productId}`);
+            setLoading(true);
+
+            // Use only the productId for the API call
+            const endpoint = `/api/v1/products/${productId}`;
+            console.log(`PRODUCT DETAIL - API endpoint: ${endpoint}`);
+
+            const response = await api.get(endpoint);
+            console.log('PRODUCT DETAIL - API response:', JSON.stringify(response.data));
+
+            if (response.data && response.data.resource) {
+                setProduct(response.data.resource);
+                console.log('PRODUCT DETAIL - Product data loaded successfully');
+            } else {
+                console.error('PRODUCT DETAIL - No resource in response data');
+                setError('Product details not found');
+                setStatusCode(404);
+            }
+        } catch (err) {
+            console.error('PRODUCT DETAIL - Error fetching product details:', err);
+            setError(`Failed to load product details: ${err.message}`);
+            // Set appropriate status code based on error
+            setStatusCode(err.response?.status || 'network');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -62,15 +68,12 @@ const ProductDetailView = ({ route, navigation }) => {
 
     if (error || !product) {
         return (
-            <View style={styles.loading}>
-                <Text style={{ color: 'red' }}>{error || 'Product not found'}</Text>
-                <TouchableOpacity
-                    style={[styles.updateButton, { marginTop: 20 }]}
-                    onPress={() => navigation.goBack()}
-                >
-                    <Text style={styles.updateButtonText}>Go Back</Text>
-                </TouchableOpacity>
-            </View>
+            <HttpErrorView
+                statusCode={statusCode}
+                message={error || 'Product details could not be found'}
+                resourceType="Product"
+                onRetry={fetchProductDetails}
+            />
         );
     }
 

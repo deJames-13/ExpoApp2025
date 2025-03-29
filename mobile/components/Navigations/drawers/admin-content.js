@@ -1,20 +1,32 @@
 import React from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
-
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Divider, Avatar } from 'react-native-paper';
+import { Divider, Avatar, ActivityIndicator } from 'react-native-paper';
 import { tabRoutes, adminRoutes } from '../routes/_admin-routes';
 import { globalStyles } from '~/styles/global';
 import navigationStyles from '~/styles/navigationStyles';
+import useAuth from '~/hooks/useAuth';
+import useLogout from '~/hooks/useLogout';
 
 export function AdminDrawerContent() {
     const [curr, setCurr] = React.useState('Home');
     const navigation = useNavigation();
+    const { isAuthenticated, currentUser, isAdmin } = useAuth();
+    const { logout, isLoading } = useLogout();
     const drawerRoutes = adminRoutes();
     const tabbedRoutes = tabRoutes();
+
+    // Redirect if not admin
+    React.useEffect(() => {
+        if (isAuthenticated && !isAdmin) {
+            navigation.navigate('DefaultNav');
+        } else if (!isAuthenticated) {
+            navigation.navigate("GuestNav", { screen: 'Login' });
+        }
+    }, [isAuthenticated, isAdmin, navigation]);
 
     return (
         <SafeAreaView style={[navigationStyles.drawerContainer, styles.container]}>
@@ -28,11 +40,11 @@ export function AdminDrawerContent() {
                 <View style={styles.userInfo}>
                     <Avatar.Text
                         size={50}
-                        label="AU"
+                        label={currentUser ? (currentUser.username.substring(0, 2).toUpperCase() || "AU") : "AU"}
                         style={styles.avatar}
                     />
-                    <Text style={styles.userName}>Admin User</Text>
-                    <Text style={styles.userRole}>Administrator</Text>
+                    <Text style={styles.userName}>{currentUser?.username || 'Admin User'}</Text>
+                    <Text style={styles.userRole}>{currentUser?.role || 'Administrator'}</Text>
                 </View>
             </View>
 
@@ -116,13 +128,14 @@ export function AdminDrawerContent() {
                 <Divider style={globalStyles.divider} />
                 <TouchableOpacity
                     style={styles.logoutButton}
-                    onPress={() => {
-                        navigation.navigate("GuestNav", {
-                            screen: 'Login',
-                        });
-                    }}
+                    onPress={logout}
+                    disabled={isLoading}
                 >
-                    <Icon name="logout" size={20} color="#fff" style={{ marginRight: 8 }} />
+                    {isLoading ? (
+                        <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
+                    ) : (
+                        <Icon name="logout" size={20} color="#fff" style={{ marginRight: 8 }} />
+                    )}
                     <Text style={styles.logoutText}>
                         Logout
                     </Text>

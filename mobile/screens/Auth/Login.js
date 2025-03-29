@@ -2,12 +2,12 @@ import { useNavigation } from '@react-navigation/native';
 import { View, TouchableOpacity, Image, StatusBar, SafeAreaView, ActivityIndicator, Platform } from 'react-native';
 import { Text, TextInput, TouchableRipple, Button } from 'react-native-paper';
 import { H1 } from '~/components/ui/typography';
-import styles from '~/styles/auth';
+import styles, { colors } from '~/styles/auth';
 import { useState } from 'react';
 import Toast from 'react-native-toast-message';
 import { useLoginMutation } from '~/states/api/auth';
 
-export default function Login() {
+export function Login() {
     const navigation = useNavigation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -47,7 +47,7 @@ export default function Login() {
                 const result = await login({ email, password }).unwrap();
                 Toast.show({
                     type: 'success',
-                    text1: 'Success',
+                    text1: 'Welcom Back!',
                     text2: 'You have successfully logged in!',
                 });
                 navigation.navigate('DefaultNav');
@@ -85,6 +85,7 @@ export default function Login() {
                         autoCapitalize="none"
                         outlineColor="#ddd"
                         activeOutlineColor="#6200ee"
+                        textColor={colors.text.primary}
                         left={<TextInput.Icon icon="email" />}
                         value={email}
                         onChangeText={setEmail}
@@ -98,6 +99,7 @@ export default function Login() {
                         style={styles.input}
                         secureTextEntry
                         outlineColor="#ddd"
+                        textColor={colors.text.primary}
                         activeOutlineColor="#6200ee"
                         left={<TextInput.Icon icon="lock" />}
                         value={password}

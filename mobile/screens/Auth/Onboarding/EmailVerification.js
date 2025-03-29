@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { View, SafeAreaView, StyleSheet, ScrollView, TextInput as RNTextInput } from 'react-native';
+import { View, SafeAreaView, StyleSheet, ScrollView, TextInput as RNTextInput, BackHandler } from 'react-native';
 import { Button, Text, ProgressBar, Card } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
 import Toast from 'react-native-toast-message';
-import { selectCurrentUser, selectAccessToken, selectIsEmailVerified } from '~/states/slices/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { selectCurrentUser, selectAccessToken, selectIsEmailVerified as selectAuthEmailVerified } from '~/states/slices/auth';
+import {
+    selectBasicInfo,
+    selectAddressInfo,
+    selectIsEmailVerified,
+    setEmailVerified,
+    setCurrentStep
+} from '~/states/slices/onboarding';
 import { adminColors } from '~/styles/adminTheme';
 import { useSendVerificationEmailMutation, useVerifyEmailMutation } from '~/states/api/auth';
 
 export default function EmailVerification() {
     const navigation = useNavigation();
+    const dispatch = useDispatch();
     const currentUser = useSelector(selectCurrentUser);
     const token = useSelector(selectAccessToken);
-    const isEmailVerified = useSelector(selectIsEmailVerified);
+    const isAuthEmailVerified = useSelector(selectAuthEmailVerified);
+    const basicInfo = useSelector(selectBasicInfo);
+    const addressInfo = useSelector(selectAddressInfo);
+    const isOnboardingEmailVerified = useSelector(selectIsEmailVerified);
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [countdown, setCountdown] = useState(0);
     const [otpSent, setOtpSent] = useState(false);
@@ -22,15 +34,68 @@ export default function EmailVerification() {
 
     const otpInputRefs = Array(6).fill(0).map(() => React.createRef());
 
+    // Check if previous steps are completed
+    useEffect(() => {
+        if (!basicInfo.isCompleted) {
+            navigation.navigate('BasicInformation');
+            return;
+        }
+
+        if (!addressInfo.isCompleted) {
+            navigation.navigate('AddressInformation');
+            return;
+        }
+
+        dispatch(setCurrentStep('EmailVerification'));
+    }, [basicInfo.isCompleted, addressInfo.isCompleted, navigation]);
+
+    // Handle back button to navigate to AddressInformation
+    useFocusEffect(
+        React.useCallback(() => {
+            const onBackPress = () => {
+                navigation.navigate('AddressInformation');
+                return true; // Prevent default behavior
+            };
+
+            // Add event listener for hardware back button
+            BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+            // Set up navigation options
+            navigation.setOptions({
+                headerLeft: () => (
+                    <Button
+                        onPress={() => navigation.navigate('AddressInformation')}
+                        mode="text"
+                        compact
+                        style={{ marginLeft: 8 }}
+                    >
+                        Back
+                    </Button>
+                ),
+            });
+
+            return () => {
+                // Clean up event listener on unmount
+                BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+            };
+        }, [navigation])
+    );
+
     // If user is already verified, redirect to main app
     useEffect(() => {
-        if (isEmailVerified) {
+        if (isAuthEmailVerified) {
+            // Update onboarding state
+            dispatch(setEmailVerified(true));
+
+            // Clear the pending verification flag
+            AsyncStorage.removeItem('pendingEmailVerification');
+
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'DefaultNav' }],
             });
         }
-    }, [isEmailVerified, navigation]);
+    }, [isAuthEmailVerified, navigation]);
 
     useEffect(() => {
         // Countdown timer for resend button
@@ -84,6 +149,12 @@ export default function EmailVerification() {
                 token
             }).unwrap();
 
+            // Update onboarding state
+            dispatch(setEmailVerified(true));
+
+            // Clear the pending verification flag
+            AsyncStorage.removeItem('pendingEmailVerification');
+
             Toast.show({
                 type: 'success',
                 text1: 'Email Verified',
@@ -119,7 +190,10 @@ export default function EmailVerification() {
         }
     };
 
-    const skipVerification = () => {
+    const skipVerification = async () => {
+        // Mark that email verification is pending
+        await AsyncStorage.setItem('pendingEmailVerification', 'true');
+
         // Skip verification and go to main app
         navigation.reset({
             index: 0,
@@ -150,6 +224,7 @@ export default function EmailVerification() {
                                 style={styles.sendButton}
                                 loading={isSending}
                                 disabled={isSending}
+                                textColor={adminColors.background}
                             >
                                 Send Verification Code
                             </Button>
@@ -263,7 +338,7 @@ const styles = StyleSheet.create({
     emailHighlight: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: adminColors.primary,
+        color: adminColors.background,
         marginBottom: 24,
         textAlign: 'center',
     },

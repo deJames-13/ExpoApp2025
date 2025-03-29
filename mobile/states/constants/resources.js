@@ -1,5 +1,6 @@
 // Central list of all resources used in the application
 export const resources = [
+    'user',
     'users',
     'products',
     'categories',

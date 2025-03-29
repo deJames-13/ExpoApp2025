@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { globalStyles } from '~/styles/global';
 import useAuth from '~/hooks/useAuth';
+import LoadingScreen from '~/screens/LoadingScreen';
 
 export function ProtectedLayout({
     children,
@@ -27,11 +26,7 @@ export function ProtectedLayout({
 
     // Show loading while auth state is being determined
     if (!isReady) {
-        return (
-            <View style={[globalStyles.container, globalStyles.centered]}>
-                <ActivityIndicator size="large" color="#007aff" />
-            </View>
-        );
+        <LoadingScreen />
     }
 
     // Authentication check

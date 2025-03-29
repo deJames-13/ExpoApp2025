@@ -1,3 +1,4 @@
+import React from 'react';
 import * as AdminScreens from '~/admin/screens';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { defaultOptions } from './_options';
@@ -6,6 +7,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AdminDrawerContent } from '../drawers/admin-content';
 import { tabRoutes, adminRoutes } from './_admin-routes';
 import ProductDetailView from '~/screens/Home/components/ProductDetailView';
+import { useAdminRoute } from '~/contexts/AuthContext';
+import { View, ActivityIndicator } from 'react-native';
+import { globalStyles } from '~/styles/global';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -55,6 +59,17 @@ function AdminRoutesStack() {
 
 // Main Admin Navigation setup
 export function AdminNav() {
+    const { isAuthorizedAdmin } = useAdminRoute();
+
+    // Simplified admin check without blocking navigation
+    if (!isAuthorizedAdmin) {
+        return (
+            <View style={[globalStyles.container, globalStyles.centered]}>
+                <ActivityIndicator size="large" color="#007aff" />
+            </View>
+        );
+    }
+
     return (
         <Drawer.Navigator
             drawerContent={props => <AdminDrawerContent {...props} />}

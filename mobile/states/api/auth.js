@@ -1,5 +1,6 @@
 import apiSlice from './index';
-import { setCredentials, clearCredentials, persistCredentials, updateOnboardingStatus } from '../slices/auth';
+import { setCredentials, updateOnboardingStatus } from '../slices/auth';
+import { persistCredentials } from '../utils/authUtils';
 
 const authApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -33,7 +34,10 @@ const authApi = apiSlice.injectEndpoints({
             }),
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
                 try {
+                    console.log('Sending registration data:', JSON.stringify(arg, null, 2));
                     const { data } = await queryFulfilled;
+                    console.log('Registration successful:', JSON.stringify(data, null, 2));
+
                     const { user, token } = data;
 
                     // Store credentials securely
@@ -42,25 +46,17 @@ const authApi = apiSlice.injectEndpoints({
                     // Update Redux state
                     dispatch(setCredentials({ userInfo: user, token }));
                 } catch (error) {
-                    console.error('Registration error:', error);
+                    console.error('Registration error details:', JSON.stringify(error, null, 2));
                 }
             },
         }),
 
         logout: builder.mutation({
             query: () => ({
-                url: 'users/logout',
+                url: '/users/logout',
                 method: 'POST',
             }),
-            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-                try {
-                    await queryFulfilled;
-                    await clearCredentials();
-                    dispatch({ type: 'auth/logout' });
-                } catch (error) {
-                    console.error('Logout error:', error);
-                }
-            },
+            invalidatesTags: ['USER'],
         }),
 
         getProfile: builder.query({
@@ -69,11 +65,34 @@ const authApi = apiSlice.injectEndpoints({
         }),
 
         updateProfile: builder.mutation({
-            query: (userData) => ({
-                url: 'users/profile',
-                method: 'PATCH',
-                body: userData,
-            }),
+            query: (userData) => {
+                // Ensure FormData has id field
+                if (userData instanceof FormData) {
+                    // If we have userData.info, make sure it contains id
+                    const infoField = userData.get('info');
+                    if (infoField) {
+                        try {
+                            const parsedInfo = JSON.parse(infoField);
+                            // If ID is missing in the info, try to add it
+                            if (!parsedInfo.id && parsedInfo._id) {
+                                parsedInfo.id = parsedInfo._id;
+                                // Replace the info field with updated version
+                                userData.delete('info');
+                                userData.append('info', JSON.stringify(parsedInfo));
+                            }
+                        } catch (e) {
+                            console.error('Error parsing info field:', e);
+                        }
+                    }
+                }
+
+                return {
+                    url: 'users/profile',
+                    method: 'PATCH',
+                    body: userData,
+                    formData: true
+                };
+            },
             async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
                 try {
                     const { data } = await queryFulfilled;
@@ -167,4 +186,4 @@ export const {
     useVerifyEmailMutation,
 } = authApi;
 
-export default authApi;
+export { authApi };

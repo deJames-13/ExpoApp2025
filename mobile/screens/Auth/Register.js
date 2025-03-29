@@ -3,20 +3,24 @@ import React, { useState } from 'react';
 import { View, TouchableOpacity, Image, StatusBar, SafeAreaView, ActivityIndicator } from 'react-native';
 import { Text, TextInput, TouchableRipple, Button } from 'react-native-paper';
 import { H1 } from '~/components/ui/typography';
-import styles from '~/styles/auth';
+import styles, { colors } from '~/styles/auth';
 import Toast from 'react-native-toast-message';
 import { useRegisterMutation } from '~/states/api/auth';
 import { useSelector } from 'react-redux';
 import { selectHasBasicInfo, selectIsEmailVerified } from '~/states/slices/auth';
 
-export default function Register() {
+export function Register() {
     const navigation = useNavigation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [username, setUsername] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [usernameError, setUsernameError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const hasBasicInfo = useSelector(selectHasBasicInfo);
     const isEmailVerified = useSelector(selectIsEmailVerified);
@@ -56,13 +60,30 @@ export default function Register() {
             setPasswordError('');
         }
 
+        // Confirm Password validation
+        if (!confirmPassword) {
+            setConfirmPasswordError('Please confirm your password');
+            isValid = false;
+        } else if (password !== confirmPassword) {
+            setConfirmPasswordError('Passwords do not match');
+            isValid = false;
+        } else {
+            setConfirmPasswordError('');
+        }
+
         return isValid;
     };
 
     const handleRegister = async () => {
         if (validateForm()) {
             try {
-                const result = await register({ email, password, username }).unwrap();
+                const result = await register({
+                    email,
+                    password,
+                    confirm_password: confirmPassword,
+                    username
+                }).unwrap();
+
                 Toast.show({
                     type: 'success',
                     text1: 'Success',
@@ -72,10 +93,24 @@ export default function Register() {
                 // Navigate to the appropriate onboarding step
                 navigateToNextOnboardingStep();
             } catch (error) {
+                console.log('Registration error:', JSON.stringify(error, null, 2));
+
+                let errorMessage = 'An error occurred during registration.';
+
+                if (error.data?.message) {
+                    errorMessage = error.data.message;
+                } else if (error.status === 500) {
+                    errorMessage = 'Server error. Please try again later or contact support.';
+                }
+
+                if (error.stack) {
+                    console.error('Server error stack:', error.stack);
+                }
+
                 Toast.show({
                     type: 'error',
                     text1: 'Registration Failed',
-                    text2: error.data?.message || 'An error occurred during registration.',
+                    text2: errorMessage,
                 });
             }
         }
@@ -87,7 +122,6 @@ export default function Register() {
         } else if (!isEmailVerified) {
             navigation.navigate("EmailVerification");
         } else {
-            // If somehow all steps are complete, go to main app
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'DefaultNav' }],
@@ -119,6 +153,7 @@ export default function Register() {
                         outlineColor="#ddd"
                         activeOutlineColor="#6200ee"
                         left={<TextInput.Icon icon="account" />}
+                        textColor={colors.text.primary}
                         value={username}
                         onChangeText={setUsername}
                         error={!!usernameError}
@@ -132,6 +167,7 @@ export default function Register() {
                         keyboardType="email-address"
                         autoCapitalize="none"
                         outlineColor="#ddd"
+                        textColor={colors.text.primary}
                         activeOutlineColor="#6200ee"
                         left={<TextInput.Icon icon="email" />}
                         value={email}
@@ -144,15 +180,45 @@ export default function Register() {
                         label="Password"
                         mode="outlined"
                         style={styles.input}
-                        secureTextEntry
+                        secureTextEntry={!showPassword}
                         outlineColor="#ddd"
+                        textColor={colors.text.primary}
                         activeOutlineColor="#6200ee"
                         left={<TextInput.Icon icon="lock" />}
+                        right={
+                            <TextInput.Icon
+                                icon={showPassword ? "eye-off" : "eye"}
+                                onPress={() => setShowPassword(!showPassword)}
+                                forceTextInputFocus={false}
+                            />
+                        }
                         value={password}
                         onChangeText={setPassword}
                         error={!!passwordError}
                     />
                     {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+
+                    <TextInput
+                        label="Confirm Password"
+                        mode="outlined"
+                        style={styles.input}
+                        secureTextEntry={!showConfirmPassword}
+                        outlineColor="#ddd"
+                        textColor={colors.text.primary}
+                        activeOutlineColor="#6200ee"
+                        left={<TextInput.Icon icon="lock-check" />}
+                        right={
+                            <TextInput.Icon
+                                icon={showConfirmPassword ? "eye-off" : "eye"}
+                                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                                forceTextInputFocus={false}
+                            />
+                        }
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                        error={!!confirmPasswordError}
+                    />
+                    {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
 
                     <TouchableRipple
                         style={styles.button}

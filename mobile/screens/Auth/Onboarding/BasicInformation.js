@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
-import { View, SafeAreaView, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, SafeAreaView, StyleSheet, ScrollView, BackHandler, Alert } from 'react-native';
 import { Button, Text, ProgressBar } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
 import * as Yup from 'yup';
 import { ResourceForm } from '~/components/ResourceForm';
 import Toast from 'react-native-toast-message';
-import { selectCurrentUser, selectAccessToken } from '~/states/slices/auth';
-import { useUpdateProfileMutation } from '~/states/api/auth';
+import { selectCurrentUser } from '~/states/slices/auth';
+import {
+    selectBasicInfo,
+    setBasicInfo,
+    selectIsAddressCompleted,
+    selectIsEmailVerified,
+    setCurrentStep
+} from '~/states/slices/onboarding';
 import { adminColors } from '~/styles/adminTheme';
 
 const BasicInformationSchema = Yup.object().shape({
@@ -22,15 +28,75 @@ const BasicInformationSchema = Yup.object().shape({
 
 export default function BasicInformation() {
     const navigation = useNavigation();
+    const dispatch = useDispatch();
     const currentUser = useSelector(selectCurrentUser);
-    const [updateProfile, { isLoading }] = useUpdateProfileMutation();
+    const basicInfo = useSelector(selectBasicInfo);
+    const isAddressCompleted = useSelector(selectIsAddressCompleted);
+    const isEmailVerified = useSelector(selectIsEmailVerified);
+    const [formValues, setFormValues] = useState({});
+    const [submitForm, setSubmitForm] = useState(null);
+
+    // Replace the redirect logic to only set the current step without redirecting
+    useEffect(() => {
+        dispatch(setCurrentStep('BasicInformation'));
+    }, [dispatch]);
+
+    // Handle back button to exit app instead of navigating back
+    useFocusEffect(
+        React.useCallback(() => {
+            const onBackPress = () => {
+                Alert.alert(
+                    'Exit App',
+                    'Are you sure you want to exit?',
+                    [
+                        { text: 'Cancel', style: 'cancel', onPress: () => { } },
+                        { text: 'Exit', style: 'destructive', onPress: () => BackHandler.exitApp() }
+                    ],
+                    { cancelable: false }
+                );
+                return true; // Prevent default behavior
+            };
+
+            // Add event listener for hardware back button
+            BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+            // Set up navigation options to prevent going back
+            navigation.setOptions({
+                headerLeft: () => null, // Remove back button
+                gestureEnabled: false, // Disable swipe back gesture
+            });
+
+            return () => {
+                // Clean up event listener on unmount
+                BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+            };
+        }, [navigation])
+    );
+
+    // Make sure form values are saved to Redux even without explicitly submitting
+    useFocusEffect(
+        React.useCallback(() => {
+            // Whenever we return to this screen, make sure we're using the latest Redux data
+            if (formValues && Object.keys(formValues).length > 0) {
+                // If we have local form values, update Redux with them
+                dispatch(setBasicInfo(formValues));
+            }
+
+            return () => {
+                // When leaving this screen, save current form values to Redux if they exist
+                if (formValues && Object.keys(formValues).length > 0) {
+                    dispatch(setBasicInfo(formValues));
+                }
+            };
+        }, [formValues, dispatch])
+    );
 
     const initialValues = {
-        first_name: '',
-        last_name: '',
-        contact: '',
-        birthdate: null,
-        avatar: null,
+        first_name: basicInfo.first_name || '',
+        last_name: basicInfo.last_name || '',
+        contact: basicInfo.contact || '',
+        birthdate: basicInfo.birthdate || null,
+        avatar: basicInfo.avatar || null,
     };
 
     const fieldConfig = [
@@ -41,7 +107,7 @@ export default function BasicInformation() {
             placeholder: 'Add your profile picture',
             width: 200,
             height: 200,
-            mode: 'both', // Allow both upload and camera
+            mode: 'both',
             multiple: false,
         },
         {
@@ -73,50 +139,39 @@ export default function BasicInformation() {
         },
     ];
 
-    const handleSubmit = async (values) => {
+    const handleSubmit = (values) => {
+        // Store values in local state
+        setFormValues(values);
+
+        // Save to Redux store
+        dispatch(setBasicInfo(values));
+
+        // Navigate to the next step
+        navigation.navigate('AddressInformation');
+    };
+
+    // Update formValues whenever form fields change
+    const handleFieldChange = (field, value) => {
+        setFormValues(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const getFormSubmitRef = (submitFn) => {
+        setSubmitForm(() => submitFn);
+    };
+
+    const validateAndContinue = async () => {
         try {
-            const formData = new FormData();
-            
-            // Add basic info as stringified JSON
-            const userInfo = {
-                first_name: values.first_name,
-                last_name: values.last_name,
-                contact: values.contact,
-                birthdate: values.birthdate,
-            };
-            
-            formData.append('info', JSON.stringify(userInfo));
-            
-            // Add avatar if it exists
-            if (values.avatar) {
-                const uri = values.avatar;
-                const uriParts = uri.split('.');
-                const fileType = uriParts[uriParts.length - 1];
-                
-                formData.append('avatar', {
-                    uri,
-                    name: `avatar.${fileType}`,
-                    type: `image/${fileType}`,
-                });
+            if (submitForm) {
+                await submitForm();
             }
-            
-            // Update profile
-            await updateProfile(formData).unwrap();
-            
-            Toast.show({
-                type: 'success',
-                text1: 'Profile Updated',
-                text2: 'Your basic information has been saved.',
-            });
-            
-            // Navigate to address information step
-            navigation.navigate('AddressInformation');
         } catch (error) {
-            console.error('Error updating profile:', error);
             Toast.show({
                 type: 'error',
-                text1: 'Update Failed',
-                text2: error.data?.message || 'Failed to update your information.',
+                text1: 'Validation Error',
+                text2: 'Please complete all required fields correctly.',
             });
         }
     };
@@ -129,20 +184,40 @@ export default function BasicInformation() {
                     <Text style={styles.subtitle}>Step 1 of 3: Basic Information</Text>
                     <ProgressBar progress={0.33} color={adminColors.primary} style={styles.progressBar} />
                 </View>
-                
+
                 <ResourceForm
                     initialValues={initialValues}
                     validationSchema={BasicInformationSchema}
                     onSubmit={handleSubmit}
                     fieldConfig={fieldConfig}
+                    getSubmitRef={getFormSubmitRef}
+                    onFieldChange={handleFieldChange}
                 />
-                
+
                 <View style={styles.buttonContainer}>
                     <Button
+                        mode="text"
+                        onPress={() => {
+                            Alert.alert(
+                                'Exit App',
+                                'Are you sure you want to exit?',
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    { text: 'Exit', style: 'destructive', onPress: () => BackHandler.exitApp() }
+                                ],
+                                { cancelable: true }
+                            );
+                        }}
+                        style={styles.exitButton}
+                    >
+                        Exit App
+                    </Button>
+
+                    <Button
                         mode="contained"
-                        onPress={() => navigation.navigate('AddressInformation')}
-                        style={styles.skipButton}
-                        loading={isLoading}
+                        onPress={validateAndContinue}
+                        style={styles.continueButton}
+                        textColor={adminColors.background}
                     >
                         Continue
                     </Button>
@@ -179,10 +254,16 @@ const styles = StyleSheet.create({
     buttonContainer: {
         marginTop: 24,
         marginBottom: 40,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         paddingHorizontal: 16,
     },
-    skipButton: {
-        marginTop: 16,
+    exitButton: {
+        flex: 1,
+        marginRight: 8,
+    },
+    continueButton: {
+        flex: 2,
         backgroundColor: adminColors.primary,
     },
 });

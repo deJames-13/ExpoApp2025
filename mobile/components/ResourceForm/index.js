@@ -1,6 +1,6 @@
-import React from 'react';
+import { useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Formik } from 'formik';
+import { Formik, Form } from 'formik';
 import { FieldMapper, FormRow, HalfField, CustomLayout } from './FormFields';
 
 export function ResourceForm({
@@ -17,7 +17,9 @@ export function ResourceForm({
     fieldConfig = [],
     wrapWithScrollView = true,
     scrollViewProps = {},
-    enableReinitialize = true
+    enableReinitialize = true,
+    onValidationChange = () => { },
+    getSubmitRef,
 }) {
     // Create a function to check if fields should be disabled
     const isDisabled = mode === 'view';
@@ -79,23 +81,39 @@ export function ResourceForm({
                 {(formikProps) => {
                     const formProps = { ...formikProps, isDisabled };
 
+                    useEffect(() => {
+                        if (getSubmitRef) {
+                            getSubmitRef(formikProps.handleSubmit);
+                        }
+                    }, [formikProps.handleSubmit, getSubmitRef]);
+
+                    useEffect(() => {
+                        if (onValidationChange) {
+                            formikProps.validateForm().then(errors => {
+                                const isValid = Object.keys(errors).length === 0;
+                                onValidationChange(isValid, formikProps.values);
+                            });
+                        }
+                    }, [formikProps.values, onValidationChange]);
+                    let ComponentForm;
+
                     // If field configuration is provided, render fields from config
                     if (fieldConfig.length > 0) {
-                        return renderFieldsFromConfig(formProps);
+                        ComponentForm = renderFieldsFromConfig(formProps);
                     }
 
                     // If renderFields function is provided, use it for custom rendering
                     if (typeof renderFields === 'function') {
-                        return renderFields(formProps);
+                        ComponentForm = renderFields(formProps);
                     }
 
                     // If children is a function, pass the form props
                     if (typeof children === 'function') {
-                        return children(formProps);
+                        ComponentForm = children(formProps);
                     }
 
                     // Otherwise, just render the children directly
-                    return children;
+                    return (ComponentForm)
                 }}
             </Formik>
         </LayoutComponent>

@@ -4,7 +4,7 @@ export const colors = {
     background: '#f8f8f8',
     cardBackground: '#ffffff',
     text: {
-        primary: '#333333',
+        primary: '#212121',
         secondary: '#666666',
         light: '#888888',
     },
