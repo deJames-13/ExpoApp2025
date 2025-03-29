@@ -36,7 +36,7 @@ const StatsCards = ({ stats }) => {
                     <MaterialCommunityIcons name="currency-usd" size={32} color="#000" style={styles.icon} />
                     <View>
                         <Text style={styles.cardLabel}>Revenue</Text>
-                        <Text style={styles.cardValue}>${stats.totalRevenue.toLocaleString()}</Text>
+                        <Text style={styles.cardValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {stats.totalRevenue.toLocaleString()}</Text>
                     </View>
                 </Card.Content>
             </Card>

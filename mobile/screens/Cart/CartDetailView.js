@@ -49,7 +49,7 @@ const CartDetailView = ({ route, navigation }) => {
 
             <View style={styles.detailsContainer}>
                 <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+                <Text style={styles.price}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {item.price.toFixed(2)}</Text>
 
                 <View style={styles.statusContainer}>
                     <Text style={[styles.status,

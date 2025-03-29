@@ -15,7 +15,7 @@ export default function ItemListsView({ items }) {
                     <Text style={styles.itemName}>{item.name}</Text>
                     <View style={styles.itemInfo}>
                         <Text style={styles.itemQuantity}>Qty: {item.quantity}</Text>
-                        <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+                        <Text style={styles.itemPrice}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {item.price.toFixed(2)}</Text>
                     </View>
                     <Text style={[styles.itemStatus, { color: getStatusColor(item.status) }]}>
                         {item.status}

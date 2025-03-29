@@ -50,7 +50,7 @@ const CartCard = ({ item, onViewDetails, isSelected, onToggleSelection }) => {
             </View>
             <View style={styles.infoContainer}>
                 <Text style={styles.name}>{name}</Text>
-                <Text style={styles.price}>${price.toFixed(2)}</Text>
+                <Text style={styles.price}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {price.toFixed(2)}</Text>
                 <View style={styles.detailsRow}>
                     <Text style={styles.quantity}>Qty: {quantity}</Text>
                     <Text style={[styles.status, { color: getStatusColor() }]}>

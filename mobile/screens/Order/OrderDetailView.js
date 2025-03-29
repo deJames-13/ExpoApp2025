@@ -57,7 +57,7 @@ const OrderDetailView = ({ route, navigation }) => {
             />
             <View style={styles.itemDetails}>
                 <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemPrice}>${item.price.toFixed(2)} x {item.quantity}</Text>
+                <Text style={styles.itemPrice}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {item.price.toFixed(2)} x {item.quantity}</Text>
                 <Text style={styles.itemTotal}>
                     ${(item.price * item.quantity).toFixed(2)}
                 </Text>
@@ -109,11 +109,11 @@ const OrderDetailView = ({ route, navigation }) => {
                 </View>
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Shipping</Text>
-                    <Text style={styles.summaryValue}>$0.00</Text>
+                    <Text style={styles.summaryValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} 0.00</Text>
                 </View>
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Tax</Text>
-                    <Text style={styles.summaryValue}>$0.00</Text>
+                    <Text style={styles.summaryValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} 0.00</Text>
                 </View>
                 <View style={[styles.summaryRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Total</Text>

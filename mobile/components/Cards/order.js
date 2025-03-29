@@ -51,7 +51,7 @@ const OrderCard = ({ order, onViewDetails }) => {
                 <View style={styles.infoContainer}>
                     <Text style={styles.date}>{date}</Text>
                     <Text style={styles.itemCount}>{items.length} item{items.length !== 1 ? 's' : ''}</Text>
-                    <Text style={styles.totalAmount}>${totalAmount.toFixed(2)}</Text>
+                    <Text style={styles.totalAmount}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {totalAmount.toFixed(2)}</Text>
                 </View>
             </View>
 

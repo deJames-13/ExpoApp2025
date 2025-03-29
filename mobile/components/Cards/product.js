@@ -22,7 +22,7 @@ export default function ProductCard({ item, itemWidth, onPress }) {
                 />
                 <View className="p-2">
                     <Text className="font-semibold text-sm" numberOfLines={1}>{item.name}</Text>
-                    <Text className="text-blue-600 font-bold">{item.price}</Text>
+                    <Text className="text-blue-600 font-bold">{process.env.EXPO_PUBLIC_APP_CURRENCY} {item.price}</Text>
                     {item.sold && (
                         <Text className="text-gray-500 text-xs">{item.sold} sold</Text>
                     )}

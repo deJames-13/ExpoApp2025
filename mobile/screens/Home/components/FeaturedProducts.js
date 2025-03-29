@@ -134,7 +134,7 @@ export default function FeaturedProducts({ navigation, initialProducts = [] }) {
 
         // Format price with check to avoid undefined error
         const formattedPrice = item.price !== undefined && item.price !== null
-            ? `$${Number(item.price).toFixed(2)}`
+            ? `${Number(item.price).toFixed(2)}`
             : 'Price unavailable';
 
         // Map the database object to the format expected by ProductCard

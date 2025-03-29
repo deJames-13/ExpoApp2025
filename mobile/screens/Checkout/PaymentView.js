@@ -48,7 +48,7 @@ export default function PaymentView({ navigation, checkoutData, updateCheckoutDa
                         <Text style={styles.methodDescription}>Delivery in 3-5 business days</Text>
                     </View>
                 </View>
-                <Text style={styles.methodPrice}>$9.99</Text>
+                <Text style={styles.methodPrice}>{process.env.EXPO_PUBLIC_APP_CURRENCY} 9.99</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -64,7 +64,7 @@ export default function PaymentView({ navigation, checkoutData, updateCheckoutDa
                         <Text style={styles.methodDescription}>Delivery in 1-2 business days</Text>
                     </View>
                 </View>
-                <Text style={styles.methodPrice}>$19.99</Text>
+                <Text style={styles.methodPrice}>{process.env.EXPO_PUBLIC_APP_CURRENCY} 19.99</Text>
             </TouchableOpacity>
 
             {/* Payment Method Section */}

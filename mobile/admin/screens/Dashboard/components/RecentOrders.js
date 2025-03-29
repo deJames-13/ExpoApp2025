@@ -33,7 +33,7 @@ const RecentOrders = ({ orders, onViewAllPress }) => {
                                 <Text style={{ color: adminColors.text.primary, fontWeight: '500' }}>{order.number}</Text>
                             </DataTable.Cell>
                             <DataTable.Cell numeric style={{ flex: 1.5 }}>
-                                <Text style={{ color: adminColors.text.primary }}>${order.amount.toFixed(2)}</Text>
+                                <Text style={{ color: adminColors.text.primary }}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {order.amount.toFixed(2)}</Text>
                             </DataTable.Cell>
                             <DataTable.Cell style={{ flex: 2, paddingLeft: 16 }}>
                                 <Text style={{ color: getStatusColor(order.status).text, fontSize: 13, fontWeight: '600' }}>

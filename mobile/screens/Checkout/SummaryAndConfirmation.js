@@ -170,24 +170,24 @@ export default function SummaryAndConfirmation({ navigation, checkoutData }) {
 
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>Subtotal</Text>
-                            <Text style={styles.totalValue}>${checkoutData.subtotal.toFixed(2)}</Text>
+                            <Text style={styles.totalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {checkoutData.subtotal.toFixed(2)}</Text>
                         </View>
 
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>Shipping</Text>
-                            <Text style={styles.totalValue}>${getShippingCost().toFixed(2)}</Text>
+                            <Text style={styles.totalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {getShippingCost().toFixed(2)}</Text>
                         </View>
 
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>Tax</Text>
-                            <Text style={styles.totalValue}>${checkoutData.tax.toFixed(2)}</Text>
+                            <Text style={styles.totalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {checkoutData.tax.toFixed(2)}</Text>
                         </View>
 
                         <View style={styles.divider} />
 
                         <View style={styles.totalRow}>
                             <Text style={styles.grandTotalLabel}>Total</Text>
-                            <Text style={styles.grandTotalValue}>${calculateTotal().toFixed(2)}</Text>
+                            <Text style={styles.grandTotalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {calculateTotal().toFixed(2)}</Text>
                         </View>
                     </View>
                 );
