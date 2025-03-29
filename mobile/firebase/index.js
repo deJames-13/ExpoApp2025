@@ -1,6 +1,11 @@
-import { initializeApp } from 'firebase/app';
+import {
+  initializeApp,
+  getApp,
+  getApps
+} from 'firebase/app';
 import {
   initializeAuth,
+  getReactNativePersistence,
   getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -11,7 +16,6 @@ import {
 } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
-// Validate required environment variables
 const requiredEnvVars = [
   'EXPO_PUBLIC_FIREBASE_API_KEY',
   'EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN',
@@ -36,23 +40,22 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+let app, auth;
 
-// Create custom persistence
-const reactNativePersistence = (storage) => {
-  return {
-    type: 'custom',
-    storage,
-    _shouldAllowMigration: true,
-  };
-};
+if (!getApps().length) {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+    })
 
-// Use it with initializeAuth instead
-const auth = initializeAuth(app, {
-  persistence: reactNativePersistence(ReactNativeAsyncStorage)
-});
-
-// Export auth functions and provider
+  } catch (error) {
+    console.log('Initializing firebase app failed: ', error)
+  }
+} else {
+  app = getApp();
+  auth = getAuth();
+}
 export {
   auth,
   signInWithEmailAndPassword,
@@ -62,5 +65,4 @@ export {
   onAuthStateChanged,
   GoogleAuthProvider
 };
-
-export default app;
+export default app
