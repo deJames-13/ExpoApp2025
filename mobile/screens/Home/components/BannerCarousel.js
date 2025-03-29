@@ -6,6 +6,7 @@ const { width } = Dimensions.get('window');
 export default function BannerCarousel({ banners = [] }) {
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
     const bannerRef = useRef(null);
+    const itemWidth = width - 32; // Width of each banner item
 
     useEffect(() => {
         const interval = global.setInterval(() => {
@@ -27,7 +28,7 @@ export default function BannerCarousel({ banners = [] }) {
         <Image
             source={{ uri: item.image }}
             className="rounded-lg overflow-hidden"
-            style={{ width: width - 32, height: 150 }}
+            style={{ width: itemWidth, height: 150 }}
             resizeMode="cover"
         />
     );
@@ -42,8 +43,13 @@ export default function BannerCarousel({ banners = [] }) {
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
+                getItemLayout={(data, index) => ({
+                    length: itemWidth,
+                    offset: itemWidth * index,
+                    index,
+                })}
                 onMomentumScrollEnd={(event) => {
-                    const slideIndex = Math.floor(event.nativeEvent.contentOffset.x / (width - 32));
+                    const slideIndex = Math.floor(event.nativeEvent.contentOffset.x / itemWidth);
                     setCurrentBannerIndex(slideIndex);
                 }}
             />

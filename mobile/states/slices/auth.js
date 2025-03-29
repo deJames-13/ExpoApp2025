@@ -25,6 +25,30 @@ export const authSlice = createSlice({
             state.token = token;
             state.isAuthenticated = !!token;
             if (fcmToken) state.fcmToken = fcmToken;
+
+            // Automatically update onboarding status based on user data
+            if (userInfo) {
+                // Check for basic info completion
+                if (userInfo.info &&
+                    userInfo.info.first_name &&
+                    userInfo.info.last_name &&
+                    userInfo.info.contact) {
+                    state.onboarding.hasBasicInfo = true;
+                }
+
+                // Check for address info completion
+                if (userInfo.info &&
+                    userInfo.info.address &&
+                    userInfo.info.city &&
+                    userInfo.info.region) {
+                    state.onboarding.hasAddressInfo = true;
+                }
+
+                // Check if email is verified
+                if (userInfo.emailVerifiedAt) {
+                    state.onboarding.isEmailVerified = true;
+                }
+            }
         },
         setFcmToken: (state, action) => {
             state.fcmToken = action.payload;
@@ -48,6 +72,30 @@ export const authSlice = createSlice({
                 state.token = token;
                 state.isAuthenticated = true;
                 if (fcmToken) state.fcmToken = fcmToken;
+
+                // Apply the same onboarding status checks during hydration
+                if (user) {
+                    // Check for basic info completion
+                    if (user.info &&
+                        user.info.first_name &&
+                        user.info.last_name &&
+                        user.info.contact) {
+                        state.onboarding.hasBasicInfo = true;
+                    }
+
+                    // Check for address info completion
+                    if (user.info &&
+                        user.info.address &&
+                        user.info.city &&
+                        user.info.region) {
+                        state.onboarding.hasAddressInfo = true;
+                    }
+
+                    // Check if email is verified
+                    if (user.emailVerifiedAt) {
+                        state.onboarding.isEmailVerified = true;
+                    }
+                }
             }
         },
         updateOnboardingStatus: (state, action) => {
