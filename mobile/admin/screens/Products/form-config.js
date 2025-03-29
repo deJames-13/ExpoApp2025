@@ -39,7 +39,6 @@ export const getProductFields = (options = {}) => {
                     label: 'Stock',
                     min: 0,
                     step: 1,
-                    suffix: 'units'
                 }
             ]
         },

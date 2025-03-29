@@ -108,11 +108,14 @@ export const styles = StyleSheet.create({
     numberInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        color: adminColors.text.primary,
     },
     numberInput: {
         flex: 1,
         marginHorizontal: 8,
         textAlign: 'center',
+        backgroundColor: adminColors.background,
+        color: adminColors.text.primary,
     },
     numberButton: {
         margin: 0,
