@@ -141,6 +141,87 @@ export const createFormDataWithImages = (jsonData = {}, images = {}) => {
 };
 
 /**
+ * Creates a flat FormData object with all fields at the root level
+ * Use this when API expects all fields directly in the form data
+ * 
+ * @param {Object} jsonData - JSON data to include in FormData
+ * @param {Object} images - Object mapping field names to image URIs
+ * @returns {FormData} - Complete FormData object ready for submission
+ */
+export const createFlatFormData = (jsonData = {}, images = {}) => {
+    const formData = new FormData();
+
+    // Add JSON data fields directly
+    if (jsonData && typeof jsonData === 'object') {
+        for (const [key, value] of Object.entries(jsonData)) {
+            if (value !== null && value !== undefined) {
+                // Convert dates or objects to appropriate string representation
+                if (value instanceof Date) {
+                    formData.append(key, value.toISOString());
+                } else if (typeof value === 'object' && !Array.isArray(value)) {
+                    formData.append(key, JSON.stringify(value));
+                } else {
+                    formData.append(key, value);
+                }
+            }
+        }
+    }
+
+    // Add images
+    if (images && typeof images === 'object') {
+        Object.entries(images).forEach(([fieldName, uri]) => {
+            if (uri) {
+                appendImageToFormData(formData, fieldName, uri);
+            }
+        });
+    }
+
+    return formData;
+};
+
+/**
+ * Creates a hybrid FormData object with both root-level fields and 'info' JSON
+ * This ensures compatibility with server endpoints that expect an 'info' field
+ * 
+ * @param {Object} jsonData - JSON data to include in FormData
+ * @param {Object} images - Object mapping field names to image URIs
+ * @returns {FormData} - Complete FormData object ready for submission
+ */
+export const createHybridFormData = (jsonData = {}, images = {}) => {
+    const formData = new FormData();
+
+    // Add JSON data as an 'info' field for server compatibility
+    if (jsonData && Object.keys(jsonData).length > 0) {
+        formData.append('info', JSON.stringify(jsonData));
+
+        // Also add individual fields directly to the form
+        for (const [key, value] of Object.entries(jsonData)) {
+            if (value !== null && value !== undefined) {
+                // Convert dates or objects to appropriate string representation
+                if (value instanceof Date) {
+                    formData.append(key, value.toISOString());
+                } else if (typeof value === 'object' && !Array.isArray(value)) {
+                    formData.append(key, JSON.stringify(value));
+                } else {
+                    formData.append(key, value);
+                }
+            }
+        }
+    }
+
+    // Add images
+    if (images && typeof images === 'object') {
+        Object.entries(images).forEach(([fieldName, uri]) => {
+            if (uri) {
+                appendImageToFormData(formData, fieldName, uri);
+            }
+        });
+    }
+
+    return formData;
+};
+
+/**
  * Capture an image using the device camera
  * 
  * @param {Object} options - Camera options

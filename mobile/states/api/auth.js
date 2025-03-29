@@ -66,23 +66,13 @@ const authApi = apiSlice.injectEndpoints({
 
         updateProfile: builder.mutation({
             query: (userData) => {
-                // Ensure FormData has id field
+                // Make sure FormData has the required 'info' field
                 if (userData instanceof FormData) {
-                    // If we have userData.info, make sure it contains id
-                    const infoField = userData.get('info');
-                    if (infoField) {
-                        try {
-                            const parsedInfo = JSON.parse(infoField);
-                            // If ID is missing in the info, try to add it
-                            if (!parsedInfo.id && parsedInfo._id) {
-                                parsedInfo.id = parsedInfo._id;
-                                // Replace the info field with updated version
-                                userData.delete('info');
-                                userData.append('info', JSON.stringify(parsedInfo));
-                            }
-                        } catch (e) {
-                            console.error('Error parsing info field:', e);
-                        }
+                    // Check if 'info' field exists
+                    const hasInfoField = userData.get('info') !== null;
+
+                    if (!hasInfoField) {
+                        console.warn('FormData missing required "info" field');
                     }
                 }
 

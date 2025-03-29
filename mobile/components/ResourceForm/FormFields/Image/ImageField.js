@@ -37,7 +37,7 @@ export const ImageField = ({
     mode = 'upload', // 'upload', 'camera', or 'both'
     quality = 0.7,
     maxWidth = 1200,
-    aspectRatio = 4 / 3,
+    aspectRatio = 1,
     onImageChanged,
     multiple = false,
     ...props

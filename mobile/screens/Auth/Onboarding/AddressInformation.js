@@ -16,7 +16,7 @@ import {
     setCurrentStep
 } from '~/states/slices/onboarding';
 import { adminColors } from '~/styles/adminTheme';
-import { createFormDataWithImages } from '~/utils/imageUpload';
+import { createHybridFormData } from '~/utils/imageUpload';
 
 const AddressInformationSchema = Yup.object().shape({
     address: Yup.string().required('Address is required'),
@@ -148,14 +148,14 @@ export default function AddressInformation() {
                 zip_code: values.zip_code,
             };
 
-            // Create FormData with JSON data and avatar image
-            const formData = createFormDataWithImages(
+            // Create hybrid FormData with both 'info' field and individual fields
+            const formData = createHybridFormData(
                 userInfo,
                 { avatar: basicInfo.avatar }
             );
 
             console.log('User ID:', currentUser.id);
-            console.log('Sending formData with ID');
+            console.log('Sending profile update request...');
 
             // Update profile
             const result = await updateProfile(formData).unwrap();
@@ -173,11 +173,49 @@ export default function AddressInformation() {
             // Navigate to email verification
             navigation.navigate('EmailVerification');
         } catch (error) {
-            console.error('Error updating profile:', JSON.stringify(error, null, 2));
+            // Enhanced error handling
+            let errorMessage = 'Failed to update your information.';
+
+            // Handle specific error status codes
+            if (error.status === 400) {
+                // Bad Request - usually validation errors or duplicate data
+                errorMessage = error.data?.message || 'Invalid data provided.';
+
+                // Handle specific bad request messages
+                if (error.data?.message?.includes('Contact already exists')) {
+                    errorMessage = 'This contact number is already registered with another account.';
+                }
+            } else if (error.status === 422) {
+                // Unprocessable Entity - validation errors
+                errorMessage = error.data?.message || 'Please check the provided information.';
+
+                // If we have detailed validation errors, show the first one
+                if (error.data?.errors?.details && error.data.errors.details.length > 0) {
+                    const firstError = error.data.errors.details[0];
+                    errorMessage = `${firstError.path}: ${firstError.msg}`;
+                }
+            } else if (error.status === 401 || error.status === 403) {
+                // Authentication or authorization error
+                errorMessage = 'Please log in again to continue.';
+            } else if (error.status === 500) {
+                // Server error
+                errorMessage = 'A server error occurred. Please try again later.';
+            } else if (error.status === 'FETCH_ERROR') {
+                // Network error
+                errorMessage = 'Network connection error. Please check your internet connection.';
+            }
+
+            // Log the error for debugging (consider removing in production)
+            console.error('Error updating profile:', error);
+
+            // Show error message to the user
             Toast.show({
                 type: 'error',
                 text1: 'Update Failed',
-                text2: error.data?.message || 'Failed to update your information.',
+                text2: errorMessage,
+                visibilityTime: 4000, // Show for 4 seconds
+                autoHide: true,
+                position: 'bottom'
             });
         }
     };

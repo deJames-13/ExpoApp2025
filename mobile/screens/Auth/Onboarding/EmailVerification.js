@@ -244,6 +244,7 @@ export default function EmailVerification() {
                                             onChangeText={(text) => handleOtpChange(text.replace(/[^0-9]/g, ''), index)}
                                             onKeyPress={(e) => handleOtpKeyPress(e, index)}
                                             keyboardType="numeric"
+                                            textColor={adminColors.text.primary}
                                             maxLength={1}
                                             selectTextOnFocus
                                         />
