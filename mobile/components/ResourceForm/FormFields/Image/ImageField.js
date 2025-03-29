@@ -77,8 +77,7 @@ export const ImageField = ({
 
             // Launch the image picker with multiple selection if enabled
             const result = await ImagePicker.launchImageLibraryAsync({
-                // Use MediaType instead of deprecated MediaTypeOptions
-                mediaTypes: ImagePicker.MediaType.Images,
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: !multiple,
                 aspect: [aspectRatio === 1 ? 1 : 4, aspectRatio === 1 ? 1 : 3],
                 quality: quality,
