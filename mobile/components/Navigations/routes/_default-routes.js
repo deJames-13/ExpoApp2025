@@ -61,10 +61,10 @@ export const defaultRoutes = () => [
     {
         name: 'Orders',
         component: Screens.OrderScreen,
-        icon: 'cart',
+        icon: 'receipt', // Changed from 'cart' to 'receipt' for consistency
         options: {
             tabBarIcon: ({ color, size }) => (
-                <Icon name="cart" color={color} size={size} />
+                <Icon name="receipt" color={color} size={size} />
             ),
         },
     },
