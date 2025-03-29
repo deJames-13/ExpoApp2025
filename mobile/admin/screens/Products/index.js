@@ -1,11 +1,10 @@
-import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native'
 import React, { useState, useCallback, useEffect } from 'react'
-import { ResourceTable } from '../../components/ResourceTable'
+import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { productsData } from './data'
 import { productColumns, productActions } from './table-data'
-import { processTableData } from '../../components/ResourceTable/tableUtils'
 import { ProductModal } from './modal'
+import { ResourceTable, processTableData } from '~/components/ResourceTable'
 
 export function Products() {
     const [products, setProducts] = useState(productsData);

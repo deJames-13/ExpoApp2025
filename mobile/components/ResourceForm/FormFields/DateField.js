@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Platform } from 'react-native';
 import { Text, Button, TextInput } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { adminColors } from '../../styles/adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 import { styles } from './styles';
 
 export const DateField = ({

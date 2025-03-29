@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { ResourceForm } from '../../components/ResourceForm';
+import { ResourceForm } from '~/components/ResourceForm';  
 import {
     getProductValidationSchema,
     initialProductValues,

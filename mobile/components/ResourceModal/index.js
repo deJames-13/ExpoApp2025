@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Dimensions, TouchableWithoutFeedback } from 'react-native';
 import { Modal, Portal, Text, Button, Surface } from 'react-native-paper';
-import { adminColors } from '../../styles/adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 
 const { width, height } = Dimensions.get('window');
 

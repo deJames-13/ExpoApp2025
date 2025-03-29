@@ -5,6 +5,7 @@ import { TableProvider, useTable } from './context'
 import { Pagination } from './pagination'
 import { SearchBar } from './searchBar'
 
+export * from './tableUtils'
 // Table header component that accesses context
 function TableHeader() {
     const { requestSort, sortConfig, actions } = useTable();

@@ -10,7 +10,7 @@ import RecentFeedback from './components/RecentFeedback'
 
 // Import data
 import { fetchDashboardData } from './data'
-import { adminStyles, adminColors } from '../../styles/adminTheme'
+import { adminStyles, adminColors } from '~/styles/adminTheme'
 
 export function Dashboard() {
     const [dashboardData, setDashboardData] = useState({

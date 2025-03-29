@@ -1,8 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text, Chip } from 'react-native-paper';
-import { adminColors } from '../../styles/adminTheme';
-import { getStatusChipStyle } from '../../styles/adminThemeUtils';
+import { adminColors } from '~/styles/adminTheme';
+import { getStatusChipStyle } from '~/styles/adminThemeUtils';
 import { styles } from './styles';
 
 export const StatusField = ({

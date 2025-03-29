@@ -1,4 +1,4 @@
-import { colors } from '../../theme/colors';
+import { colors } from '../theme/colors';
 
 // Status color palette with proper opacity variants
 export const statusColors = {

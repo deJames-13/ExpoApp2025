@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Text, Checkbox } from 'react-native-paper';
-import { adminColors } from '../../styles/adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 import { styles } from './styles';
 
 export const CheckboxField = ({

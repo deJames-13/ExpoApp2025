@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Text, Chip, TextInput, Menu, Divider } from 'react-native-paper';
-import { adminColors } from '../../styles/adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 import { styles } from './styles';
 
 export const MultiselectField = ({

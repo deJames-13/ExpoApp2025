@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text, TextInput, IconButton } from 'react-native-paper';
-import { adminColors } from '../../styles/adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 import { styles } from './styles';
 
 export const NumberField = ({

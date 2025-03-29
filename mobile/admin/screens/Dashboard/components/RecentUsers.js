@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, List, Avatar, Button } from 'react-native-paper';
 import { View, Text } from 'react-native';
-import { adminStyles, adminColors } from '../../../styles/adminTheme';
+import { adminStyles, adminColors } from '~/styles/adminTheme';
 
 const RecentUsers = ({ users, onViewAllPress }) => {
     return (

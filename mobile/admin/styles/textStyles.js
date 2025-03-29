@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { adminColors } from './adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 
 // Consistent text styles for admin UI
 export const textStyles = StyleSheet.create({

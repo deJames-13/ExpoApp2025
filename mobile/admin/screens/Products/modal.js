@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
 import { StyleSheet } from 'react-native';
-import { ResourceModal } from '../../components/ResourceModal';
+import { ResourceModal } from '~/components/ResourceModal';
 import { ProductForm } from './form';
-import { adminColors } from '../../styles/adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 
 export function ProductModal({ visible, onDismiss, product, onSave, mode = 'create' }) {
     const formRef = useRef(null);

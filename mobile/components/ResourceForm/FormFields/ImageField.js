@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Image, TouchableOpacity } from 'react-native';
 import { Text, Button, ActivityIndicator } from 'react-native-paper';
-import { adminColors } from '../../styles/adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 import { styles } from './styles';
 
 export const ImageField = ({

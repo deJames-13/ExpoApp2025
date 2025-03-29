@@ -4,7 +4,7 @@ import { Camera } from 'expo-camera';
 import { Button, IconButton, ActivityIndicator } from 'react-native-paper';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import * as IntentLauncher from 'expo-intent-launcher';
-import { adminColors } from '../../styles/adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 import { styles as formStyles } from './styles';
 
 export const CameraField = ({

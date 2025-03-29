@@ -1,7 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Text, Slider } from 'react-native-paper';
-import { adminColors } from '../../styles/adminTheme';
+import Slider from '@react-native-community/slider'; // Fixed import
+import { Text } from 'react-native-paper';
+import { adminColors } from '~/styles/adminTheme';
 import { styles } from './styles';
 
 export const RangeField = ({
@@ -16,6 +17,7 @@ export const RangeField = ({
     max = 100,
     step = 1,
     showValues = true,
+    displayName = '',
     ...props
 }) => {
     const hasError = touched[field] && errors[field];

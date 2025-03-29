@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { adminColors } from '../../styles/adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 
 export const styles = StyleSheet.create({
     // Base field styles
@@ -157,6 +157,7 @@ export const styles = StyleSheet.create({
     checkboxLabel: {
         marginLeft: 8,
         fontSize: 15,
+        color: '#212121',
     },
 
     // Radio button styles
@@ -178,7 +179,12 @@ export const styles = StyleSheet.create({
     radioLabel: {
         marginLeft: 8,
         fontSize: 15,
+        color: '#212121',
     },
+    radioLabelActive: {
+        fontWeight: 'bold'
+    },
+
 
     // Image field styles
     imageFieldContainer: {

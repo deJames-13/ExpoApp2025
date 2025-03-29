@@ -2,7 +2,7 @@ import React from 'react';
 import { View, SafeAreaView, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import DashboardTable from '../../components/table';
-import { getStatusChipStyle } from '../../styles/adminThemeUtils';
+import { getStatusChipStyle } from '~/styles/adminThemeUtils';
 
 export default function ExampleTable() {
     const initialData = [

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Text, RadioButton } from 'react-native-paper';
-import { adminColors } from '../../styles/adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 import { styles } from './styles';
 
 export const RadioField = ({
@@ -55,7 +55,8 @@ export const RadioField = ({
                             />
                             <Text style={[
                                 styles.radioLabel,
-                                disabled && styles.disabledText
+                                disabled && styles.disabledText,
+                                value === optionValue && styles.radioLabelActive
                             ]}>
                                 {optionLabel}
                             </Text>

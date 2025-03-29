@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
-import { globalStyles } from '../../styles/global';
-import { colors } from '../../theme/colors';
-import { theme } from '../../core/theme';
+import { globalStyles } from './global';
+import { colors } from '../theme/colors';
+import { theme } from '../core/theme';
 import { statusColors, getStatusColor } from './adminThemeUtils';
 
 // Admin-specific color palette extending the main theme

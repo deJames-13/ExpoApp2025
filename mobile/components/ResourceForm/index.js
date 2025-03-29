@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Formik } from 'formik';
-import { adminColors } from '../../styles/adminTheme';
-import { FieldMapper, FormRow, HalfField, CustomLayout } from '../FormFields';
+import { FieldMapper, FormRow, HalfField, CustomLayout } from './FormFields';
 
 export function ResourceForm({
     initialValues,

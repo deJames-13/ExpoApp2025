@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { adminColors } from './adminTheme';
+import { adminColors } from '~/styles/adminTheme';
 
 export const accountStyles = StyleSheet.create({
     scrollContent: {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { Card, Button } from 'react-native-paper';
-import { adminStyles, adminColors } from '../../../styles/adminTheme';
+import { adminStyles, adminColors } from '~/styles/adminTheme';
 
 const RecentFeedback = ({ newFeedbackCount, onReviewPress }) => {
     return (
