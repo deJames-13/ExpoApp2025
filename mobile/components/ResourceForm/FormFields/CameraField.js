@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Alert, Linking } from 'react-native';
-import { Camera } from 'expo-camera';
-import { Button, IconButton, ActivityIndicator } from 'react-native-paper';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Alert, Linking, Dimensions, StatusBar } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Button, IconButton, ActivityIndicator, Portal } from 'react-native-paper';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { adminColors } from '~/styles/adminTheme';
@@ -16,42 +16,29 @@ export const CameraField = ({
     touched,
     disabled = false,
     aspectRatio = 1,
-    quality = 0.7, // Image quality (0 to 1)
-    maxWidth = 1200, // Max width for resizing
+    quality = 0.7,
+    maxWidth = 1200,
     placeholder = 'Take a photo',
     previewWidth = 300,
     previewHeight = 300,
     onImageCaptured,
     ...props
 }) => {
-    const [hasPermission, setHasPermission] = useState(null);
+    const [permission, requestPermission] = useCameraPermissions();
     const [cameraVisible, setCameraVisible] = useState(false);
-    const [type, setType] = useState(Camera.Constants.Type.back);
-    const [flash, setFlash] = useState(Camera.Constants.FlashMode.off);
+    const [facing, setFacing] = useState('back');
+    const [flash, setFlash] = useState('off');
     const [loading, setLoading] = useState(false);
     const cameraRef = useRef(null);
     const hasError = touched[field] && errors[field];
-
-    // Request camera permissions
-    const requestPermissions = async () => {
-        try {
-            const { status } = await Camera.requestCameraPermissionsAsync();
-            setHasPermission(status === 'granted');
-
-            if (status !== 'granted') {
-                showPermissionAlert();
-            }
-        } catch (error) {
-            console.error("Error requesting camera permissions:", error);
-            setHasPermission(false);
-        }
-    };
+    const isMounted = useRef(true);
 
     useEffect(() => {
-        requestPermissions();
+        return () => {
+            isMounted.current = false;
+        };
     }, []);
 
-    // Show alert when permission is denied
     const showPermissionAlert = () => {
         Alert.alert(
             "Camera Permission Required",
@@ -66,34 +53,28 @@ export const CameraField = ({
         );
     };
 
-    // Open device settings to enable permissions
     const openSettings = () => {
         if (Platform.OS === 'ios') {
             Linking.openURL('app-settings:');
         } else {
-            // For Android
             IntentLauncher.startActivityAsync(
                 IntentLauncher.ActivityAction.APPLICATION_DETAILS_SETTINGS,
                 { data: 'package:' + expo.applicationId }
             ).catch(() => {
-                // If the above fails, try this as fallback
                 Linking.openSettings();
             });
         }
     };
 
-    const openCamera = () => {
+    const openCamera = async () => {
         if (disabled) return;
 
-        if (hasPermission === null) {
-            // If permission state is unknown, re-request
-            requestPermissions();
-            return;
-        }
-
-        if (hasPermission === false) {
-            showPermissionAlert();
-            return;
+        if (!permission?.granted) {
+            const permissionResult = await requestPermission();
+            if (!permissionResult.granted) {
+                showPermissionAlert();
+                return;
+            }
         }
 
         setCameraVisible(true);
@@ -103,53 +84,67 @@ export const CameraField = ({
         setCameraVisible(false);
     };
 
-    const toggleCameraType = () => {
-        setType(
-            type === Camera.Constants.Type.back
-                ? Camera.Constants.Type.front
-                : Camera.Constants.Type.back
-        );
+    const toggleCameraFacing = () => {
+        setFacing(current => (current === 'back' ? 'front' : 'back'));
     };
 
     const toggleFlash = () => {
-        setFlash(
-            flash === Camera.Constants.FlashMode.off
-                ? Camera.Constants.FlashMode.on
-                : Camera.Constants.FlashMode.off
-        );
+        setFlash(current => (current === 'off' ? 'on' : 'off'));
     };
 
     const takePicture = async () => {
-        if (cameraRef.current) {
-            try {
-                setLoading(true);
-                const photo = await cameraRef.current.takePictureAsync({
-                    quality,
-                    skipProcessing: true, // Skip additional processing for speed
-                });
+        if (!cameraRef.current) {
+            console.error("Camera reference is not available");
+            setLoading(false);
+            return;
+        }
 
-                // Resize and compress image
-                const manipulatedImage = await manipulateAsync(
-                    photo.uri,
-                    [{ resize: { width: maxWidth } }],
-                    { compress: quality, format: SaveFormat.JPEG }
-                );
+        try {
+            setLoading(true);
 
-                // Set the field value with the image URI
-                setFieldValue(field, manipulatedImage.uri);
+            // Add timeout to prevent infinite loading
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Camera timeout')), 10000)
+            );
 
-                // Call optional callback with the full image object
-                if (onImageCaptured) {
-                    onImageCaptured(manipulatedImage);
-                }
+            // Race the camera capture against a timeout
+            const photo = await Promise.race([
+                cameraRef.current.takePictureAsync({ quality }),
+                timeoutPromise
+            ]);
 
-                // Close the camera view
+            console.log("Photo captured:", photo.uri);
+
+            // Process the image
+            const manipulatedImage = await manipulateAsync(
+                photo.uri,
+                [{ resize: { width: maxWidth } }],
+                { compress: quality, format: SaveFormat.JPEG }
+            );
+
+            console.log("Image processed:", manipulatedImage.uri);
+
+            // Update form and UI
+            setFieldValue(field, manipulatedImage.uri);
+
+            if (onImageCaptured) {
+                onImageCaptured(manipulatedImage);
+            }
+
+            // Use setTimeout to ensure state updates before camera closes
+            setTimeout(() => {
                 closeCamera();
                 setLoading(false);
-            } catch (error) {
-                console.error("Error taking picture:", error);
-                setLoading(false);
-            }
+            }, 100);
+
+        } catch (error) {
+            console.error("Error taking picture:", error);
+            Alert.alert(
+                "Camera Error",
+                "Failed to capture image. Please try again.",
+                [{ text: "OK" }]
+            );
+            setLoading(false);
         }
     };
 
@@ -158,8 +153,21 @@ export const CameraField = ({
         setFieldValue(field, null);
     };
 
-    // Return permission error message if camera permission not granted
-    if (hasPermission === false) {
+    if (!permission) {
+        return (
+            <View style={formStyles.fieldContainer}>
+                <Text style={formStyles.fieldLabel}>{label}</Text>
+                <View style={[styles.permissionError, { width: previewWidth, height: previewHeight }]}>
+                    <ActivityIndicator size="large" color={adminColors.primary} />
+                    <Text style={[styles.permissionErrorText, { marginTop: 16 }]}>
+                        Checking camera permissions...
+                    </Text>
+                </View>
+            </View>
+        );
+    }
+
+    if (!permission.granted) {
         return (
             <View style={formStyles.fieldContainer}>
                 <Text style={formStyles.fieldLabel}>{label}</Text>
@@ -169,7 +177,7 @@ export const CameraField = ({
                     </Text>
                     <Button
                         mode="contained"
-                        onPress={requestPermissions}
+                        onPress={requestPermission}
                         style={styles.permissionButton}
                     >
                         Request Permission
@@ -189,75 +197,73 @@ export const CameraField = ({
         );
     }
 
-    // Camera view when active
     if (cameraVisible) {
         return (
-            <View style={styles.cameraContainer}>
-                {hasPermission === null ? (
-                    <ActivityIndicator size="large" color={adminColors.primary} />
-                ) : (
-                    <>
-                        <Camera
-                            ref={cameraRef}
-                            style={styles.camera}
-                            type={type}
-                            flashMode={flash}
-                            ratio={aspectRatio === 1 ? "1:1" : "4:3"}
-                        >
-                            <View style={styles.cameraOverlay}>
-                                {/* Transparent capture frame */}
+            <Portal>
+                <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+                <View style={styles.fullScreenContainer}>
+                    <CameraView
+                        ref={cameraRef}
+                        style={styles.camera}
+                        facing={facing}
+                        flash={flash}
+                        onMountError={(error) => {
+                            console.error("Camera mount error:", error);
+                            Alert.alert("Camera Error", "Failed to initialize camera. Please try again.");
+                            closeCamera();
+                        }}
+                    >
+                        <View style={styles.cameraOverlay}>
+                            <View style={styles.captureFrameContainer}>
                                 <View style={styles.captureFrame} />
-
-                                {/* Camera controls */}
-                                <View style={styles.controlsContainer}>
-                                    <IconButton
-                                        icon="close"
-                                        size={30}
-                                        iconColor="#fff"
-                                        style={styles.controlButton}
-                                        onPress={closeCamera}
-                                    />
-
-                                    <IconButton
-                                        icon={flash === Camera.Constants.FlashMode.off ? "flash-off" : "flash"}
-                                        size={30}
-                                        iconColor="#fff"
-                                        style={styles.controlButton}
-                                        onPress={toggleFlash}
-                                    />
-
-                                    <IconButton
-                                        icon="camera-flip"
-                                        size={30}
-                                        iconColor="#fff"
-                                        style={styles.controlButton}
-                                        onPress={toggleCameraType}
-                                    />
-                                </View>
-
-                                {/* Capture button */}
-                                <View style={styles.captureButtonContainer}>
-                                    <TouchableOpacity
-                                        style={styles.captureButton}
-                                        onPress={takePicture}
-                                        disabled={loading}
-                                    >
-                                        {loading ? (
-                                            <ActivityIndicator size="small" color="#fff" />
-                                        ) : (
-                                            <View style={styles.captureButtonInner} />
-                                        )}
-                                    </TouchableOpacity>
-                                </View>
                             </View>
-                        </Camera>
-                    </>
-                )}
-            </View>
+
+                            <View style={styles.controlsContainer}>
+                                <IconButton
+                                    icon="close"
+                                    size={30}
+                                    iconColor="#fff"
+                                    style={styles.controlButton}
+                                    onPress={closeCamera}
+                                />
+
+                                <IconButton
+                                    icon={flash === 'off' ? "flash-off" : "flash"}
+                                    size={30}
+                                    iconColor="#fff"
+                                    style={styles.controlButton}
+                                    onPress={toggleFlash}
+                                />
+
+                                <IconButton
+                                    icon="camera-flip"
+                                    size={30}
+                                    iconColor="#fff"
+                                    style={styles.controlButton}
+                                    onPress={toggleCameraFacing}
+                                />
+                            </View>
+
+                            <View style={styles.captureButtonContainer}>
+                                <TouchableOpacity
+                                    style={styles.captureButton}
+                                    onPress={takePicture}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        <ActivityIndicator size="small" color="#fff" />
+                                    ) : (
+                                        <View style={styles.captureButtonInner} />
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </CameraView>
+                </View>
+            </Portal>
         );
     }
 
-    // Regular field view with preview or placeholder
     return (
         <View style={formStyles.fieldContainer}>
             <Text style={formStyles.fieldLabel}>{label}</Text>
@@ -319,7 +325,20 @@ export const CameraField = ({
     );
 };
 
+const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
+    fullScreenContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#000',
+        zIndex: 9999,
+    },
     cameraContainer: {
         flex: 1,
         width: '100%',
@@ -340,15 +359,18 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'space-between',
     },
+    captureFrameContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     captureFrame: {
-        width: '70%',
+        width: Math.min(windowWidth * 0.7, windowHeight * 0.7),
         aspectRatio: 1,
         backgroundColor: 'transparent',
         borderWidth: 2,
         borderColor: 'white',
         borderRadius: 10,
-        alignSelf: 'center',
-        marginTop: '25%',
     },
     controlsContainer: {
         flexDirection: 'row',
@@ -358,13 +380,14 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
+        zIndex: 10,
     },
     controlButton: {
         backgroundColor: 'rgba(0,0,0,0.3)',
     },
     captureButtonContainer: {
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: 40,
     },
     captureButton: {
         width: 70,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { ResourceForm } from '~/components/ResourceForm';  
+import { ResourceForm } from '~/components/ResourceForm';
 import {
     getProductValidationSchema,
     initialProductValues,
@@ -23,7 +23,8 @@ export function ProductForm({ product, mode = 'create', onSubmit, formRef }) {
     useEffect(() => {
         const fieldsOptions = {
             includeAdvancedFields: mode !== 'create',
-            includeImages: true
+            includeImages: true,
+            includeCamera: true // Enable camera field
         };
 
         // Configure validation based on mode
@@ -47,6 +48,7 @@ export function ProductForm({ product, mode = 'create', onSubmit, formRef }) {
                 ...initialProductValues,
                 ...(product || {}),
                 image: product?.image || null,
+                cameraImage: product?.cameraImage || null, // Add initial value for camera image
                 featured: product?.featured || false,
                 rating: product?.rating || 0
             }}

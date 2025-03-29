@@ -5,6 +5,7 @@ import { productStatusOptions } from './validation';
  * 
  * @param {Object} options - Configuration options
  * @param {boolean} options.includeImages - Whether to include image fields
+ * @param {boolean} options.includeCamera - Whether to include camera field
  * @param {boolean} options.includeAdvancedFields - Whether to include advanced fields like ratings
  * @param {Object} options.customFields - Custom fields to include
  * @param {Array} options.exclude - Field names to exclude
@@ -13,6 +14,7 @@ import { productStatusOptions } from './validation';
 export const getProductFields = (options = {}) => {
     const {
         includeImages = true,
+        includeCamera = false,
         includeAdvancedFields = true,
         customFields = {},
         exclude = []
@@ -86,6 +88,20 @@ export const getProductFields = (options = {}) => {
         }
     ] : [];
 
+    // Camera fields
+    const cameraFields = includeCamera ? [
+        {
+            type: 'camera',
+            field: 'cameraImage',
+            label: 'Take Product Photo',
+            placeholder: 'Take a photo of your product',
+            previewWidth: 300,
+            previewHeight: 200,
+            aspectRatio: 4 / 3,
+            quality: 0.8
+        }
+    ] : [];
+
     // Advanced fields
     const advancedFields = includeAdvancedFields ? [
         {
@@ -107,6 +123,7 @@ export const getProductFields = (options = {}) => {
     let allFields = [
         ...baseFields,
         ...imageFields,
+        ...cameraFields,
         ...advancedFields
     ];
 
