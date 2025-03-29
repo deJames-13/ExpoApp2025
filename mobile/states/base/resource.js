@@ -60,7 +60,7 @@ export default function resourceBuilder(resource, customEndpoints = (builder) =>
                 const method = payload.method || 'PATCH';
 
                 return {
-                    url: `${resource}/${id}${qStr}`,
+                    url: `${resource}/edit/${id}${qStr}`,
                     method,
                     body: data,
                     headers,
@@ -82,7 +82,7 @@ export default function resourceBuilder(resource, customEndpoints = (builder) =>
                 const method = isOptionsObject && payload.method ? payload.method : 'DELETE';
 
                 return {
-                    url: `${resource}/${id}${qStr}`,
+                    url: `${resource}/delete/${id}${qStr}`,
                     method,
                     headers,
                     ...(isOptionsObject && payload.options)

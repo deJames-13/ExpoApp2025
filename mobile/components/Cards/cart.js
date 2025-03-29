@@ -1,138 +1,89 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import React from 'react';
+import { Checkbox } from 'react-native-paper';
 
-const CartCard = ({ item, onViewDetails, isSelected, onToggleSelection }) => {
-    const { id, name, price, quantity, status } = item;
-
-    const getStatusColor = () => {
-        switch (status.toLowerCase()) {
-            case 'in stock':
-                return '#4CAF50'; // green
-            case 'processing':
-                return '#FF9800'; // orange
-            case 'out of stock':
-                return '#F44336'; // red
-            default:
-                return '#9E9E9E'; // grey
-        }
-    };
-
-    const handlePress = () => {
-        onToggleSelection(id);
-    };
-
-    const handleViewDetailsPress = () => {
-        onViewDetails(id);
-    };
+const CartCard = ({ item, onViewDetails, onDeleteItem, isSelected, onToggleSelection }) => {
+    const productName = item.product?.name || 'Product';
+    const productPrice = item.price || 0;
+    const quantity = item.quantity || 0;
+    const total = item.total || 0;
+    const imageUrl = item.product?.images?.[0] || process.env.EXPO_PUBLIC_APP_LOGO;
+    const status = item.product?.stock > 0 ? 'In Stock' : 'Out of Stock';
 
     return (
-        <TouchableOpacity
-            style={[
-                styles.cardContainer,
-                isSelected && styles.selectedCard
-            ]}
-            onPress={handlePress}
-        >
-            <View style={styles.selectionIndicator}>
-                <View style={[
-                    styles.checkCircle,
-                    isSelected && styles.checkedCircle
-                ]}>
-                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                </View>
-            </View>
-            <View style={styles.imageContainer}>
-                <Image
-                    source={{ uri: process.env.EXPO_PUBLIC_APP_LOGO }}
-                    style={styles.image}
-                    resizeMode="cover"
+        <View style={[styles.card, isSelected && styles.selectedCard]}>
+            <TouchableOpacity style={styles.checkbox} onPress={onToggleSelection}>
+                <Checkbox
+                    status={isSelected ? 'checked' : 'unchecked'}
+                    onPress={onToggleSelection}
+                    color="#2196F3"
                 />
-            </View>
-            <View style={styles.infoContainer}>
-                <Text style={styles.name}>{name}</Text>
-                <Text style={styles.price}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {price.toFixed(2)}</Text>
-                <View style={styles.detailsRow}>
+            </TouchableOpacity>
+
+            <Image
+                source={{ uri: imageUrl }}
+                style={styles.image}
+                resizeMode="contain"
+            />
+
+            <View style={styles.details}>
+                <Text style={styles.name} numberOfLines={2}>{productName}</Text>
+                <Text style={styles.price}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {productPrice.toFixed(2)}</Text>
+                <View style={styles.quantityRow}>
                     <Text style={styles.quantity}>Qty: {quantity}</Text>
-                    <Text style={[styles.status, { color: getStatusColor() }]}>
+                    <Text style={[styles.status, {
+                        color: status === 'In Stock' ? '#4CAF50' : '#F44336'
+                    }]}>
                         {status}
                     </Text>
                 </View>
+                <Text style={styles.total}>Total: {process.env.EXPO_PUBLIC_APP_CURRENCY} {total.toFixed(2)}</Text>
             </View>
-            <View style={styles.actionsContainer}>
-                <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={handleViewDetailsPress}
-                >
-                    <Text style={styles.actionText}>Details</Text>
+
+            <View style={styles.actions}>
+                <TouchableOpacity style={styles.actionButton} onPress={onViewDetails}>
+                    <Text style={styles.actionButtonText}>View</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.actionButton, styles.removeButton]}>
-                    <Text style={styles.removeText}>Remove</Text>
+                <TouchableOpacity style={[styles.actionButton, styles.deleteButton]} onPress={onDeleteItem}>
+                    <Text style={styles.deleteButtonText}>Remove</Text>
                 </TouchableOpacity>
             </View>
-        </TouchableOpacity>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    centered: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    cardContainer: {
+    card: {
+        flexDirection: 'row',
         backgroundColor: '#fff',
         borderRadius: 8,
         padding: 12,
         marginBottom: 12,
-        flexDirection: 'row',
+        elevation: 2,
         shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 4,
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: 'transparent',
+        shadowRadius: 2,
     },
     selectedCard: {
         borderColor: '#2196F3',
+        borderWidth: 1,
         backgroundColor: '#E3F2FD',
     },
-    selectionIndicator: {
+    checkbox: {
         justifyContent: 'center',
         marginRight: 8,
     },
-    checkCircle: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#BDBDBD',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    checkedCircle: {
-        backgroundColor: '#2196F3',
-        borderColor: '#2196F3',
-    },
-    checkmark: {
-        color: 'white',
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
-    imageContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 4,
-        overflow: 'hidden',
-        marginRight: 12,
-    },
     image: {
-        width: '100%',
-        height: '100%',
+        width: 70,
+        height: 70,
+        borderRadius: 4,
+        backgroundColor: '#f5f5f5',
     },
-    infoContainer: {
+    details: {
         flex: 1,
-        justifyContent: 'center',
+        marginLeft: 12,
+        justifyContent: 'space-between',
     },
     name: {
         fontSize: 16,
@@ -140,44 +91,53 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     price: {
-        fontSize: 15,
+        fontSize: 14,
         color: '#2196F3',
-        marginBottom: 4,
+        marginBottom: 2,
     },
-    detailsRow: {
+    quantityRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 2,
     },
     quantity: {
         fontSize: 14,
         color: '#757575',
     },
     status: {
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    total: {
         fontSize: 14,
         fontWeight: '500',
-        paddingHorizontal: 8,
     },
-    actionsContainer: {
-        justifyContent: 'center',
-        alignItems: 'flex-end',
+    actions: {
+        justifyContent: 'space-between',
+        paddingLeft: 8,
     },
     actionButton: {
         paddingVertical: 6,
-        paddingHorizontal: 10,
-        marginBottom: 4,
-    },
-    actionText: {
-        color: '#2196F3',
-        fontSize: 14,
-    },
-    removeButton: {
-        backgroundColor: '#ffebee',
+        paddingHorizontal: 12,
         borderRadius: 4,
+        backgroundColor: '#E3F2FD',
+        alignItems: 'center',
+        marginBottom: 6,
     },
-    removeText: {
+    actionButtonText: {
+        color: '#2196F3',
+        fontWeight: '500',
+        fontSize: 12,
+    },
+    deleteButton: {
+        backgroundColor: '#FFEBEE',
+    },
+    deleteButtonText: {
         color: '#F44336',
-        fontSize: 14,
-    }
+        fontWeight: '500',
+        fontSize: 12,
+    },
 });
 
 export default CartCard;

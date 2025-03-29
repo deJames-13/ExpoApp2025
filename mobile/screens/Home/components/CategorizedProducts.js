@@ -13,7 +13,7 @@ export default function CategorizedProducts({ route, navigation }) {
     const [allProducts, setAllProducts] = useState([]);
 
     // Use resource hook for fetching products
-    const productResource = useResource('products');
+    const productResource = useResource({ resourceName: 'products' });
     const {
         states: { data: products, loading },
         actions: { fetchDatas }

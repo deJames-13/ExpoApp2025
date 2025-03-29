@@ -1,2 +1,2 @@
-- [ ] Fix useResource
-- [ ] add component testing area
+TRANSACTION
+- Cart Detail Update Fix

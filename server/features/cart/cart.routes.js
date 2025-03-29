@@ -11,9 +11,14 @@ export default [
         controller: [...protectAndPermit(READ_WRITE), controller.getAll],
       },
       {
+        path: PATHS.ID,
+        method: METHODS.GET,
+        controller: [...protectAndPermit(READ_WRITE), controller.getById],
+      },
+      {
         path: PATHS.EDIT,
         method: METHODS.PATCH,
-        controller: [...protectAndPermit(READ_WRITE), controller.store],
+        controller: [...protectAndPermit(READ_WRITE), controller.update],
       },
       {
         path: PATHS.STORE,
@@ -24,6 +29,11 @@ export default [
         path: PATHS.DELETE,
         method: METHODS.DELETE,
         controller: [...protectAndPermit(READ_WRITE), controller.delete],
+      },
+      {
+        path: '/clear',
+        method: METHODS.DELETE,
+        controller: [...protectAndPermit(READ_WRITE), controller.clear],
       },
     ],
   },

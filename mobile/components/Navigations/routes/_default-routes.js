@@ -41,12 +41,16 @@ export const defaultRoutes = () => [
     {
         name: 'Cart',
         component: Screens.CartScreen,
-        icon: 'shopping-cart',  // Updated icon name for consistency
+        icon: 'shopping-cart',
         options: {
             tabBarIcon: ({ color, size }) => (
                 <Icon name="shopping-cart" color={color} size={size} />
             ),
         },
+    },
+    {
+        name: 'CartDetailView',
+        component: Screens.CartDetailView,
     },
     {
         name: 'Checkout',

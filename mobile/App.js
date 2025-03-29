@@ -5,6 +5,7 @@ import Toast from 'react-native-toast-message';
 import { Provider } from 'react-redux';
 import { PaperProvider } from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
+import { View, Text } from 'react-native';
 
 import store from '~/states/store';
 import MainNav from '~/components/Navigations';
@@ -13,6 +14,9 @@ import { FirebaseAuthProvider } from '~/firebase/FirebaseAuthContext';
 import { useLoadUser } from './hooks/useAuth';
 import { AuthProvider } from './contexts/AuthContext';
 import { navigationRef } from './navigation/navigationService';
+
+// Import toast configuration from the separate file
+import toastConfig from './toast.config';
 
 function AppContent() {
   const { isHydrated } = useLoadUser();
@@ -36,7 +40,7 @@ function AppContent() {
           </AuthProvider>
         </PaperProvider>
       </NavigationContainer>
-      <Toast />
+      <Toast config={toastConfig} position="top" />
     </FirebaseAuthProvider>
   );
 }

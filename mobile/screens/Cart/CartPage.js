@@ -1,21 +1,33 @@
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import CartHeader from './CartHeader'
 import CartList from './CartList'
+import useResource from '~/hooks/useResource';
+import { ActivityIndicator } from 'react-native';
+import Toast from 'react-native-toast-message';
+import resourceEndpoints from '~/states/api/resources';
 
-export function CartPage({ navigation }) {
-    const [cartItems, setCartItems] = useState([
-        { id: '1', name: 'Ray-Ban Aviator', price: 149.99, quantity: 1, status: 'In Stock' },
-        { id: '2', name: 'Oakley Holbrook', price: 129.99, quantity: 2, status: 'In Stock' },
-        { id: '3', name: 'Gucci GG0036S', price: 299.99, quantity: 1, status: 'Processing' },
-    ]);
+export function CartPage({ navigation, route }) {
+    const {
+        states: { data: cartItems, loading, refresh },
+        actions: { fetchDatas, doDestroy },
+        events: { onDestroy }
+    } = useResource({ resourceName: 'cart' });
 
-    // Selection state - can be moved to Redux later
+
     const [selectedItems, setSelectedItems] = useState({});
-
     const [searchQuery, setSearchQuery] = useState('');
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const { params } = route || {};
+    const shouldRefresh = params?.refresh || false;
 
-    // Action handlers - can be moved to Redux actions later
+    useEffect(() => {
+        fetchDatas();
+        if (shouldRefresh && navigation.setParams) {
+            navigation.setParams({ refresh: false });
+        }
+    }, [refresh, shouldRefresh]);
+
     const handleToggleSelection = (itemId) => {
         setSelectedItems(prev => ({
             ...prev,
@@ -39,51 +51,195 @@ export function CartPage({ navigation }) {
         setSearchQuery(query);
     };
 
-    const handleViewDetails = (itemId) => {
-        navigation.navigate('CartDetailView', { itemId });
+    const handleViewDetails = (item) => {
+        console.log(item)
+        navigation.navigate('DefaultRoutes', {
+            screen: 'CartDetailView',
+            params: {
+                itemId: item.product.id,
+                cartItemId: item.id,
+                quantity: item.quantity,
+                price: item.price
+            }
+        });
+    };
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await fetchDatas();
+            Toast.show({
+                type: 'success',
+                text1: 'Cart Updated',
+                text2: 'Your cart has been refreshed',
+                visibilityTime: 2000,
+            });
+        } catch (error) {
+            Toast.show({
+                type: 'error',
+                text1: 'Refresh Failed',
+                text2: 'Unable to refresh cart data',
+            });
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
+    const handleDeleteItem = (itemId) => {
+        Alert.alert(
+            "Remove Item",
+            "Are you sure you want to remove this item from your cart?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Remove",
+                    onPress: () => {
+                        setIsRefreshing(true);
+                        doDestroy(itemId).then(() => {
+                            // Update local state immediately for better UX
+                            const updatedItems = cartItems.filter(item => item.id !== itemId);
+
+                            // Also remove from selected items
+                            const updatedSelectedItems = { ...selectedItems };
+                            delete updatedSelectedItems[itemId];
+                            setSelectedItems(updatedSelectedItems);
+
+                            Toast.show({
+                                type: 'success',
+                                text1: 'Item Removed',
+                                text2: 'The item was removed from your cart',
+                            });
+
+                            // Refresh data from server to ensure sync
+                            fetchDatas().finally(() => {
+                                setIsRefreshing(false);
+                            });
+                        }).catch(error => {
+                            setIsRefreshing(false);
+                            Toast.show({
+                                type: 'error',
+                                text1: 'Error',
+                                text2: 'Failed to remove item from cart',
+                            });
+                        });
+                    },
+                    style: "destructive"
+                }
+            ]
+        );
+    };
+
+    const handleClearCart = () => {
+        if (cartItems.length === 0) {
+            Toast.show({
+                type: 'info',
+                text1: 'Cart Empty',
+                text2: 'Your cart is already empty',
+            });
+            return;
+        }
+
+        Alert.alert(
+            "Clear Cart",
+            "Are you sure you want to remove all items from your cart?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Clear All",
+                    onPress: async () => {
+                        try {
+                            const response = await resourceEndpoints.useClearCartMutation()[0]().unwrap();
+                            Toast.show({
+                                type: 'success',
+                                text1: 'Cart Cleared',
+                                text2: 'All items were removed from your cart',
+                            });
+                            setSelectedItems({});
+                            fetchDatas();
+                        } catch (error) {
+                            Toast.show({
+                                type: 'error',
+                                text1: 'Error',
+                                text2: 'Failed to clear cart',
+                            });
+                        }
+                    },
+                    style: "destructive"
+                }
+            ]
+        );
     };
 
     const handleCheckout = () => {
         // Only checkout selected items
         const itemsToCheckout = cartItems.filter(item => selectedItems[item.id]);
 
-        // Navigate to Checkout with selected items
+        if (itemsToCheckout.length === 0) {
+            Toast.show({
+                type: 'info',
+                text1: 'No Items Selected',
+                text2: 'Please select items to checkout',
+            });
+            return;
+        }
+
         navigation.navigate('DefaultRoutes', {
             screen: 'Checkout',
-            params: {
-                items: itemsToCheckout
-            }
+            params: { items: itemsToCheckout }
         });
     };
 
     const filteredItems = cartItems.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        item.product?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Selectors - can be moved to Redux selectors later
+    // Selectors
     const selectedCount = Object.values(selectedItems).filter(Boolean).length;
     const totalAmount = cartItems
         .filter(item => selectedItems[item.id])
-        .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        .reduce((sum, item) => sum + (item.total || 0), 0);
+
+    if (loading && cartItems.length === 0) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#2196F3" />
+                <Text style={styles.loadingText}>Loading cart items...</Text>
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
             <CartHeader
+                navigation={navigation}
                 onSearch={handleSearch}
                 onSelectAll={handleSelectAll}
                 onDeselectAll={handleDeselectAll}
+                onClearCart={handleClearCart}
+                onRefresh={handleRefresh}
                 selectedCount={selectedCount}
                 totalCount={cartItems.length}
             />
             <CartList
+                navigation={navigation}
                 items={filteredItems}
                 onViewDetails={handleViewDetails}
+                onDeleteItem={handleDeleteItem}
                 selectedItems={selectedItems}
                 onToggleSelection={handleToggleSelection}
+                loading={loading || isRefreshing}
+                onRefresh={handleRefresh}
+                refreshing={isRefreshing}
             />
             <View style={styles.summary}>
                 <Text style={styles.summaryText}>Selected Items: {selectedCount}</Text>
-                <Text style={styles.summaryText}>Total Amount: ${totalAmount.toFixed(2)}</Text>
+                <Text style={styles.summaryText}>Total Amount: {process.env.EXPO_PUBLIC_APP_CURRENCY} {totalAmount.toFixed(2)}</Text>
                 <TouchableOpacity
                     style={[styles.checkoutButton, selectedCount === 0 && styles.disabledButton]}
                     onPress={handleCheckout}
@@ -100,6 +256,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f5f5f5',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+    },
+    loadingText: {
+        marginTop: 10,
+        color: '#757575',
     },
     summary: {
         padding: 16,

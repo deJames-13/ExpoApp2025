@@ -1,11 +1,12 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import api from '~/axios.config';
 import HttpErrorView from '~/components/Errors/HttpErrorView';
 import Carousel from '~/components/Carousel';
+import useResource from '~/hooks/useResource';
+import Toast from 'react-native-toast-message';
 
 const ProductDetailView = ({ route, navigation }) => {
-
     // Extract productId safely
     const { productId } = route.params || {};
     const [product, setProduct] = useState(null);
@@ -13,6 +14,9 @@ const ProductDetailView = ({ route, navigation }) => {
     const [error, setError] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [statusCode, setStatusCode] = useState(404);
+    const [addingToCart, setAddingToCart] = useState(false);
+
+    const { actions: { doStore: addToCart } } = useResource({ resourceName: 'cart' });
 
     useEffect(() => {
         fetchProductDetails();
@@ -44,6 +48,149 @@ const ProductDetailView = ({ route, navigation }) => {
             setStatusCode(err.response?.status || 'network');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAddToCart = async () => {
+        if (!product || product.stock <= 0) {
+            Toast.show({
+                type: 'error',
+                text1: 'Out of Stock',
+                text2: 'This product is currently unavailable',
+            });
+            return;
+        }
+
+        if (quantity > product.stock) {
+            Toast.show({
+                type: 'error',
+                text1: 'Stock Limitation',
+                text2: `Only ${product.stock} units available`,
+            });
+            return;
+        }
+
+        try {
+            setAddingToCart(true);
+
+            const cartData = {
+                product: product.id,
+                quantity: quantity
+            };
+
+            // Proper error handling with more detailed logging
+            const response = await addToCart(cartData);
+            console.log("Add to cart response:", response);
+
+            // Check for error object properties that might be returned from the API
+            if (response && response.error) {
+                throw new Error(response.error);
+            }
+
+            // Extract the actual response data - could be direct or nested in resource
+            const responseData = response.resource || response;
+
+            // Check if this was an existing item (backend message will tell us)
+            const wasUpdatedItem = response.message && response.message.includes('Quantity increased');
+
+            // Success message based on whether item was new or updated
+            const successMessage = wasUpdatedItem
+                ? `Updated cart! Added ${quantity} more ${quantity > 1 ? 'items' : 'item'}`
+                : `Added ${quantity} ${quantity > 1 ? 'items' : 'item'} to your cart`;
+
+            if (responseData && (responseData.id || responseData._id)) {
+                Toast.show({
+                    type: 'success',
+                    text1: wasUpdatedItem ? 'Cart Updated' : 'Added to Cart',
+                    text2: successMessage,
+                });
+
+                // Option to navigate to cart
+                Alert.alert(
+                    wasUpdatedItem ? "Cart Updated" : "Added to Cart",
+                    "Would you like to view your cart or continue shopping?",
+                    [
+                        {
+                            text: "Continue Shopping",
+                            style: "cancel"
+                        },
+                        {
+                            text: "View Cart",
+                            onPress: () => {
+                                // Same navigation logic as before
+                                navigation.navigate('DefaultNav', {
+                                    screen: 'DefaultRoutes',
+                                    params: {
+                                        screen: 'Cart',
+                                        params: { refresh: true }
+                                    }
+                                });
+                            }
+                        }
+                    ]
+                );
+            } else if (response && response.success === true) {
+                // Alternative success format
+                Toast.show({
+                    type: 'success',
+                    text1: 'Added to Cart',
+                    text2: `${quantity} ${quantity > 1 ? 'items' : 'item'} added to your cart`,
+                });
+
+                // Standard Alert for navigation options
+                Alert.alert(
+                    "Added to Cart",
+                    "Would you like to view your cart or continue shopping?",
+                    [
+                        {
+                            text: "Continue Shopping",
+                            style: "cancel"
+                        },
+                        {
+                            text: "View Cart",
+                            onPress: () => {
+                                // Same navigation logic as above
+                                try {
+                                    navigation.navigate('Cart', { refresh: true });
+                                } catch (navError) {
+                                    try {
+                                        navigation.navigate('DefaultRoutes', {
+                                            screen: 'Cart',
+                                            params: { refresh: true }
+                                        });
+                                    } catch (nestedNavError) {
+                                        navigation.navigate('DefaultNav', {
+                                            screen: 'DefaultRoutes',
+                                            params: {
+                                                screen: 'Cart',
+                                                params: { refresh: true }
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                );
+            } else {
+                // This is not actually an error - show info toast
+                console.info("Unexpected but valid response format:", response);
+                Toast.show({
+                    type: 'info',
+                    text1: 'Added to Cart',
+                    text2: 'Item was added to your cart',
+                });
+            }
+        } catch (error) {
+            console.error("Add to cart error:", error);
+            // Display more detailed error message
+            Toast.show({
+                type: 'error',
+                text1: 'Error Adding to Cart',
+                text2: error.message || 'Failed to add item to cart. Please try again.',
+            });
+        } finally {
+            setAddingToCart(false);
         }
     };
 
@@ -149,6 +296,7 @@ const ProductDetailView = ({ route, navigation }) => {
                         <TouchableOpacity
                             style={styles.quantityButton}
                             onPress={() => quantity > 1 && setQuantity(quantity - 1)}
+                            disabled={quantity <= 1}
                         >
                             <Text style={styles.quantityButtonText}>-</Text>
                         </TouchableOpacity>
@@ -165,13 +313,18 @@ const ProductDetailView = ({ route, navigation }) => {
 
                 <View style={styles.actionsContainer}>
                     <TouchableOpacity
-                        style={[styles.updateButton, product.stock <= 0 && styles.disabledButton]}
-                        disabled={product.stock <= 0}
-                        onPress={() => {
-                            console.log(`Added ${quantity} of ${product.name} to cart`);
-                        }}
+                        style={[
+                            styles.updateButton,
+                            (product.stock <= 0 || addingToCart) && styles.disabledButton
+                        ]}
+                        disabled={product.stock <= 0 || addingToCart}
+                        onPress={handleAddToCart}
                     >
-                        <Text style={styles.updateButtonText}>Add to Cart</Text>
+                        {addingToCart ? (
+                            <ActivityIndicator size="small" color="#ffffff" />
+                        ) : (
+                            <Text style={styles.updateButtonText}>Add to Cart</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>

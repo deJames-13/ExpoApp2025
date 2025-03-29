@@ -6,7 +6,7 @@ import useResource from '~/hooks/useResource.js';
 import { useNavigation } from '@react-navigation/native';
 
 export default function CategoryList({ categories = [], onSelectCategory }) {
-    const resource = useResource('categories');
+    const resource = useResource({ resourceName: 'categories', silent: true });
     const { states: { data, loading }, actions: { fetchDatas } } = resource;
     const navigation = useNavigation();
 

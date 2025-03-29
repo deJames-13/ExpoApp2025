@@ -1,7 +1,8 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
+import { MaterialIcons, Ionicons, AntDesign } from '@expo/vector-icons';
 
-const CartHeader = ({ onSearch, onSelectAll, onDeselectAll, selectedCount, totalCount }) => {
+const CartHeader = ({ onSearch, onSelectAll, onDeselectAll, onClearCart, onRefresh, selectedCount, totalCount, navigation }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showFilterOptions, setShowFilterOptions] = useState(false);
 
@@ -18,23 +19,45 @@ const CartHeader = ({ onSearch, onSelectAll, onDeselectAll, selectedCount, total
         <View style={styles.headerContainer}>
             <View style={styles.titleContainer}>
                 <Text style={styles.title}>My Cart</Text>
-                <TouchableOpacity style={styles.addButton}>
-                    <Text style={styles.addButtonText}>+ Shop More</Text>
-                </TouchableOpacity>
+                <View style={styles.headerActions}>
+                    <TouchableOpacity
+                        style={styles.refreshButton}
+                        onPress={onRefresh}
+                    >
+                        <Ionicons name="refresh" size={20} color="#2196F3" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={() => navigation?.navigate('TabsRoute', { screen: 'Home' })}
+                    >
+                        <Text style={styles.addButtonText}>+ Shop More</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.searchContainer}>
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search items in cart..."
-                    value={searchQuery}
-                    onChangeText={handleSearchChange}
-                />
+                <View style={styles.searchInputWrapper}>
+                    <Ionicons name="search-outline" size={20} color="#757575" style={styles.searchIcon} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search items in cart..."
+                        value={searchQuery}
+                        onChangeText={handleSearchChange}
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity
+                            onPress={() => handleSearchChange('')}
+                            style={styles.clearSearchButton}
+                        >
+                            <Ionicons name="close-circle" size={18} color="#9e9e9e" />
+                        </TouchableOpacity>
+                    )}
+                </View>
                 <TouchableOpacity
                     style={styles.filterButton}
                     onPress={toggleFilterOptions}
                 >
-                    <Text style={styles.filterButtonText}>Filter</Text>
+                    <Ionicons name="filter" size={22} color="#757575" />
                 </TouchableOpacity>
             </View>
 
@@ -44,16 +67,22 @@ const CartHeader = ({ onSearch, onSelectAll, onDeselectAll, selectedCount, total
                 </Text>
                 <View style={styles.selectionButtons}>
                     <TouchableOpacity
-                        style={styles.selectionButton}
+                        style={styles.iconButton}
                         onPress={onSelectAll}
                     >
-                        <Text style={styles.selectionButtonText}>Select All</Text>
+                        <MaterialIcons name="select-all" size={22} color="#2196F3" />
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={[styles.selectionButton, styles.deselectButton]}
+                        style={styles.iconButton}
                         onPress={onDeselectAll}
                     >
-                        <Text style={styles.deselectButtonText}>Deselect All</Text>
+                        <MaterialIcons name="deselect" size={22} color="#F44336" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.iconButton}
+                        onPress={onClearCart}
+                    >
+                        <AntDesign name="delete" size={22} color="#F44336" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -95,6 +124,20 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
     },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    refreshButton: {
+        padding: 8,
+        marginRight: 8,
+        borderRadius: 20,
+        backgroundColor: '#E3F2FD',
+        width: 36,
+        height: 36,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     addButton: {
         backgroundColor: '#2196F3',
         paddingVertical: 8,
@@ -108,29 +151,40 @@ const styles = StyleSheet.create({
     searchContainer: {
         flexDirection: 'row',
         marginBottom: 12,
+        alignItems: 'center',
     },
-    searchInput: {
+    searchInputWrapper: {
         flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
         height: 40,
         borderWidth: 1,
         borderColor: '#e0e0e0',
         borderRadius: 6,
-        paddingHorizontal: 12,
-        marginRight: 8,
+        paddingHorizontal: 8,
         backgroundColor: '#f5f5f5',
+        marginRight: 8,
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
+        flex: 1,
+        height: '100%',
+        padding: 0,
+    },
+    clearSearchButton: {
+        padding: 2,
     },
     filterButton: {
         backgroundColor: '#f5f5f5',
-        paddingHorizontal: 16,
+        width: 40,
+        height: 40,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 6,
         borderWidth: 1,
         borderColor: '#e0e0e0',
-    },
-    filterButtonText: {
-        color: '#757575',
-        fontWeight: '500',
     },
     selectionControls: {
         flexDirection: 'row',
@@ -145,25 +199,14 @@ const styles = StyleSheet.create({
     selectionButtons: {
         flexDirection: 'row',
     },
-    selectionButton: {
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-        backgroundColor: '#E3F2FD',
-        borderRadius: 4,
+    iconButton: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 20,
         marginLeft: 8,
-    },
-    selectionButtonText: {
-        color: '#2196F3',
-        fontWeight: '500',
-        fontSize: 13,
-    },
-    deselectButton: {
-        backgroundColor: '#FFEBEE',
-    },
-    deselectButtonText: {
-        color: '#F44336',
-        fontWeight: '500',
-        fontSize: 13,
+        backgroundColor: '#f5f5f5',
     },
     filterOptionsContainer: {
         marginTop: 12,

@@ -14,8 +14,27 @@ const customEndpoints = {
     // TODO: Orders custom endpoints
 
 
-    // TODO: Cart custom endpoints
-
+    // Cart custom endpoints
+    cart: (builder) => ({
+        clearCart: builder.mutation({
+            query: () => ({
+                url: 'cart/clear',
+                method: 'DELETE',
+            }),
+            invalidatesTags: [{ type: 'CART', id: 'LIST' }]
+        }),
+        updateCartQuantity: builder.mutation({
+            query: (data) => ({
+                url: `cart/edit/${data.id}`,
+                method: 'PATCH',
+                body: { quantity: data.quantity },
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: 'CART', id },
+                { type: 'CART', id: 'LIST' }
+            ]
+        }),
+    }),
 };
 
 // Create a combined endpoints object with all resource endpoints
