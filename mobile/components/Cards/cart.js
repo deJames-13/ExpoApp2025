@@ -43,7 +43,7 @@ const CartCard = ({ item, onViewDetails, isSelected, onToggleSelection }) => {
             </View>
             <View style={styles.imageContainer}>
                 <Image
-                    source={{ uri: `https://picsum.photos/200/300?random=${id}` }}
+                    source={{ uri: process.env.EXPO_PUBLIC_APP_LOGO }}
                     style={styles.image}
                     resizeMode="cover"
                 />

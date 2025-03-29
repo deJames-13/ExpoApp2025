@@ -31,9 +31,9 @@ export const ImageField = ({
             // This would typically use expo-image-picker or react-native-image-picker
             console.log('Image selection would happen here');
 
-            // Simulate a selection with a demo URL (replace with actual selection logic)
+            // Set the shop logo from env instead of a random URL
             setTimeout(() => {
-                setFieldValue(field, 'https://picsum.photos/200');
+                setFieldValue(field, process.env.EXPO_PUBLIC_APP_LOGO);
                 setLoading(false);
             }, 1000);
 
@@ -56,7 +56,7 @@ export const ImageField = ({
                 {value ? (
                     <View style={styles.imagePreviewContainer}>
                         <Image
-                            source={{ uri: value }}
+                            source={{ uri: typeof value === 'string' ? value : process.env.EXPO_PUBLIC_APP_LOGO }}
                             style={[
                                 styles.imagePreview,
                                 { width, height }

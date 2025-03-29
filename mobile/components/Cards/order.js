@@ -20,7 +20,7 @@ const OrderCard = ({ order, onViewDetails }) => {
     };
 
     // Get the first item image to display as the order thumbnail
-    const mainItemImageUrl = `https://picsum.photos/200/300?random=${id}`;
+    const mainItemImageUrl = process.env.EXPO_PUBLIC_APP_LOGO;
 
     return (
         <TouchableOpacity

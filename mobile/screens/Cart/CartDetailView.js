@@ -41,7 +41,7 @@ const CartDetailView = ({ route, navigation }) => {
 
             <View style={styles.imageContainer}>
                 <Image
-                    source={{ uri: `https://picsum.photos/400/400?random=${itemId}` }}
+                    source={{ uri: process.env.EXPO_PUBLIC_APP_LOGO }}
                     style={styles.image}
                     resizeMode="contain"
                 />

@@ -51,7 +51,7 @@ const OrderDetailView = ({ route, navigation }) => {
     const renderOrderItem = ({ item }) => (
         <View style={styles.orderItem}>
             <Image
-                source={{ uri: `https://picsum.photos/200/200?random=${item.id}` }}
+                source={{ uri: process.env.EXPO_PUBLIC_APP_LOGO }}
                 style={styles.itemImage}
                 resizeMode="cover"
             />

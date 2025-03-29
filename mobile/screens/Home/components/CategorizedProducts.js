@@ -87,7 +87,7 @@ export default function CategorizedProducts({ route, navigation }) {
             price: formattedPrice,
             image: item.images && item.images.length > 0
                 ? item.images[0].secure_url
-                : 'https://picsum.photos/200/200?random=1',
+                : process.env.EXPO_PUBLIC_APP_LOGO,
             averageRating: item.averageRating || 0
         };
 

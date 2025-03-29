@@ -79,7 +79,7 @@ const ProductDetailView = ({ route, navigation }) => {
 
     const imageUrl = product.images && product.images.length > 0
         ? product.images[0].secure_url
-        : `https://picsum.photos/400/400?random=${productId}`;
+        : process.env.EXPO_PUBLIC_APP_LOGO;
 
     // Helper function to format price correctly
     const formatPrice = (price) => {

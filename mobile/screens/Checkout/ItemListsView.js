@@ -7,7 +7,7 @@ export default function ItemListsView({ items }) {
             <View style={styles.itemContainer}>
                 <View style={styles.imageContainer}>
                     <Image
-                        source={{ uri: `https://picsum.photos/200/300?random=${item.id}` }}
+                        source={{ uri: process.env.EXPO_PUBLIC_APP_LOGO }}
                         style={styles.image}
                     />
                 </View>
