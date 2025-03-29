@@ -2,6 +2,8 @@ import apiSlice from './index';
 import { setCredentials, updateOnboardingStatus } from '../slices/auth';
 import { persistCredentials } from '../utils/authUtils';
 import { resetOnboarding } from '../slices/onboarding';
+import { useSelector } from 'react-redux';
+import { selectFcmToken } from '../slices/auth';
 
 const authApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -9,18 +11,19 @@ const authApi = apiSlice.injectEndpoints({
             query: (credentials) => ({
                 url: 'users/authenticate',
                 method: 'POST',
-                body: credentials,
+                body: credentials, // Now includes fcmToken
             }),
-            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+            async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
                 try {
                     const { data } = await queryFulfilled;
                     const { user, token } = data;
+                    const fcmToken = arg.fcmToken || getState().auth.fcmToken;
 
-                    // Store credentials securely
-                    await persistCredentials(user, token);
+                    // Store credentials with FCM token
+                    await persistCredentials(user, token, fcmToken);
 
-                    // Update Redux state
-                    dispatch(setCredentials({ userInfo: user, token }));
+                    // Update Redux state with FCM token
+                    dispatch(setCredentials({ userInfo: user, token, fcmToken }));
                 } catch (error) {
                     console.error('Login error:', error);
                 }
@@ -31,21 +34,22 @@ const authApi = apiSlice.injectEndpoints({
             query: (userData) => ({
                 url: 'users',
                 method: 'POST',
-                body: userData,
+                body: userData, // Now includes fcmToken
             }),
-            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+            async onQueryStarted(arg, { dispatch, queryFulfilled, getState }) {
                 try {
                     console.log('Sending registration data:', JSON.stringify(arg, null, 2));
                     const { data } = await queryFulfilled;
                     console.log('Registration successful:', JSON.stringify(data, null, 2));
 
                     const { user, token } = data;
+                    const fcmToken = arg.fcmToken || getState().auth.fcmToken;
 
-                    // Store credentials securely
-                    await persistCredentials(user, token);
+                    // Store credentials with FCM token
+                    await persistCredentials(user, token, fcmToken);
 
-                    // Update Redux state
-                    dispatch(setCredentials({ userInfo: user, token }));
+                    // Update Redux state with FCM token
+                    dispatch(setCredentials({ userInfo: user, token, fcmToken }));
                 } catch (error) {
                     console.error('Registration error details:', JSON.stringify(error, null, 2));
                 }

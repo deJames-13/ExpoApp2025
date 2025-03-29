@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import useAuth from '~/hooks/useAuth';
 import LoadingScreen from '~/screens/LoadingScreen';
+import { logProtectedLayoutStatus } from '~/utils/logUtils';
 
 export function ProtectedLayout({
     children,
@@ -12,21 +13,38 @@ export function ProtectedLayout({
     const {
         isAuthenticated,
         isReady,
+        currentUser,
         hasBasicInfo,
         hasAddressInfo,
         isEmailVerified,
-        isAdmin
+        isPendingVerification,
+        isAdmin,
+        userHasCompletedProfile,
+        userHasVerifiedEmail
     } = useAuth({
         requireAuth: true,
-        requireBasicInfo,
-        requireAddressInfo,
-        requireEmailVerified,
+        // Use actual profile data from user object to determine if onboarding is needed
+        requireBasicInfo: requireBasicInfo && !userHasCompletedProfile,
+        requireAddressInfo: requireAddressInfo && !userHasCompletedProfile,
+        requireEmailVerified: requireEmailVerified && !userHasVerifiedEmail && !isPendingVerification,
         requireAdmin
     });
 
+    // Debug user profile information at layout level
+    useEffect(() => {
+        if (currentUser) {
+            logProtectedLayoutStatus(
+                currentUser,
+                userHasCompletedProfile,
+                userHasVerifiedEmail,
+                isPendingVerification
+            );
+        }
+    }, [currentUser, userHasCompletedProfile, userHasVerifiedEmail, isPendingVerification]);
+
     // Show loading while auth state is being determined
     if (!isReady) {
-        <LoadingScreen />
+        return <LoadingScreen />;
     }
 
     // Authentication check
@@ -39,16 +57,22 @@ export function ProtectedLayout({
         return null;
     }
 
-    // Onboarding checks
-    if (requireBasicInfo && !hasBasicInfo) {
+    // Check if user has completed profile directly from user data
+    const profileComplete = userHasCompletedProfile || (hasBasicInfo && hasAddressInfo);
+
+    // Check if email is verified or pending verification
+    const emailVerificationComplete = userHasVerifiedEmail || isEmailVerified || isPendingVerification;
+
+    // Onboarding checks with prioritization of data from user object
+    if (requireBasicInfo && !profileComplete) {
         return null;
     }
 
-    if (requireAddressInfo && !hasAddressInfo) {
+    if (requireAddressInfo && !profileComplete) {
         return null;
     }
 
-    if (requireEmailVerified && !isEmailVerified) {
+    if (requireEmailVerified && !emailVerificationComplete) {
         return null;
     }
 

@@ -17,7 +17,8 @@ const initialState = {
         zip_code: '',
         isCompleted: false
     },
-    isEmailVerified: false
+    isEmailVerified: false,
+    isPendingVerification: false // New state to track if verification is pending
 };
 
 const onboardingSlice = createSlice({
@@ -43,8 +44,14 @@ const onboardingSlice = createSlice({
         },
         setEmailVerified: (state, action) => {
             state.isEmailVerified = action.payload;
+            // When email is verified, clear pending status
+            if (action.payload === true) {
+                state.isPendingVerification = false;
+            }
         },
-        // Add a new action to reset the onboarding state
+        setPendingVerification: (state, action) => {
+            state.isPendingVerification = action.payload;
+        },
         resetOnboarding: (state) => {
             // Reset form values but keep completion status
             return {
@@ -57,7 +64,8 @@ const onboardingSlice = createSlice({
                     ...initialState.addressInfo,
                     isCompleted: state.addressInfo.isCompleted
                 },
-                isEmailVerified: state.isEmailVerified
+                isEmailVerified: state.isEmailVerified,
+                isPendingVerification: state.isPendingVerification
             };
         }
     }
@@ -68,6 +76,7 @@ export const {
     setBasicInfo,
     setAddressInfo,
     setEmailVerified,
+    setPendingVerification, // Export the new action
     resetOnboarding
 } = onboardingSlice.actions;
 
@@ -77,5 +86,6 @@ export const selectAddressInfo = (state) => state.onboarding.addressInfo;
 export const selectIsBasicCompleted = (state) => state.onboarding.basicInfo.isCompleted;
 export const selectIsAddressCompleted = (state) => state.onboarding.addressInfo.isCompleted;
 export const selectIsEmailVerified = (state) => state.onboarding.isEmailVerified;
+export const selectIsPendingVerification = (state) => state.onboarding.isPendingVerification;
 
 export default onboardingSlice.reducer;

@@ -8,12 +8,15 @@ import {
     selectHasBasicInfo,
     selectHasAddressInfo,
     selectIsEmailVerified,
+    selectFcmToken,
     logout,
     hydrate
 } from '~/states/slices/auth';
+import { selectIsPendingVerification } from '~/states/slices/onboarding';
 import { useGetProfileQuery, useRefreshTokenQuery } from '~/states/api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS, persistCredentials, clearCredentials } from '~/states/utils/authUtils';
+import { logUserProfile } from '~/utils/logUtils';
 
 export const useLoadUser = () => {
     const dispatch = useDispatch();
@@ -23,14 +26,15 @@ export const useLoadUser = () => {
     useEffect(() => {
         async function loadAuthState() {
             try {
-                const [tokenValue, userValue] = await Promise.all([
+                const [tokenValue, userValue, fcmTokenValue] = await Promise.all([
                     AsyncStorage.getItem(STORAGE_KEYS.TOKEN),
-                    AsyncStorage.getItem(STORAGE_KEYS.USER)
+                    AsyncStorage.getItem(STORAGE_KEYS.USER),
+                    AsyncStorage.getItem(STORAGE_KEYS.FCM_TOKEN)
                 ]);
 
                 if (tokenValue && userValue) {
                     const user = JSON.parse(userValue);
-                    dispatch(hydrate({ token: tokenValue, user }));
+                    dispatch(hydrate({ token: tokenValue, user, fcmToken: fcmTokenValue }));
                 }
             } catch (e) {
                 console.error('Failed to load auth state:', e);
@@ -65,6 +69,8 @@ export default function useAuth({
     const hasBasicInfo = useSelector(selectHasBasicInfo);
     const hasAddressInfo = useSelector(selectHasAddressInfo);
     const isEmailVerified = useSelector(selectIsEmailVerified);
+    const isPendingVerification = useSelector(selectIsPendingVerification);
+    const fcmToken = useSelector(selectFcmToken);
 
     // Check if user is admin
     const isAdmin = currentUser?.role === 'ADMIN';
@@ -75,14 +81,15 @@ export default function useAuth({
             if (isInitialized) return;
 
             try {
-                const [tokenValue, userValue] = await Promise.all([
+                const [tokenValue, userValue, fcmTokenValue] = await Promise.all([
                     AsyncStorage.getItem(STORAGE_KEYS.TOKEN),
-                    AsyncStorage.getItem(STORAGE_KEYS.USER)
+                    AsyncStorage.getItem(STORAGE_KEYS.USER),
+                    AsyncStorage.getItem(STORAGE_KEYS.FCM_TOKEN)
                 ]);
 
                 if (tokenValue && userValue) {
                     const user = JSON.parse(userValue);
-                    dispatch(hydrate({ token: tokenValue, user }));
+                    dispatch(hydrate({ token: tokenValue, user, fcmToken: fcmTokenValue }));
                 }
             } catch (e) {
                 console.error('Failed to initialize auth state:', e);
@@ -143,7 +150,20 @@ export default function useAuth({
         }
     }, [triggerRefreshToken]);
 
-    // Validate requirements and redirect as needed
+    // Enhanced logging to debug user profile information
+    useEffect(() => {
+        if (currentUser) {
+            logUserProfile(
+                currentUser,
+                hasBasicInfo,
+                hasAddressInfo,
+                isEmailVerified,
+                isPendingVerification
+            );
+        }
+    }, [currentUser, hasBasicInfo, hasAddressInfo, isEmailVerified, isPendingVerification]);
+
+    // Enhanced validation function that detects profile completion directly from user object
     const validateRequirements = useCallback(() => {
         if (!isReady) return false;
 
@@ -159,19 +179,35 @@ export default function useAuth({
             return false;
         }
 
-        if (isAuthenticated) {
-            // Onboarding checks - in order of flow
-            if (requireBasicInfo && !hasBasicInfo) {
+        if (isAuthenticated && currentUser) {
+            // Check for directly completed profile in the user object
+            const userHasCompletedProfile = !!(
+                currentUser.info?.first_name &&
+                currentUser.info?.last_name &&
+                currentUser.info?.contact &&
+                currentUser.info?.address &&
+                currentUser.info?.city &&
+                currentUser.info?.region
+            );
+
+            // Check if email is verified directly in the user object
+            const userHasVerifiedEmail = !!currentUser.emailVerifiedAt;
+
+            // Only redirect to BasicInformation if required AND not completed based on user data
+            if (requireBasicInfo && !hasBasicInfo && !userHasCompletedProfile) {
                 navigation.navigate('BasicInformation');
                 return false;
             }
 
-            if (requireAddressInfo && !hasAddressInfo) {
+            // Only redirect to AddressInformation if required AND basic info is complete but address is not
+            if (requireAddressInfo && hasBasicInfo && !hasAddressInfo && !userHasCompletedProfile) {
                 navigation.navigate('AddressInformation');
                 return false;
             }
 
-            if (requireEmailVerified && !isEmailVerified) {
+            // Only redirect for email verification if it's required AND not verified
+            // AND the user hasn't chosen to verify later AND not already verified in user object
+            if (requireEmailVerified && !isEmailVerified && !isPendingVerification && !userHasVerifiedEmail) {
                 navigation.navigate('EmailVerification');
                 return false;
             }
@@ -182,9 +218,11 @@ export default function useAuth({
         isReady,
         isAuthenticated,
         isAdmin,
+        currentUser,
         hasBasicInfo,
         hasAddressInfo,
         isEmailVerified,
+        isPendingVerification,
         requireAuth,
         requireAdmin,
         requireBasicInfo,
@@ -235,12 +273,23 @@ export default function useAuth({
         hasBasicInfo,
         hasAddressInfo,
         isEmailVerified,
+        isPendingVerification,
         isAdmin,
         isReady,
+        fcmToken,
         refreshToken,
         refetchProfile,
         validateRequirements,
         isRefreshing,
-        handleLogout
+        handleLogout,
+        userHasCompletedProfile: !!(
+            currentUser?.info?.first_name &&
+            currentUser?.info?.last_name &&
+            currentUser?.info?.contact &&
+            currentUser?.info?.address &&
+            currentUser?.info?.city &&
+            currentUser?.info?.region
+        ),
+        userHasVerifiedEmail: !!currentUser?.emailVerifiedAt
     };
 }

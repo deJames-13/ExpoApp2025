@@ -12,7 +12,8 @@ import {
     selectIsEmailVerified,
     setEmailVerified,
     setCurrentStep,
-    resetOnboarding
+    resetOnboarding,
+    setPendingVerification
 } from '~/states/slices/onboarding';
 import { adminColors } from '~/styles/adminTheme';
 import { useSendVerificationEmailMutation, useVerifyEmailMutation } from '~/states/api/auth';
@@ -202,6 +203,9 @@ export default function EmailVerification() {
         // Mark that email verification is pending
         await AsyncStorage.setItem('pendingEmailVerification', 'true');
 
+        // Update Redux state to track pending verification
+        dispatch(setPendingVerification(true));
+
         // Skip verification and go to main app
         navigation.reset({
             index: 0,
@@ -292,13 +296,13 @@ export default function EmailVerification() {
                 </Card>
 
                 <View style={styles.buttonContainer}>
-                    <Button
+                    {/* <Button
                         mode="outlined"
                         onPress={() => navigation.goBack()}
                         style={styles.backButton}
                     >
                         Back
-                    </Button>
+                    </Button> */}
                     <Button
                         mode="text"
                         onPress={skipVerification}

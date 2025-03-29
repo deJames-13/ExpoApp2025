@@ -7,7 +7,7 @@ import styles, { colors } from '~/styles/auth';
 import Toast from 'react-native-toast-message';
 import { useRegisterMutation } from '~/states/api/auth';
 import { useSelector } from 'react-redux';
-import { selectHasBasicInfo, selectIsEmailVerified } from '~/states/slices/auth';
+import { selectHasBasicInfo, selectIsEmailVerified, selectFcmToken } from '~/states/slices/auth';
 
 export function Register() {
     const navigation = useNavigation();
@@ -24,6 +24,7 @@ export function Register() {
 
     const hasBasicInfo = useSelector(selectHasBasicInfo);
     const isEmailVerified = useSelector(selectIsEmailVerified);
+    const fcmToken = useSelector(selectFcmToken); // Get fcmToken from Redux store
 
     const [register, { isLoading }] = useRegisterMutation();
 
@@ -81,7 +82,8 @@ export function Register() {
                     email,
                     password,
                     confirm_password: confirmPassword,
-                    username
+                    username,
+                    fcmToken: fcmToken // Add FCM token to registration data
                 }).unwrap();
 
                 Toast.show({

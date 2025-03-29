@@ -6,6 +6,8 @@ import styles, { colors } from '~/styles/auth';
 import { useState } from 'react';
 import Toast from 'react-native-toast-message';
 import { useLoginMutation } from '~/states/api/auth';
+import { useSelector } from 'react-redux';
+import { selectFcmToken } from '~/states/slices/auth';
 
 export function Login() {
     const navigation = useNavigation();
@@ -13,6 +15,7 @@ export function Login() {
     const [password, setPassword] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const fcmToken = useSelector(selectFcmToken); // Get fcmToken from Redux store
 
     const [login, { isLoading }] = useLoginMutation();
 
@@ -44,10 +47,17 @@ export function Login() {
     const handleLogin = async () => {
         if (validateForm()) {
             try {
-                const result = await login({ email, password }).unwrap();
+                // Include fcmToken in login request
+                const credentials = {
+                    email,
+                    password,
+                    fcmToken: fcmToken // Add FCM token to credentials
+                };
+
+                const result = await login(credentials).unwrap();
                 Toast.show({
                     type: 'success',
-                    text1: 'Welcom Back!',
+                    text1: 'Welcome Back!',
                     text2: 'You have successfully logged in!',
                 });
                 navigation.navigate('DefaultNav');

@@ -3,8 +3,10 @@ import { getApp } from '@react-native-firebase/app'
 import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission as requestMessagingPermission, getInitialNotification, onNotificationOpenedApp, registerDeviceForRemoteMessages } from '@react-native-firebase/messaging'
 import Toast from 'react-native-toast-message'
 import { setIsChanging, storeFcmToken, setNotification } from "~/states/slices/firebase";
+import { setFcmToken } from "~/states/slices/auth"; // Import auth action
 import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '~/states/utils/authUtils';
 
 export default function useFirebaseMessaging() {
     const dispatch = useDispatch();
@@ -41,23 +43,38 @@ export default function useFirebaseMessaging() {
                 // Existing token
                 const existingToken = await getToken(messaging);
                 if (existingToken) {
+                    // Store in both firebase and auth slices
                     dispatch(storeFcmToken({ fcmToken: existingToken }));
+                    dispatch(setFcmToken(existingToken));
+
+                    // Store in AsyncStorage
                     await AsyncStorage.setItem('fcmToken', existingToken);
+                    await AsyncStorage.setItem(STORAGE_KEYS.FCM_TOKEN, existingToken);
                     console.log('Existing token:', existingToken)
                 }
 
                 // Register for token refresh
                 const tokenUnsubscribe = onTokenRefresh(messaging, async (token) => {
                     console.log('Token refreshed:', token);
+                    // Update in both firebase and auth slices
                     dispatch(storeFcmToken({ fcmToken: token }));
+                    dispatch(setFcmToken(token));
+
+                    // Update in AsyncStorage
                     await AsyncStorage.setItem('fcmToken', token);
+                    await AsyncStorage.setItem(STORAGE_KEYS.FCM_TOKEN, token);
                 });
 
                 // Get the initial token
                 const token = await getToken(messaging);
                 if (token) {
+                    // Store in both firebase and auth slices
                     dispatch(storeFcmToken({ fcmToken: token }));
+                    dispatch(setFcmToken(token));
+
+                    // Store in AsyncStorage
                     await AsyncStorage.setItem('fcmToken', token);
+                    await AsyncStorage.setItem(STORAGE_KEYS.FCM_TOKEN, token);
                 }
 
                 // Handle other messaging events

@@ -5,6 +5,7 @@ import { STORAGE_KEYS, persistCredentials, clearCredentials } from '../utils/aut
 const initialState = {
     user: null,
     token: null,
+    fcmToken: null, // Add FCM token to auth state
     isAuthenticated: false,
     isLoading: false,
     onboarding: {
@@ -19,10 +20,14 @@ export const authSlice = createSlice({
     initialState,
     reducers: {
         setCredentials: (state, action) => {
-            const { userInfo, token } = action.payload;
+            const { userInfo, token, fcmToken } = action.payload;
             state.user = userInfo;
             state.token = token;
             state.isAuthenticated = !!token;
+            if (fcmToken) state.fcmToken = fcmToken;
+        },
+        setFcmToken: (state, action) => {
+            state.fcmToken = action.payload;
         },
         logout: (state) => {
             state.user = null;
@@ -34,15 +39,15 @@ export const authSlice = createSlice({
                 isEmailVerified: false
             };
 
-            // Clear from AsyncStorage
             clearCredentials();
         },
         hydrate: (state, action) => {
-            const { user, token } = action.payload;
+            const { user, token, fcmToken } = action.payload;
             if (token && user) {
                 state.user = user;
                 state.token = token;
                 state.isAuthenticated = true;
+                if (fcmToken) state.fcmToken = fcmToken;
             }
         },
         updateOnboardingStatus: (state, action) => {
@@ -52,14 +57,20 @@ export const authSlice = createSlice({
             };
         }
     },
-    // We'll handle API responses through the middleware's onQueryStarted callbacks instead
 });
 
-export const { setCredentials, logout, hydrate, updateOnboardingStatus } = authSlice.actions;
+export const {
+    setCredentials,
+    setFcmToken,
+    logout,
+    hydrate,
+    updateOnboardingStatus
+} = authSlice.actions;
 
 // Selectors
 export const selectCurrentUser = (state) => state.auth.user;
 export const selectAccessToken = (state) => state.auth.token;
+export const selectFcmToken = (state) => state.auth.fcmToken;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectHasBasicInfo = (state) => state.auth.onboarding.hasBasicInfo;
 export const selectHasAddressInfo = (state) => state.auth.onboarding.hasAddressInfo;
