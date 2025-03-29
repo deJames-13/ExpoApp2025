@@ -9,7 +9,7 @@ import { NumberField } from './NumberField';
 import { RangeField } from './RangeField';
 import { CheckboxField } from './CheckboxField';
 import { RadioField } from './RadioField';
-import { ImageField } from './ImageField';
+import { ImageField } from './Image';
 import { CameraField } from './CameraField';
 
 export const FieldMapper = (props) => {

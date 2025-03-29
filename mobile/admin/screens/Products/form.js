@@ -24,7 +24,7 @@ export function ProductForm({ product, mode = 'create', onSubmit, formRef }) {
         const fieldsOptions = {
             includeAdvancedFields: mode !== 'create',
             includeImages: true,
-            includeCamera: true // Enable camera field
+            includeCamera: true
         };
 
         // Configure validation based on mode
@@ -47,8 +47,7 @@ export function ProductForm({ product, mode = 'create', onSubmit, formRef }) {
             initialValues={{
                 ...initialProductValues,
                 ...(product || {}),
-                image: product?.image || null,
-                cameraImage: product?.cameraImage || null, // Add initial value for camera image
+                productImage: product?.image || product?.cameraImage || null,
                 featured: product?.featured || false,
                 rating: product?.rating || 0
             }}
