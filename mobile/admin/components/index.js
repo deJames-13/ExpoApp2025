@@ -1,1 +1,1 @@
-export { ResourceList } from '~/components/ResourceList'
+export { ResourceList } from './ResourceList'

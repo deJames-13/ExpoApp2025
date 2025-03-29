@@ -4,4 +4,4 @@
  */
 
 // Re-export from the new location for backward compatibility
-export * from '../admin/components/ResourceTable/tableUtils';
+export * from '~/components/ResourceTable/tableUtils';

@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, SafeAreaView, StyleSheet } from 'react-native';
-import { Text } from 'react-native-paper';
-import DashboardTable from '../../components/table';
+import { SafeAreaView, StyleSheet } from 'react-native';
+import { Text } from 'react-native'; // Remove View
+import Table from '../../components/table'; // Correct the path
 import { getStatusChipStyle } from '~/styles/adminThemeUtils';
 
 export default function ExampleTable() {
@@ -74,7 +74,7 @@ export default function ExampleTable() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <DashboardTable
+            <Table
                 title="Dessert Inventory"
                 initialData={initialData}
                 columns={columns}

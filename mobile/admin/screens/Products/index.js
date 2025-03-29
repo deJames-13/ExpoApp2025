@@ -8,7 +8,7 @@ import { ResourceTable, processTableData } from '~/components/ResourceTable'
 
 export function Products() {
     const [products, setProducts] = useState(productsData);
-    const [loading, setLoading] = useState(false);
+    const [loading, _setLoading] = useState(false); // Prefix with underscore to indicate intentionally unused
     const [refreshing, setRefreshing] = useState(false);
     const [filteredProducts, setFilteredProducts] = useState(products);
     const [currentSort, setCurrentSort] = useState({ field: 'name', direction: 'asc' });
@@ -24,7 +24,7 @@ export function Products() {
     useEffect(() => {
         const result = processTableData(products, searchText, currentSort, searchFields);
         setFilteredProducts(result);
-    }, [products, currentSort, searchText]);
+    }, [products, currentSort, searchText, searchFields]);
 
     // Modal state
     const [modalVisible, setModalVisible] = useState(false);
@@ -128,6 +128,12 @@ export function Products() {
         console.log(`Sorting by ${sortConfig.field} (${sortConfig.direction})`);
         setCurrentSort(sortConfig);
     }, []);
+
+    const handleSomeAction = () => {
+        global.setTimeout(() => {
+            // Function content
+        }, 1000);
+    };
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50">

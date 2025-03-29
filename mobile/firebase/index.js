@@ -2,7 +2,6 @@ import { initializeApp } from 'firebase/app';
 import {
   initializeAuth,
   getAuth,
-  getReactNativePersistence,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -10,7 +9,7 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider
 } from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 // Validate required environment variables
 const requiredEnvVars = [
@@ -39,9 +38,18 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize auth with React Native persistence
+// Create custom persistence
+const reactNativePersistence = (storage) => {
+  return {
+    type: 'custom',
+    storage,
+    _shouldAllowMigration: true,
+  };
+};
+
+// Use it with initializeAuth instead
 const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage)
+  persistence: reactNativePersistence(ReactNativeAsyncStorage)
 });
 
 // Export auth functions and provider

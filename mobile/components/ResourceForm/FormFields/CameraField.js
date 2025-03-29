@@ -4,6 +4,8 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Button, IconButton, ActivityIndicator, Portal } from 'react-native-paper';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import * as IntentLauncher from 'expo-intent-launcher';
+import { Camera } from 'expo-camera';
+import * as Application from 'expo-application';
 import { adminColors } from '~/styles/adminTheme';
 import { styles as formStyles } from './styles';
 
@@ -24,7 +26,7 @@ export const CameraField = ({
     onImageCaptured,
     ...props
 }) => {
-    const [permission, requestPermission] = useCameraPermissions();
+    const [permission, setPermission] = useState(null);
     const [cameraVisible, setCameraVisible] = useState(false);
     const [facing, setFacing] = useState('back');
     const [flash, setFlash] = useState('off');
@@ -38,6 +40,11 @@ export const CameraField = ({
             isMounted.current = false;
         };
     }, []);
+
+    const requestPermission = async () => {
+        const { status } = await Camera.requestCameraPermissionsAsync();
+        setPermission({ granted: status === 'granted' });
+    };
 
     const showPermissionAlert = () => {
         Alert.alert(
@@ -59,7 +66,7 @@ export const CameraField = ({
         } else {
             IntentLauncher.startActivityAsync(
                 IntentLauncher.ActivityAction.APPLICATION_DETAILS_SETTINGS,
-                { data: 'package:' + expo.applicationId }
+                { data: 'package:' + Application.applicationId }
             ).catch(() => {
                 Linking.openSettings();
             });
@@ -70,8 +77,8 @@ export const CameraField = ({
         if (disabled) return;
 
         if (!permission?.granted) {
-            const permissionResult = await requestPermission();
-            if (!permissionResult.granted) {
+            await requestPermission();
+            if (!permission?.granted) {
                 showPermissionAlert();
                 return;
             }
@@ -104,7 +111,7 @@ export const CameraField = ({
 
             // Add timeout to prevent infinite loading
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Camera timeout')), 10000)
+                global.setTimeout(() => reject(new Error('Camera timeout')), 10000)
             );
 
             // Race the camera capture against a timeout
@@ -132,7 +139,7 @@ export const CameraField = ({
             }
 
             // Use setTimeout to ensure state updates before camera closes
-            setTimeout(() => {
+            global.setTimeout(() => {
                 closeCamera();
                 setLoading(false);
             }, 100);

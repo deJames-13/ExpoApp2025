@@ -7,7 +7,8 @@
     "dev": "set NODE_ENV=development && npx expo start",
     "android": "set NODE_ENV=development && npx expo run:android",
     "ios": "set NODE_ENV=development && npx expo run:ios",
-    "web": "set NODE_ENV=development && npx expo start --web"
+    "web": "set NODE_ENV=development && npx expo start --web",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
@@ -67,14 +68,17 @@
     "expo-intent-launcher": "~12.0.2",
     "@react-native-community/slider": "4.5.5",
     "expo-image-picker": "~16.0.6",
-    "expo-file-system": "~18.0.12"
+    "expo-file-system": "~18.0.12",
+    "expo-application": "~6.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~18.3.12",
     "@types/react-native-vector-icons": "^6.4.18",
     "plop": "^4.0.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "eslint": "^8.57.0",
+    "eslint-config-expo": "~8.0.1"
   },
   "private": true,
   "expo": {

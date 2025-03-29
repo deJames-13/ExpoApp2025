@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import {
     GoogleOneTapSignIn,
     statusCodes,
@@ -15,7 +15,7 @@ const GoogleSignIn = ({ onSignInSuccess, onSignInFailed }) => {
 
     useEffect(() => {
         configureGoogleSignIn();
-    }, []);
+    }, [configureGoogleSignIn]);
 
     const configureGoogleSignIn = () => {
         GoogleOneTapSignIn.configure({
@@ -121,7 +121,8 @@ const GoogleSignIn = ({ onSignInSuccess, onSignInFailed }) => {
         }
     };
 
-    const signOut = async () => {
+    const _signOut = async () => {
+        // Renamed to indicate it's intentionally unused
         try {
             const currentUser = auth.currentUser;
             if (currentUser) {

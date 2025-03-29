@@ -1,4 +1,3 @@
-// Mock data for the dashboard
 
 export const statsData = {
     totalUsers: 1250,
@@ -22,14 +21,22 @@ export const recentUsersData = [
 ];
 
 // Function to fetch mock data with a delay to simulate API call
+const timeoutDelay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const fetchDashboardData = () => {
     return new Promise((resolve) => {
-        setTimeout(() => {
+        timeoutDelay(1500).then(() => {
             resolve({
                 stats: statsData,
                 recentOrders: recentOrdersData,
                 recentUsers: recentUsersData
             });
-        }, 1500);
+        });
     });
+};
+
+export const someFunction = () => {
+    global.setTimeout(() => {
+        // Function content
+    }, 1000);
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, DataTable, Button } from 'react-native-paper';
 import { adminStyles, adminColors } from '~/styles/adminTheme';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { getStatusColor } from '~/styles/adminThemeUtils';
 
 const RecentOrders = ({ orders, onViewAllPress }) => {

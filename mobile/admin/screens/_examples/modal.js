@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Button, Text, TextInput, Checkbox, Divider, List, Avatar } from 'react-native-paper';
-import AdminModal, { AdminModalProvider, useAdminModal } from '../components/AdminModal';
+import AdminModal, { AdminModalProvider, useAdminModal } from '../../../components/AdminModal';
 
 const AdminModalExampleScreen = () => {
     // State for direct modal usage
@@ -29,8 +29,7 @@ const AdminModalExampleScreen = () => {
     // Mock submit function
     const handleSubmit = () => {
         setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
+        global.setTimeout(() => {
             setIsLoading(false);
             setFormModalVisible(false);
             // Show success confirmation modal

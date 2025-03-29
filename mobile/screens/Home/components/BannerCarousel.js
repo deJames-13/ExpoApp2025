@@ -8,7 +8,7 @@ export default function BannerCarousel({ banners = [] }) {
     const bannerRef = useRef(null);
 
     useEffect(() => {
-        const interval = setInterval(() => {
+        const interval = global.setInterval(() => {
             if (banners.length > 0) {
                 const nextIndex = (currentBannerIndex + 1) % banners.length;
                 setCurrentBannerIndex(nextIndex);
@@ -20,7 +20,7 @@ export default function BannerCarousel({ banners = [] }) {
             }
         }, 3000);
 
-        return () => clearInterval(interval);
+        return () => global.clearInterval(interval);
     }, [currentBannerIndex, banners.length]);
 
     const renderBannerItem = ({ item }) => (

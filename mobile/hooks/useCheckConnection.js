@@ -11,8 +11,8 @@ const BACKUP_APIS = Platform.OS === 'web'
 const TIMEOUT = 60000
 
 export const testConnection = async (apiUrl = PRIMARY_API) => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT);
+    const controller = new global.AbortController();
+    const timeout = global.setTimeout(() => controller.abort(), TIMEOUT);
 
     console.log(`Attempting to connect to: ${apiUrl}`);
 
@@ -28,7 +28,7 @@ export const testConnection = async (apiUrl = PRIMARY_API) => {
             signal: controller.signal
         });
 
-        clearTimeout(timeout);
+        global.clearTimeout(timeout);
 
         if (!response.ok) {
             throw new Error(`API connection failed with status: ${response.status}`);
@@ -37,7 +37,7 @@ export const testConnection = async (apiUrl = PRIMARY_API) => {
 
         return { success: true, message: 'API connection successful', apiUrl };
     } catch (error) {
-        clearTimeout(timeout);
+        global.clearTimeout(timeout);
 
         if (error.name === 'AbortError') {
             console.error(`API connection to ${apiUrl} timed out after ${parseFloat(TIMEOUT / 1000).toFixed(2)} seconds`);

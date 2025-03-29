@@ -1,4 +1,4 @@
-import { SafeAreaView, ScrollView, Text, ActivityIndicator, View } from 'react-native'
+import { SafeAreaView, ScrollView, Text, ActivityIndicator } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native'
 

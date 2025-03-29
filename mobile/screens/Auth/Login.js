@@ -1,11 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
 import { View, TouchableOpacity, Image, StatusBar, SafeAreaView, ActivityIndicator, Platform } from 'react-native';
 import { Text, TextInput, TouchableRipple, Button } from 'react-native-paper';
 import { H1 } from '~/components/ui/typography';
-import styles from '~/styles/auth';
 import { useAuth } from '~/firebase/FirebaseAuthContext';
+import styles from '~/styles/auth';
+import { useState } from 'react';
 import Toast from 'react-native-toast-message';
+import api from '~/axios.config'
 
 export default function Login() {
     const navigation = useNavigation();
