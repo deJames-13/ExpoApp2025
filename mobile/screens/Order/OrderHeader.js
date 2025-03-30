@@ -18,9 +18,6 @@ const OrderHeader = ({ onSearch }) => {
         <View style={styles.headerContainer}>
             <View style={styles.titleContainer}>
                 <Text style={styles.title}>My Orders</Text>
-                <TouchableOpacity style={styles.newButton}>
-                    <Text style={styles.newButtonText}>+ New Order</Text>
-                </TouchableOpacity>
             </View>
 
             <View style={styles.searchContainer}>
