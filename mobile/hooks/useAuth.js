@@ -15,8 +15,10 @@ import {
 import { selectIsPendingVerification } from '~/states/slices/onboarding';
 import { useGetProfileQuery, useRefreshTokenQuery } from '~/states/api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_KEYS, persistCredentials, clearCredentials } from '~/states/utils/authUtils';
+import { STORAGE_KEYS, clearCredentials } from '~/states/utils/authUtils';
 import { logUserProfile } from '~/utils/logUtils';
+
+const LOG = false;
 
 export const useLoadUser = () => {
     const dispatch = useDispatch();
@@ -62,7 +64,6 @@ export default function useAuth({
     const [isReady, setIsReady] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
 
-    // Auth selectors
     const isAuthenticated = useSelector(selectIsAuthenticated);
     const currentUser = useSelector(selectCurrentUser);
     const accessToken = useSelector(selectAccessToken);
@@ -72,10 +73,7 @@ export default function useAuth({
     const isPendingVerification = useSelector(selectIsPendingVerification);
     const fcmToken = useSelector(selectFcmToken);
 
-    // Check if user is admin
     const isAdmin = currentUser?.role === 'ADMIN';
-
-    // Initialize auth state from storage (runs only once)
     useEffect(() => {
         const initializeAuth = async () => {
             if (isInitialized) return;
@@ -101,20 +99,14 @@ export default function useAuth({
 
         initializeAuth();
     }, [dispatch, isInitialized]);
-
-    // Get latest profile data
     const { data: profileData, error: profileError, refetch: refetchProfile } =
         useGetProfileQuery(undefined, {
             skip: !isAuthenticated || !accessToken || !isInitialized,
             refetchOnMountOrArgChange: true
         });
-
-    // Token refresh hook - with safety checks for non-iterable return
     const refreshTokenResult = useRefreshTokenQuery(undefined, {
         skip: true
     });
-
-    // Safely extract values with fallbacks
     const triggerRefreshToken = refreshTokenResult && typeof refreshTokenResult[0] === 'function'
         ? refreshTokenResult[0]
         : () => Promise.resolve(false);
@@ -123,22 +115,14 @@ export default function useAuth({
         refreshTokenResult[1] &&
         refreshTokenResult[1].isLoading || false;
 
-    // Handle logout
     const handleLogout = useCallback(async () => {
-        // Use the centralized clearCredentials function
         await clearCredentials();
-
-        // Update Redux state
         dispatch(logout());
-
-        // Navigate to login
         navigation.navigate('GuestNav', { screen: 'Login' });
     }, [dispatch, navigation]);
 
-    // Refresh token function
     const refreshToken = useCallback(async () => {
         try {
-            // Only call triggerRefreshToken if it's a function
             if (typeof triggerRefreshToken === 'function') {
                 const result = await triggerRefreshToken().unwrap();
                 return !!result?.token;
@@ -150,10 +134,9 @@ export default function useAuth({
         }
     }, [triggerRefreshToken]);
 
-    // Enhanced logging to debug user profile information
     useEffect(() => {
         if (currentUser) {
-            logUserProfile(
+            LOG && logUserProfile(
                 currentUser,
                 hasBasicInfo,
                 hasAddressInfo,
@@ -180,7 +163,6 @@ export default function useAuth({
         }
 
         if (isAuthenticated && currentUser) {
-            // Check for directly completed profile in the user object
             const userHasCompletedProfile = !!(
                 currentUser.info?.first_name &&
                 currentUser.info?.last_name &&
@@ -190,23 +172,15 @@ export default function useAuth({
                 currentUser.info?.region
             );
 
-            // Check if email is verified directly in the user object
             const userHasVerifiedEmail = !!currentUser.emailVerifiedAt;
-
-            // Only redirect to BasicInformation if required AND not completed based on user data
             if (requireBasicInfo && !hasBasicInfo && !userHasCompletedProfile) {
                 navigation.navigate('BasicInformation');
                 return false;
             }
-
-            // Only redirect to AddressInformation if required AND basic info is complete but address is not
             if (requireAddressInfo && hasBasicInfo && !hasAddressInfo && !userHasCompletedProfile) {
                 navigation.navigate('AddressInformation');
                 return false;
             }
-
-            // Only redirect for email verification if it's required AND not verified
-            // AND the user hasn't chosen to verify later AND not already verified in user object
             if (requireEmailVerified && !isEmailVerified && !isPendingVerification && !userHasVerifiedEmail) {
                 navigation.navigate('EmailVerification');
                 return false;
@@ -231,14 +205,12 @@ export default function useAuth({
         navigation
     ]);
 
-    // Check on first load and when dependencies change
     useEffect(() => {
         if (!isReady) {
             setIsReady(true);
             return;
         }
 
-        // Validate and redirect if needed
         const isValid = validateRequirements();
         if (!isValid && redirectTo) {
             navigation.navigate(redirectTo);
@@ -250,16 +222,13 @@ export default function useAuth({
         navigation
     ]);
 
-    // Handle token expiration and profile errors
     useEffect(() => {
         if (isAuthenticated &&
             (profileError?.status === 401 ||
                 profileError?.status === 403 ||
                 profileError?.status === 419)) {
-            // Token expired, try to refresh
             refreshToken().then(success => {
                 if (!success) {
-                    // If refresh fails, log the user out
                     handleLogout();
                 }
             });

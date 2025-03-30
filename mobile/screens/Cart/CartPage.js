@@ -6,6 +6,8 @@ import useResource from '~/hooks/useResource';
 import { ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 import resourceEndpoints from '~/states/api/resources';
+import { useSelector, useDispatch } from 'react-redux';
+import { toggleItemSelection, selectAllItems, deselectAllItems } from '~/states/slices/cart';
 
 export function CartPage({ navigation, route }) {
     const {
@@ -14,8 +16,23 @@ export function CartPage({ navigation, route }) {
         events: { onDestroy }
     } = useResource({ resourceName: 'cart' });
 
+    const selectedItems = useSelector(state => {
+        return state.cart?.selectedItems || {};
+    });
+    const dispatch = useDispatch();
 
-    const [selectedItems, setSelectedItems] = useState({});
+    const [localSelectedItems, setLocalSelectedItems] = useState({});
+
+    useEffect(() => {
+        if (selectedItems && Object.keys(selectedItems).length > 0) {
+            setLocalSelectedItems(selectedItems);
+        }
+    }, [selectedItems]);
+
+    const effectiveSelectedItems = Object.keys(selectedItems).length > 0
+        ? selectedItems
+        : localSelectedItems;
+
     const [searchQuery, setSearchQuery] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
     const { params } = route || {};
@@ -29,22 +46,30 @@ export function CartPage({ navigation, route }) {
     }, [refresh, shouldRefresh]);
 
     const handleToggleSelection = (itemId) => {
-        setSelectedItems(prev => ({
-            ...prev,
-            [itemId]: !prev[itemId]
-        }));
+        setLocalSelectedItems(prev => {
+            const updated = { ...prev };
+            if (updated[itemId]) {
+                delete updated[itemId];
+            } else {
+                updated[itemId] = true;
+            }
+            return updated;
+        });
+
+        try {
+            dispatch(toggleItemSelection(itemId));
+        } catch (error) {
+            console.error('Error toggling selection:', error);
+        }
     };
 
     const handleSelectAll = () => {
-        const newSelectedItems = {};
-        cartItems.forEach(item => {
-            newSelectedItems[item.id] = true;
-        });
-        setSelectedItems(newSelectedItems);
+        dispatch(selectAllItems(cartItems));
     };
 
     const handleDeselectAll = () => {
-        setSelectedItems({});
+        setLocalSelectedItems({});
+        dispatch(deselectAllItems());
     };
 
     const handleSearch = (query) => {
@@ -52,7 +77,6 @@ export function CartPage({ navigation, route }) {
     };
 
     const handleViewDetails = (item) => {
-        console.log(item)
         navigation.navigate('DefaultRoutes', {
             screen: 'CartDetailView',
             params: {
@@ -99,13 +123,7 @@ export function CartPage({ navigation, route }) {
                     onPress: () => {
                         setIsRefreshing(true);
                         doDestroy(itemId).then(() => {
-                            // Update local state immediately for better UX
                             const updatedItems = cartItems.filter(item => item.id !== itemId);
-
-                            // Also remove from selected items
-                            const updatedSelectedItems = { ...selectedItems };
-                            delete updatedSelectedItems[itemId];
-                            setSelectedItems(updatedSelectedItems);
 
                             Toast.show({
                                 type: 'success',
@@ -113,7 +131,6 @@ export function CartPage({ navigation, route }) {
                                 text2: 'The item was removed from your cart',
                             });
 
-                            // Refresh data from server to ensure sync
                             fetchDatas().finally(() => {
                                 setIsRefreshing(false);
                             });
@@ -160,7 +177,6 @@ export function CartPage({ navigation, route }) {
                                 text1: 'Cart Cleared',
                                 text2: 'All items were removed from your cart',
                             });
-                            setSelectedItems({});
                             fetchDatas();
                         } catch (error) {
                             Toast.show({
@@ -177,8 +193,7 @@ export function CartPage({ navigation, route }) {
     };
 
     const handleCheckout = () => {
-        // Only checkout selected items
-        const itemsToCheckout = cartItems.filter(item => selectedItems[item.id]);
+        const itemsToCheckout = cartItems.filter(item => effectiveSelectedItems[item.id]);
 
         if (itemsToCheckout.length === 0) {
             Toast.show({
@@ -189,9 +204,25 @@ export function CartPage({ navigation, route }) {
             return;
         }
 
+        // Make sure Redux store has the selected items before navigating
+        // This ensures SummaryAndConfirmation can access the selection state
+        dispatch(selectAllItems(itemsToCheckout));
+
+        // Calculate the subtotal of selected items
+        const subtotal = itemsToCheckout.reduce((sum, item) =>
+            sum + (item.price * item.quantity), 0);
+
+        // Navigate with complete item data
         navigation.navigate('DefaultRoutes', {
             screen: 'Checkout',
-            params: { items: itemsToCheckout }
+            params: {
+                items: itemsToCheckout,
+                subtotal: subtotal,
+                selectedItems: Object.keys(effectiveSelectedItems).reduce((obj, id) => {
+                    obj[id] = true;
+                    return obj;
+                }, {})
+            }
         });
     };
 
@@ -199,10 +230,9 @@ export function CartPage({ navigation, route }) {
         item.product?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Selectors
-    const selectedCount = Object.values(selectedItems).filter(Boolean).length;
+    const selectedCount = Object.keys(effectiveSelectedItems).length;
     const totalAmount = cartItems
-        .filter(item => selectedItems[item.id])
+        .filter(item => effectiveSelectedItems[item.id])
         .reduce((sum, item) => sum + (item.total || 0), 0);
 
     if (loading && cartItems.length === 0) {
@@ -231,7 +261,7 @@ export function CartPage({ navigation, route }) {
                 items={filteredItems}
                 onViewDetails={handleViewDetails}
                 onDeleteItem={handleDeleteItem}
-                selectedItems={selectedItems}
+                selectedItems={effectiveSelectedItems}
                 onToggleSelection={handleToggleSelection}
                 loading={loading || isRefreshing}
                 onRefresh={handleRefresh}

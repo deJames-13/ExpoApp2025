@@ -30,7 +30,7 @@ export default [
       {
         path: PATHS.ID,
         method: METHODS.GET,
-        controller: controller.getById,
+        controller: [...protectAndPermit(READ_WRITE), controller.getById],
       },
     ],
   },

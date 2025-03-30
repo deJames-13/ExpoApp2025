@@ -3,9 +3,9 @@ import { Resource } from '#lib';
 
 
 let shippingMethods = {
-  std: { key: 'std', fee: 100, method: 'Standard', day: 7},
-  exp: { key: 'exp', fee: 200, method: 'Express', day: 3},
-  smd: { key: 'smd', fee: 300, method: 'Same Day', day: 1},
+  std: { key: 'std', fee: 100, method: 'Standard', day: 7 },
+  exp: { key: 'exp', fee: 200, method: 'Express', day: 3 },
+  smd: { key: 'smd', fee: 300, method: 'Same Day', day: 1 },
 }
 
 let notesPhrases = {
@@ -18,7 +18,7 @@ let notesPhrases = {
 export default class OrderResource extends Resource {
 
   async transform(order) {
-    const { _id, user, products, review=null, ...rest } = order;
+    const { _id, user, products, review = null, ...rest } = order;
     const userData = await UserService.getById(user);
     const productList = products.map((product) => product.product);
     const productData = await ProductModel.find({ _id: { $in: productList } }).exec();
@@ -34,7 +34,7 @@ export default class OrderResource extends Resource {
       user: await UserResource.make(userData),
       review: review ? await ReviewResource.make(reviewData) : null,
       products: productData,
-      quantities: products.map((product) => ({[product.product]: product.quantity})),
+      quantities: products.map((product) => ({ [product.product]: product.quantity })),
       subTotal,
       total,
       notes,

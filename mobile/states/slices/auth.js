@@ -5,7 +5,7 @@ import { STORAGE_KEYS, persistCredentials, clearCredentials } from '../utils/aut
 const initialState = {
     user: null,
     token: null,
-    fcmToken: null, // Add FCM token to auth state
+    fcmToken: null,
     isAuthenticated: false,
     isLoading: false,
     onboarding: {

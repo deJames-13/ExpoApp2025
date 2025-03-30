@@ -21,6 +21,22 @@ class OrderController extends Controller {
     this.success({ res, message, resource, meta: { ...meta, count: data.length } });
   };
 
+  getById = async (req, res) => {
+    try {
+      const data = await this.service.getById(req.params.id);
+      if (!data?._id) return this.error({ res, message: 'Order not found!' });
+
+      if (data.products && data.products.length > 0) {
+        const productIds = data.products.map(item => item.product);
+        const productData = await this.service.getProductsData(productIds);
+      }
+
+      const resource = await this.resource.make(data);
+      this.success({ res, message: 'Data fetched!', resource });
+    } catch (error) {
+      return this.error({ res, message: 'Failed to fetch order details', error });
+    }
+  };
 
   store = async (req, res) => {
     const order = await this.service.create(req.body);

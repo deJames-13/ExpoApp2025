@@ -1,40 +1,95 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import useAuth from '~/hooks/useAuth';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+import { useDispatch } from 'react-redux';
+import { updateBasicInfo } from '~/states/slices/checkout';
+
+// Validation schema
+const CheckoutSchema = Yup.object().shape({
+    firstName: Yup.string()
+        .min(2, 'Too Short!')
+        .max(50, 'Too Long!')
+        .required('First name is required'),
+    lastName: Yup.string()
+        .min(2, 'Too Short!')
+        .max(50, 'Too Long!')
+        .required('Last name is required'),
+    email: Yup.string()
+        .email('Invalid email')
+        .required('Email is required'),
+    phone: Yup.string()
+        .matches(/^[0-9]{10}$/, 'Phone number must be 10 digits')
+        .required('Phone number is required'),
+    address: Yup.string()
+        .required('Address is required'),
+    city: Yup.string()
+        .required('City is required'),
+    state: Yup.string()
+        .required('State is required'),
+    zipCode: Yup.string()
+        .required('Zip code is required'),
+    country: Yup.string()
+        .required('Country is required'),
+});
 
 export default function BasicInfoView({ navigation, checkoutData, updateCheckoutData }) {
-    const [formData, setFormData] = useState({
-        firstName: checkoutData.userInfo.firstName || '',
-        lastName: checkoutData.userInfo.lastName || '',
-        email: checkoutData.userInfo.email || '',
-        phone: checkoutData.userInfo.phone || '',
-        address: checkoutData.shippingAddress.address || '',
-        city: checkoutData.shippingAddress.city || '',
-        state: checkoutData.shippingAddress.state || '',
-        zipCode: checkoutData.shippingAddress.zipCode || '',
-        country: checkoutData.shippingAddress.country || '',
-    });
+    const dispatch = useDispatch();
+    const { currentUser, isAuthenticated } = useAuth();
 
-    const handleChange = (field, value) => {
-        setFormData({ ...formData, [field]: value });
+    // Get initial values from redux store or user data
+    const getInitialValues = () => {
+        const userInfo = currentUser?.info || {};
+
+        return {
+            firstName: checkoutData.userInfo.firstName || userInfo.first_name || '',
+            lastName: checkoutData.userInfo.lastName || userInfo.last_name || '',
+            email: checkoutData.userInfo.email || currentUser?.email || '',
+            phone: checkoutData.userInfo.phone || userInfo.contact || '',
+            address: checkoutData.shippingAddress.address || userInfo.address || '',
+            city: checkoutData.shippingAddress.city || userInfo.city || '',
+            state: checkoutData.shippingAddress.state || userInfo.region || '',
+            zipCode: checkoutData.shippingAddress.zipCode || userInfo.zip_code || '',
+            country: checkoutData.shippingAddress.country || userInfo.country || 'Philippines',
+        };
     };
 
-    const handleSubmit = () => {
-        // Save form data to checkout data
+    // Submit handler - save to redux and navigate if valid
+    const handleSubmit = (values) => {
+        // Save form data to checkout data in the component's state
         updateCheckoutData('userInfo', {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.phone,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            phone: values.phone,
         });
 
         updateCheckoutData('shippingAddress', {
-            address: formData.address,
-            city: formData.city,
-            state: formData.state,
-            zipCode: formData.zipCode,
-            country: formData.country,
+            address: values.address,
+            city: values.city,
+            state: values.state,
+            zipCode: values.zipCode,
+            country: values.country,
         });
+
+        // Save data to Redux for global state management
+        dispatch(updateBasicInfo({
+            userInfo: {
+                firstName: values.firstName,
+                lastName: values.lastName,
+                email: values.email,
+                phone: values.phone,
+            },
+            shippingAddress: {
+                address: values.address,
+                city: values.city,
+                state: values.state,
+                zipCode: values.zipCode,
+                country: values.country,
+            }
+        }));
 
         // Navigate to payment step
         navigation.navigate('Payment');
@@ -56,118 +111,168 @@ export default function BasicInfoView({ navigation, checkoutData, updateCheckout
                 </View>
             </View>
 
-            <Text style={styles.sectionTitle}>Personal Information</Text>
-            <View style={styles.formGroup}>
-                <Text style={styles.label}>First Name</Text>
-                <TextInput
-                    style={styles.input}
-                    value={formData.firstName}
-                    onChangeText={(text) => handleChange('firstName', text)}
-                    placeholder="Enter your first name"
-                    placeholderTextColor="#999"
-                />
-            </View>
+            <Formik
+                initialValues={getInitialValues()}
+                validationSchema={CheckoutSchema}
+                onSubmit={handleSubmit}
+            >
+                {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isValid, dirty }) => (
+                    <>
+                        <Text style={styles.sectionTitle}>Personal Information</Text>
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>First Name</Text>
+                            <TextInput
+                                style={[styles.input, touched.firstName && errors.firstName && styles.inputError]}
+                                value={values.firstName}
+                                onChangeText={handleChange('firstName')}
+                                onBlur={handleBlur('firstName')}
+                                placeholder="Enter your first name"
+                                placeholderTextColor="#999"
+                            />
+                            {touched.firstName && errors.firstName && (
+                                <Text style={styles.errorText}>{errors.firstName}</Text>
+                            )}
+                        </View>
 
-            <View style={styles.formGroup}>
-                <Text style={styles.label}>Last Name</Text>
-                <TextInput
-                    style={styles.input}
-                    value={formData.lastName}
-                    onChangeText={(text) => handleChange('lastName', text)}
-                    placeholder="Enter your last name"
-                    placeholderTextColor="#999"
-                />
-            </View>
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Last Name</Text>
+                            <TextInput
+                                style={[styles.input, touched.lastName && errors.lastName && styles.inputError]}
+                                value={values.lastName}
+                                onChangeText={handleChange('lastName')}
+                                onBlur={handleBlur('lastName')}
+                                placeholder="Enter your last name"
+                                placeholderTextColor="#999"
+                            />
+                            {touched.lastName && errors.lastName && (
+                                <Text style={styles.errorText}>{errors.lastName}</Text>
+                            )}
+                        </View>
 
-            <View style={styles.formGroup}>
-                <Text style={styles.label}>Email Address</Text>
-                <TextInput
-                    style={styles.input}
-                    value={formData.email}
-                    onChangeText={(text) => handleChange('email', text)}
-                    placeholder="Enter your email"
-                    placeholderTextColor="#999"
-                    keyboardType="email-address"
-                />
-            </View>
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Email Address</Text>
+                            <TextInput
+                                style={[styles.input, touched.email && errors.email && styles.inputError]}
+                                value={values.email}
+                                onChangeText={handleChange('email')}
+                                onBlur={handleBlur('email')}
+                                placeholder="Enter your email"
+                                placeholderTextColor="#999"
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                            />
+                            {touched.email && errors.email && (
+                                <Text style={styles.errorText}>{errors.email}</Text>
+                            )}
+                        </View>
 
-            <View style={styles.formGroup}>
-                <Text style={styles.label}>Phone Number</Text>
-                <TextInput
-                    style={styles.input}
-                    value={formData.phone}
-                    onChangeText={(text) => handleChange('phone', text)}
-                    placeholder="Enter your phone number"
-                    placeholderTextColor="#999"
-                    keyboardType="phone-pad"
-                />
-            </View>
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Phone Number</Text>
+                            <TextInput
+                                style={[styles.input, touched.phone && errors.phone && styles.inputError]}
+                                value={values.phone}
+                                onChangeText={handleChange('phone')}
+                                onBlur={handleBlur('phone')}
+                                placeholder="Enter your phone number"
+                                placeholderTextColor="#999"
+                                keyboardType="phone-pad"
+                            />
+                            {touched.phone && errors.phone && (
+                                <Text style={styles.errorText}>{errors.phone}</Text>
+                            )}
+                        </View>
 
-            <Text style={styles.sectionTitle}>Shipping Address</Text>
-            <View style={styles.formGroup}>
-                <Text style={styles.label}>Address</Text>
-                <TextInput
-                    style={styles.input}
-                    value={formData.address}
-                    onChangeText={(text) => handleChange('address', text)}
-                    placeholder="Enter your street address"
-                    placeholderTextColor="#999"
-                />
-            </View>
+                        <Text style={styles.sectionTitle}>Shipping Address</Text>
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Address</Text>
+                            <TextInput
+                                style={[styles.input, touched.address && errors.address && styles.inputError]}
+                                value={values.address}
+                                onChangeText={handleChange('address')}
+                                onBlur={handleBlur('address')}
+                                placeholder="Enter your street address"
+                                placeholderTextColor="#999"
+                            />
+                            {touched.address && errors.address && (
+                                <Text style={styles.errorText}>{errors.address}</Text>
+                            )}
+                        </View>
 
-            <View style={styles.rowFields}>
-                <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-                    <Text style={styles.label}>City</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={formData.city}
-                        onChangeText={(text) => handleChange('city', text)}
-                        placeholder="City"
-                        placeholderTextColor="#999"
-                    />
-                </View>
+                        <View style={styles.rowFields}>
+                            <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                                <Text style={styles.label}>City</Text>
+                                <TextInput
+                                    style={[styles.input, touched.city && errors.city && styles.inputError]}
+                                    value={values.city}
+                                    onChangeText={handleChange('city')}
+                                    onBlur={handleBlur('city')}
+                                    placeholder="City"
+                                    placeholderTextColor="#999"
+                                />
+                                {touched.city && errors.city && (
+                                    <Text style={styles.errorText}>{errors.city}</Text>
+                                )}
+                            </View>
 
-                <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-                    <Text style={styles.label}>State</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={formData.state}
-                        onChangeText={(text) => handleChange('state', text)}
-                        placeholder="State"
-                        placeholderTextColor="#999"
-                    />
-                </View>
-            </View>
+                            <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
+                                <Text style={styles.label}>State</Text>
+                                <TextInput
+                                    style={[styles.input, touched.state && errors.state && styles.inputError]}
+                                    value={values.state}
+                                    onChangeText={handleChange('state')}
+                                    onBlur={handleBlur('state')}
+                                    placeholder="State"
+                                    placeholderTextColor="#999"
+                                />
+                                {touched.state && errors.state && (
+                                    <Text style={styles.errorText}>{errors.state}</Text>
+                                )}
+                            </View>
+                        </View>
 
-            <View style={styles.rowFields}>
-                <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-                    <Text style={styles.label}>Zip Code</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={formData.zipCode}
-                        onChangeText={(text) => handleChange('zipCode', text)}
-                        placeholder="Zip Code"
-                        placeholderTextColor="#999"
-                        keyboardType="numeric"
-                    />
-                </View>
+                        <View style={styles.rowFields}>
+                            <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                                <Text style={styles.label}>Zip Code</Text>
+                                <TextInput
+                                    style={[styles.input, touched.zipCode && errors.zipCode && styles.inputError]}
+                                    value={values.zipCode}
+                                    onChangeText={handleChange('zipCode')}
+                                    onBlur={handleBlur('zipCode')}
+                                    placeholder="Zip Code"
+                                    placeholderTextColor="#999"
+                                    keyboardType="numeric"
+                                />
+                                {touched.zipCode && errors.zipCode && (
+                                    <Text style={styles.errorText}>{errors.zipCode}</Text>
+                                )}
+                            </View>
 
-                <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-                    <Text style={styles.label}>Country</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={formData.country}
-                        onChangeText={(text) => handleChange('country', text)}
-                        placeholder="Country"
-                        placeholderTextColor="#999"
-                    />
-                </View>
-            </View>
+                            <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
+                                <Text style={styles.label}>Country</Text>
+                                <TextInput
+                                    style={[styles.input, touched.country && errors.country && styles.inputError]}
+                                    value={values.country || 'Philippines'}
+                                    onChangeText={handleChange('country')}
+                                    onBlur={handleBlur('country')}
+                                    placeholder="Country"
+                                    placeholderTextColor="#999"
+                                />
+                                {touched.country && errors.country && (
+                                    <Text style={styles.errorText}>{errors.country}</Text>
+                                )}
+                            </View>
+                        </View>
 
-            <TouchableOpacity style={styles.nextButton} onPress={handleSubmit}>
-                <Text style={styles.nextButtonText}>Continue to Payment</Text>
-                <Ionicons name="arrow-forward" size={20} color="#fff" />
-            </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.nextButton}
+                            onPress={handleSubmit}
+                        >
+                            <Text style={styles.nextButtonText}>Continue to Payment</Text>
+                            <Ionicons name="arrow-forward" size={20} color="#fff" />
+                        </TouchableOpacity>
+                    </>
+                )}
+            </Formik>
         </ScrollView>
     );
 }
@@ -236,6 +341,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         backgroundColor: '#fff',
     },
+    inputError: {
+        borderColor: '#f44336',
+    },
+    errorText: {
+        color: '#f44336',
+        fontSize: 12,
+        marginTop: 4,
+    },
     rowFields: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -248,6 +361,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginVertical: 24,
+    },
+    disabledButton: {
+        backgroundColor: '#b0bec5',
     },
     nextButtonText: {
         color: 'white',

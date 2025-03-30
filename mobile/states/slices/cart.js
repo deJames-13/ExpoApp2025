@@ -1,40 +1,62 @@
 import { createSlice } from '@reduxjs/toolkit';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const initialState = {
-    items: [],
-    total: 0,
-}
+    selectedItems: {}, // Track selected items with an object for O(1) lookup
+};
 
 const cartSlice = createSlice({
     name: 'cart',
     initialState,
     reducers: {
-        addItem: (state, action) => {
-            const item = action.payload;
-            const index = state.items.findIndex(i => i.id === item.id);
-            if (index !== -1) {
-                state.items[index].quantity += item.quantity;
+        toggleItemSelection: (state, action) => {
+            const itemId = action.payload;
+
+            // If the item is already selected, unselect it
+            if (state.selectedItems[itemId]) {
+                const newSelectedItems = { ...state.selectedItems };
+                delete newSelectedItems[itemId];
+                state.selectedItems = newSelectedItems;
             } else {
-                state.items.push(item);
-            }
-            state.total += item.price * item.quantity;
-        },
-        removeItem: (state, action) => {
-            const item = action.payload;
-            const index = state.items.findIndex(i => i.id === item.id);
-            if (index !== -1) {
-                state.total -= state.items[index].price * state.items[index].quantity;
-                state.items.splice(index, 1);
+                // Otherwise, select it
+                state.selectedItems = {
+                    ...state.selectedItems,
+                    [itemId]: true
+                };
             }
         },
-        clearCart: (state) => {
-            state.items = [];
-            state.total = 0;
+        selectAllItems: (state, action) => {
+            const items = action.payload || [];
+            const selectedItems = {};
+
+            items.forEach(item => {
+                if (item && item.id) {
+                    selectedItems[item.id] = true;
+                }
+            });
+
+            state.selectedItems = selectedItems;
+        },
+        deselectAllItems: (state) => {
+            state.selectedItems = {};
+        },
+        // Add new function to remove selected items after checkout
+        removeSelectedItems: (state) => {
+            // This function performs a hard reset of the selected items
+            // Different from deselectAllItems as it's specifically meant for post-checkout cleanup
+            state.selectedItems = {};
         },
     },
 });
 
-export const { addItem, removeItem, clearCart } = cartSlice.actions;
+export const {
+    toggleItemSelection,
+    selectAllItems,
+    deselectAllItems,
+    removeSelectedItems
+} = cartSlice.actions;
+
+// Add the missing selector
+export const selectSelectedItems = (state) => state.cart.selectedItems;
+
 export default cartSlice.reducer;
 

@@ -1,14 +1,53 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+import { useDispatch } from 'react-redux';
+import { updatePaymentInfo } from '~/states/slices/checkout';
+
+// Shipping configuration matching the server
+const shippingMethods = {
+    std: { key: 'std', fee: 100, method: 'Standard', day: 7 },
+    exp: { key: 'exp', fee: 200, method: 'Express', day: 3 },
+    smd: { key: 'smd', fee: 300, method: 'Same Day', day: 1 },
+};
+
+const formatCurrency = (cents) => {
+    return (cents).toFixed(2);
+};
+
+// Validation schema
+const PaymentSchema = Yup.object().shape({
+    shippingMethod: Yup.string()
+        .oneOf(['std', 'exp', 'smd'], 'Please select a shipping method')
+        .required('Shipping method is required'),
+    paymentMethod: Yup.string()
+        .oneOf(['cash', 'card', 'paypal'], 'Please select a payment method')
+        .required('Payment method is required'),
+});
 
 export default function PaymentView({ navigation, checkoutData, updateCheckoutData }) {
-    const [shippingMethod, setShippingMethod] = useState(checkoutData.shippingMethod || 'standard');
-    const [paymentMethod, setPaymentMethod] = useState(checkoutData.paymentMethod || 'cash');
+    const dispatch = useDispatch();
 
-    const handleContinue = () => {
-        updateCheckoutData('shippingMethod', shippingMethod);
-        updateCheckoutData('paymentMethod', paymentMethod);
+    // Initial values
+    const initialValues = {
+        shippingMethod: checkoutData.shippingMethod || 'std',
+        paymentMethod: checkoutData.paymentMethod || 'cash',
+    };
+
+    const handleSubmit = (values) => {
+        // Update local component state
+        updateCheckoutData('shippingMethod', values.shippingMethod);
+        updateCheckoutData('paymentMethod', values.paymentMethod);
+
+        // Update Redux state
+        dispatch(updatePaymentInfo({
+            shippingMethod: values.shippingMethod,
+            paymentMethod: values.paymentMethod,
+        }));
+
+        // Navigate to summary
         navigation.navigate('Summary');
     };
 
@@ -32,106 +71,140 @@ export default function PaymentView({ navigation, checkoutData, updateCheckoutDa
                 </View>
             </View>
 
-            {/* Shipping Method Section */}
-            <Text style={styles.sectionTitle}>Shipping Method</Text>
-
-            <TouchableOpacity
-                style={[styles.methodCard, shippingMethod === 'standard' && styles.selectedMethodCard]}
-                onPress={() => setShippingMethod('standard')}
+            <Formik
+                initialValues={initialValues}
+                validationSchema={PaymentSchema}
+                onSubmit={handleSubmit}
             >
-                <View style={styles.methodCardLeft}>
-                    <View style={[styles.radioButton, shippingMethod === 'standard' && styles.radioButtonSelected]}>
-                        {shippingMethod === 'standard' && <View style={styles.radioButtonInner} />}
-                    </View>
-                    <View style={styles.methodInfo}>
-                        <Text style={styles.methodTitle}>Standard Shipping</Text>
-                        <Text style={styles.methodDescription}>Delivery in 3-5 business days</Text>
-                    </View>
-                </View>
-                <Text style={styles.methodPrice}>{process.env.EXPO_PUBLIC_APP_CURRENCY} 9.99</Text>
-            </TouchableOpacity>
+                {({ handleSubmit, values, setFieldValue, isValid }) => (
+                    <>
+                        <Text style={styles.sectionTitle}>Shipping Method</Text>
 
-            <TouchableOpacity
-                style={[styles.methodCard, shippingMethod === 'express' && styles.selectedMethodCard]}
-                onPress={() => setShippingMethod('express')}
-            >
-                <View style={styles.methodCardLeft}>
-                    <View style={[styles.radioButton, shippingMethod === 'express' && styles.radioButtonSelected]}>
-                        {shippingMethod === 'express' && <View style={styles.radioButtonInner} />}
-                    </View>
-                    <View style={styles.methodInfo}>
-                        <Text style={styles.methodTitle}>Express Shipping</Text>
-                        <Text style={styles.methodDescription}>Delivery in 1-2 business days</Text>
-                    </View>
-                </View>
-                <Text style={styles.methodPrice}>{process.env.EXPO_PUBLIC_APP_CURRENCY} 19.99</Text>
-            </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.methodCard, values.shippingMethod === 'std' && styles.selectedMethodCard]}
+                            onPress={() => setFieldValue('shippingMethod', 'std')}
+                        >
+                            <View style={styles.methodCardLeft}>
+                                <View style={[styles.radioButton, values.shippingMethod === 'std' && styles.radioButtonSelected]}>
+                                    {values.shippingMethod === 'std' && <View style={styles.radioButtonInner} />}
+                                </View>
+                                <View style={styles.methodInfo}>
+                                    <Text style={styles.methodTitle}>Standard Shipping</Text>
+                                    <Text style={styles.methodDescription}>Delivery in {shippingMethods.std.day} business days</Text>
+                                </View>
+                            </View>
+                            <Text style={styles.methodPrice}>
+                                {process.env.EXPO_PUBLIC_APP_CURRENCY} {formatCurrency(shippingMethods.std.fee)}
+                            </Text>
+                        </TouchableOpacity>
 
-            {/* Payment Method Section */}
-            <Text style={styles.sectionTitle}>Payment Method</Text>
+                        <TouchableOpacity
+                            style={[styles.methodCard, values.shippingMethod === 'exp' && styles.selectedMethodCard]}
+                            onPress={() => setFieldValue('shippingMethod', 'exp')}
+                        >
+                            <View style={styles.methodCardLeft}>
+                                <View style={[styles.radioButton, values.shippingMethod === 'exp' && styles.radioButtonSelected]}>
+                                    {values.shippingMethod === 'exp' && <View style={styles.radioButtonInner} />}
+                                </View>
+                                <View style={styles.methodInfo}>
+                                    <Text style={styles.methodTitle}>Express Shipping</Text>
+                                    <Text style={styles.methodDescription}>Delivery in {shippingMethods.exp.day} business days</Text>
+                                </View>
+                            </View>
+                            <Text style={styles.methodPrice}>
+                                {process.env.EXPO_PUBLIC_APP_CURRENCY} {formatCurrency(shippingMethods.exp.fee)}
+                            </Text>
+                        </TouchableOpacity>
 
-            <TouchableOpacity
-                style={[styles.methodCard, paymentMethod === 'cash' && styles.selectedMethodCard]}
-                onPress={() => setPaymentMethod('cash')}
-            >
-                <View style={styles.methodCardLeft}>
-                    <View style={[styles.radioButton, paymentMethod === 'cash' && styles.radioButtonSelected]}>
-                        {paymentMethod === 'cash' && <View style={styles.radioButtonInner} />}
-                    </View>
-                    <View style={styles.methodInfo}>
-                        <Text style={styles.methodTitle}>Cash on Delivery</Text>
-                        <Text style={styles.methodDescription}>Pay when you receive your items</Text>
-                    </View>
-                </View>
-                <Ionicons name="cash-outline" size={24} color="#757575" />
-            </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.methodCard, values.shippingMethod === 'smd' && styles.selectedMethodCard]}
+                            onPress={() => setFieldValue('shippingMethod', 'smd')}
+                        >
+                            <View style={styles.methodCardLeft}>
+                                <View style={[styles.radioButton, values.shippingMethod === 'smd' && styles.radioButtonSelected]}>
+                                    {values.shippingMethod === 'smd' && <View style={styles.radioButtonInner} />}
+                                </View>
+                                <View style={styles.methodInfo}>
+                                    <Text style={styles.methodTitle}>Same Day Shipping</Text>
+                                    <Text style={styles.methodDescription}>Delivery in {shippingMethods.smd.day} business day</Text>
+                                </View>
+                            </View>
+                            <Text style={styles.methodPrice}>
+                                {process.env.EXPO_PUBLIC_APP_CURRENCY} {formatCurrency(shippingMethods.smd.fee)}
+                            </Text>
+                        </TouchableOpacity>
 
-            <TouchableOpacity
-                style={[styles.methodCard, paymentMethod === 'card' && styles.selectedMethodCard]}
-                onPress={() => setPaymentMethod('card')}
-            >
-                <View style={styles.methodCardLeft}>
-                    <View style={[styles.radioButton, paymentMethod === 'card' && styles.radioButtonSelected]}>
-                        {paymentMethod === 'card' && <View style={styles.radioButtonInner} />}
-                    </View>
-                    <View style={styles.methodInfo}>
-                        <Text style={styles.methodTitle}>Credit / Debit Card</Text>
-                        <Text style={styles.methodDescription}>Pay securely with your card</Text>
-                    </View>
-                </View>
-                <View style={styles.cardIcons}>
-                    <Image source={{ uri: 'https://via.placeholder.com/30' }} style={styles.cardIcon} />
-                    <Image source={{ uri: 'https://via.placeholder.com/30' }} style={styles.cardIcon} />
-                </View>
-            </TouchableOpacity>
+                        <Text style={styles.sectionTitle}>Payment Method</Text>
 
-            <TouchableOpacity
-                style={[styles.methodCard, paymentMethod === 'paypal' && styles.selectedMethodCard]}
-                onPress={() => setPaymentMethod('paypal')}
-            >
-                <View style={styles.methodCardLeft}>
-                    <View style={[styles.radioButton, paymentMethod === 'paypal' && styles.radioButtonSelected]}>
-                        {paymentMethod === 'paypal' && <View style={styles.radioButtonInner} />}
-                    </View>
-                    <View style={styles.methodInfo}>
-                        <Text style={styles.methodTitle}>PayPal</Text>
-                        <Text style={styles.methodDescription}>Pay with your PayPal account</Text>
-                    </View>
-                </View>
-                <Image source={{ uri: 'https://via.placeholder.com/30' }} style={styles.cardIcon} />
-            </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.methodCard, values.paymentMethod === 'cash' && styles.selectedMethodCard]}
+                            onPress={() => setFieldValue('paymentMethod', 'cash')}
+                        >
+                            <View style={styles.methodCardLeft}>
+                                <View style={[styles.radioButton, values.paymentMethod === 'cash' && styles.radioButtonSelected]}>
+                                    {values.paymentMethod === 'cash' && <View style={styles.radioButtonInner} />}
+                                </View>
+                                <View style={styles.methodInfo}>
+                                    <Text style={styles.methodTitle}>Cash on Delivery</Text>
+                                    <Text style={styles.methodDescription}>Pay when you receive your items</Text>
+                                </View>
+                            </View>
+                            <Ionicons name="cash-outline" size={24} color="#757575" />
+                        </TouchableOpacity>
 
-            <View style={styles.buttonsContainer}>
-                <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-                    <Ionicons name="arrow-back" size={20} color="#2196F3" />
-                    <Text style={styles.backButtonText}>Back</Text>
-                </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.methodCard, values.paymentMethod === 'card' && styles.selectedMethodCard]}
+                            onPress={() => setFieldValue('paymentMethod', 'card')}
+                        >
+                            <View style={styles.methodCardLeft}>
+                                <View style={[styles.radioButton, values.paymentMethod === 'card' && styles.radioButtonSelected]}>
+                                    {values.paymentMethod === 'card' && <View style={styles.radioButtonInner} />}
+                                </View>
+                                <View style={styles.methodInfo}>
+                                    <Text style={styles.methodTitle}>Credit / Debit Card</Text>
+                                    <Text style={styles.methodDescription}>Pay securely with your card</Text>
+                                </View>
+                            </View>
+                            <View style={styles.cardIcons}>
+                                <Image source={{ uri: 'https://via.placeholder.com/30' }} style={styles.cardIcon} />
+                                <Image source={{ uri: 'https://via.placeholder.com/30' }} style={styles.cardIcon} />
+                            </View>
+                        </TouchableOpacity>
 
-                <TouchableOpacity style={styles.nextButton} onPress={handleContinue}>
-                    <Text style={styles.nextButtonText}>Review Order</Text>
-                    <Ionicons name="arrow-forward" size={20} color="#fff" />
-                </TouchableOpacity>
-            </View>
+                        <TouchableOpacity
+                            style={[styles.methodCard, values.paymentMethod === 'paypal' && styles.selectedMethodCard]}
+                            onPress={() => setFieldValue('paymentMethod', 'paypal')}
+                        >
+                            <View style={styles.methodCardLeft}>
+                                <View style={[styles.radioButton, values.paymentMethod === 'paypal' && styles.radioButtonSelected]}>
+                                    {values.paymentMethod === 'paypal' && <View style={styles.radioButtonInner} />}
+                                </View>
+                                <View style={styles.methodInfo}>
+                                    <Text style={styles.methodTitle}>PayPal</Text>
+                                    <Text style={styles.methodDescription}>Pay with your PayPal account</Text>
+                                </View>
+                            </View>
+                            <Image source={{ uri: 'https://via.placeholder.com/30' }} style={styles.cardIcon} />
+                        </TouchableOpacity>
+
+                        <View style={styles.buttonsContainer}>
+                            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+                                <Ionicons name="arrow-back" size={20} color="#2196F3" />
+                                <Text style={styles.backButtonText}>Back</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.nextButton, !isValid && styles.disabledButton]}
+                                onPress={handleSubmit}
+                                disabled={!isValid}
+                            >
+                                <Text style={styles.nextButtonText}>Review Order</Text>
+                                <Ionicons name="arrow-forward" size={20} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
+            </Formik>
         </ScrollView>
     );
 }
@@ -297,5 +370,8 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         marginRight: 8,
+    },
+    disabledButton: {
+        backgroundColor: '#b0bec5',
     },
 });

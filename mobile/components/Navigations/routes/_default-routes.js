@@ -55,17 +55,16 @@ export const defaultRoutes = () => [
     {
         name: 'Checkout',
         component: Screens.CheckoutScreen,
-        // icon: 'credit-card',
-        // options: {
-        //     tabBarIcon: ({ color, size }) => (
-        //         <Icon name="credit-card" color={color} size={size} />
-        //     ),
-        // },
+    },
+    {
+        name: 'OrderSuccess',
+        component: Screens.OrderSuccess,
+        // No icon needed as this is not a tab or drawer item
     },
     {
         name: 'Orders',
         component: Screens.OrderScreen,
-        icon: 'receipt', // Changed from 'cart' to 'receipt' for consistency
+        icon: 'receipt',
         options: {
             tabBarIcon: ({ color, size }) => (
                 <Icon name="receipt" color={color} size={size} />

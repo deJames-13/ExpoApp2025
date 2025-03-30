@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import BasicInfoView from './BasicInfoView';
@@ -6,22 +6,39 @@ import PaymentView from './PaymentView';
 import SummaryAndConfirmation from './SummaryAndConfirmation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { selectAllItems } from '~/states/slices/cart';
 
 const Stack = createStackNavigator();
 
-export function CheckoutScreen() {
+export { default as OrderSuccess } from './OrderSuccess'
+
+export function CheckoutScreen({ route }) {
+    const dispatch = useDispatch();
+    const { params } = route || {};
+    const initialItems = params?.items || [];
+    const initialSubtotal = params?.subtotal || 0;
+    const initialSelectedItems = params?.selectedItems || {};
+
+    // Store the selected items in Redux when the component mounts
+    useEffect(() => {
+        if (initialItems.length > 0) {
+            dispatch(selectAllItems(initialItems));
+        }
+    }, [dispatch, initialItems]);
+
     // This state will store all checkout information across screens
     const [checkoutData, setCheckoutData] = useState({
         userInfo: {},
         shippingAddress: {},
         paymentMethod: '',
         shippingMethod: '',
-        items: [
-            // Sample items
+        items: initialItems || [
+            // Sample items as fallback
             { id: 1, name: 'Premium Sunglasses', price: 129.99, quantity: 1, status: 'In Stock' },
             { id: 2, name: 'Reading Glasses', price: 59.99, quantity: 2, status: 'In Stock' }
         ],
-        subtotal: 249.97,
+        subtotal: initialSubtotal || 249.97,
         shipping: 9.99,
         tax: 20.00
     });

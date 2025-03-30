@@ -3,29 +3,41 @@ import { View, Text, StyleSheet, Image, FlatList } from 'react-native';
 
 export default function ItemListsView({ items }) {
     const renderItem = ({ item }) => {
+        // Get product image URL with fallback
+        const imageUrl = item.product?.images?.[0] || process.env.EXPO_PUBLIC_APP_LOGO;
+
+        // Get product name from either item.name or item.product.name
+        const productName = item.name || item.product?.name || 'Unknown Product';
+
         return (
             <View style={styles.itemContainer}>
                 <View style={styles.imageContainer}>
                     <Image
-                        source={{ uri: process.env.EXPO_PUBLIC_APP_LOGO }}
+                        source={{ uri: imageUrl }}
                         style={styles.image}
+                        defaultSource={{ uri: process.env.EXPO_PUBLIC_APP_LOGO }}
                     />
                 </View>
                 <View style={styles.itemDetails}>
-                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemName}>{productName}</Text>
                     <View style={styles.itemInfo}>
                         <Text style={styles.itemQuantity}>Qty: {item.quantity}</Text>
                         <Text style={styles.itemPrice}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {item.price.toFixed(2)}</Text>
                     </View>
-                    <Text style={[styles.itemStatus, { color: getStatusColor(item.status) }]}>
-                        {item.status}
-                    </Text>
+                    <View style={styles.priceRow}>
+                        <Text style={styles.itemTotal}>Total: {process.env.EXPO_PUBLIC_APP_CURRENCY} {(item.price * item.quantity).toFixed(2)}</Text>
+                        <Text style={[styles.itemStatus, { color: getStatusColor(item.status) }]}>
+                            {item.status || 'Processing'}
+                        </Text>
+                    </View>
                 </View>
             </View>
         );
     };
 
     const getStatusColor = (status) => {
+        if (!status) return '#9E9E9E';
+
         switch (status.toLowerCase()) {
             case 'in stock':
                 return '#4CAF50'; // green
@@ -47,6 +59,9 @@ export default function ItemListsView({ items }) {
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    <Text style={styles.emptyText}>No items selected for checkout</Text>
+                }
             />
         </View>
     );
@@ -86,10 +101,12 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         overflow: 'hidden',
         marginRight: 12,
+        backgroundColor: '#f5f5f5',
     },
     image: {
         width: '100%',
         height: '100%',
+        resizeMode: 'contain',
     },
     itemDetails: {
         flex: 1,
@@ -115,8 +132,23 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#2196F3',
     },
+    priceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    itemTotal: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#212121',
+    },
     itemStatus: {
         fontSize: 13,
         fontWeight: '500',
+    },
+    emptyText: {
+        textAlign: 'center',
+        color: '#757575',
+        padding: 20,
     }
 });

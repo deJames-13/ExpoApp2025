@@ -1,60 +1,162 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ItemListsView from './ItemListsView';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectSelectedItems, removeSelectedItems } from '~/states/slices/cart';
+import { resetCheckout, selectShippingCost, selectTax } from '~/states/slices/checkout';
+import useAuth from '~/hooks/useAuth';
+import { useCreateOrderMutation } from '~/states/api/orders';
+import Toast from 'react-native-toast-message';
 
 export default function SummaryAndConfirmation({ navigation, checkoutData }) {
+    const dispatch = useDispatch();
+    const { currentUser } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
+    const [orderSuccess, setOrderSuccess] = useState(false);
 
-    const getShippingCost = () => {
-        return checkoutData.shippingMethod === 'express' ? 19.99 : 9.99;
+    // Get selected items from cart and checkout details from Redux
+    const selectedItemsObj = useSelector(selectSelectedItems);
+    const shippingCost = useSelector(selectShippingCost);
+    const tax = useSelector(selectTax);
+
+    // Get cart items that are selected
+    const selectedCartItems = checkoutData.items.filter(item => selectedItemsObj[item.id]);
+
+    // Calculate the correct subtotal based on selected items
+    const subtotal = useMemo(() => {
+        return selectedCartItems.reduce((sum, item) => {
+            return sum + (item.price * item.quantity);
+        }, 0);
+    }, [selectedCartItems]);
+
+    // Calculate the correct order total
+    const orderTotal = useMemo(() => {
+        return subtotal + shippingCost + tax;
+    }, [subtotal, shippingCost, tax]);
+
+    // Order API mutation hook
+    const [createOrder, { isLoading, isError, error }] = useCreateOrderMutation();
+
+    useEffect(() => {
+        // If we have an API error, show it
+        if (isError && error) {
+            Toast.show({
+                type: 'error',
+                text1: 'Order Failed',
+                text2: error.data?.message || 'Could not place your order. Please try again.',
+            });
+        }
+    }, [isError, error]);
+
+    const getShippingMethodKey = () => {
+        // Map frontend shipping method names to backend keys
+        return checkoutData.shippingMethod === 'express' ? 'exp' : 'std';
     };
 
-    const calculateTotal = () => {
-        return checkoutData.subtotal + getShippingCost() + checkoutData.tax;
+    const getPaymentMethodKey = () => {
+        // Map frontend payment method names to backend keys
+        switch (checkoutData.paymentMethod) {
+            case 'card': return 'stripe';
+            case 'paypal': return 'paypal';
+            case 'cash':
+            default: return 'cod';
+        }
+    };
+
+    const formatShippingAddress = () => {
+        const { address, city, state, zipCode, country } = checkoutData.shippingAddress;
+        return `${address}, ${city}, ${state} ${zipCode}, ${country}`;
     };
 
     const handleBack = () => {
         navigation.goBack();
     };
 
-    const handlePlaceOrder = () => {
+    const handlePlaceOrder = async () => {
+        if (selectedCartItems.length === 0) {
+            Alert.alert("No Items Selected", "Please select items to checkout.");
+            return;
+        }
+
         setIsProcessing(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            setIsProcessing(false);
+        try {
+            // Format the order data for the API
+            const orderData = {
+                userId: currentUser?._id,
+                products: selectedCartItems.map(item => ({
+                    product: item.product.id,
+                    quantity: item.quantity
+                })),
+                shipping: {
+                    method: getShippingMethodKey(),
+                    address: formatShippingAddress()
+                },
+                payment: {
+                    method: getPaymentMethodKey(),
+                    status: 'pending'
+                },
+                note: '',
+                status: 'pending',
+                subtotal: subtotal,
+                total: orderTotal
+            };
+
+            // Make the API call
+            const response = await createOrder(orderData).unwrap();
+            setOrderSuccess(true);
+            Toast.show({
+                type: 'success',
+                text1: 'Order Placed Successfully!',
+                text2: `Order ID: ${response.id}`,
+            });
+
+            dispatch(removeSelectedItems());
+            dispatch(resetCheckout());
+
+
+            console.log(response)
+
+            setTimeout(() => {
+                navigation.reset({
+                    index: 0,
+                    routes: [{
+                        name: 'OrderSuccess', params: {
+                            orderId: response.resource.id,
+                            order: response.resource
+                        }
+                    }],
+                });
+            }, 1500);
+
+        } catch (err) {
+            console.error('Order error:', err);
             Alert.alert(
-                "Order Placed Successfully!",
-                "Thank you for your purchase. Your order will be processed soon.",
-                [{ text: "OK", onPress: () => navigation.navigate('Home') }]
+                "Order Failed",
+                err.message || "There was a problem placing your order. Please try again.",
+                [{ text: "OK" }]
             );
-        }, 2000);
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const getPaymentMethodIcon = () => {
         switch (checkoutData.paymentMethod) {
-            case 'card':
-                return 'card-outline';
-            case 'paypal':
-                return 'logo-paypal';
-            case 'cash':
-                return 'cash-outline';
-            default:
-                return 'wallet-outline';
+            case 'card': return 'card-outline';
+            case 'paypal': return 'logo-paypal';
+            case 'cash': return 'cash-outline';
+            default: return 'wallet-outline';
         }
     };
 
     const getPaymentMethodName = () => {
         switch (checkoutData.paymentMethod) {
-            case 'card':
-                return 'Credit/Debit Card';
-            case 'paypal':
-                return 'PayPal';
-            case 'cash':
-                return 'Cash on Delivery';
-            default:
-                return 'Other';
+            case 'card': return 'Credit/Debit Card';
+            case 'paypal': return 'PayPal';
+            case 'cash': return 'Cash on Delivery';
+            default: return 'Other';
         }
     };
 
@@ -162,7 +264,14 @@ export default function SummaryAndConfirmation({ navigation, checkoutData }) {
                     </View>
                 );
             case 'orderItems':
-                return <ItemListsView items={checkoutData.items} />;
+                return (
+                    <>
+                        <Text style={styles.selectedItemsHeader}>
+                            {selectedCartItems.length} {selectedCartItems.length === 1 ? 'Item' : 'Items'} to Checkout
+                        </Text>
+                        <ItemListsView items={selectedCartItems} />
+                    </>
+                );
             case 'orderTotal':
                 return (
                     <View style={styles.sectionCard}>
@@ -170,39 +279,47 @@ export default function SummaryAndConfirmation({ navigation, checkoutData }) {
 
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>Subtotal</Text>
-                            <Text style={styles.totalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {checkoutData.subtotal.toFixed(2)}</Text>
+                            <Text style={styles.totalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {subtotal.toFixed(2)}</Text>
                         </View>
 
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>Shipping</Text>
-                            <Text style={styles.totalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {getShippingCost().toFixed(2)}</Text>
+                            <Text style={styles.totalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {shippingCost.toFixed(2)}</Text>
                         </View>
 
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>Tax</Text>
-                            <Text style={styles.totalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {checkoutData.tax.toFixed(2)}</Text>
+                            <Text style={styles.totalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {tax.toFixed(2)}</Text>
                         </View>
 
                         <View style={styles.divider} />
 
                         <View style={styles.totalRow}>
                             <Text style={styles.grandTotalLabel}>Total</Text>
-                            <Text style={styles.grandTotalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {calculateTotal().toFixed(2)}</Text>
+                            <Text style={styles.grandTotalValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {orderTotal.toFixed(2)}</Text>
                         </View>
                     </View>
                 );
             case 'buttons':
                 return (
                     <View style={styles.buttonsContainer}>
-                        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            onPress={handleBack}
+                            disabled={isProcessing}
+                        >
                             <Ionicons name="arrow-back" size={20} color="#2196F3" />
                             <Text style={styles.backButtonText}>Back</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.placeOrderButton, isProcessing && styles.processingButton]}
+                            style={[
+                                styles.placeOrderButton,
+                                isProcessing && styles.processingButton,
+                                selectedCartItems.length === 0 && styles.disabledButton
+                            ]}
                             onPress={handlePlaceOrder}
-                            disabled={isProcessing}
+                            disabled={isProcessing || selectedCartItems.length === 0}
                         >
                             {isProcessing ? (
                                 <View style={styles.processingContent}>
@@ -229,15 +346,18 @@ export default function SummaryAndConfirmation({ navigation, checkoutData }) {
     };
 
     return (
-        <FlatList
-            data={sections}
-            renderItem={renderItem}
-            keyExtractor={item => item.id}
-            contentContainerStyle={styles.containerContent}
-            showsVerticalScrollIndicator={true}
-            removeClippedSubviews={false}
-            keyboardShouldPersistTaps="handled"
-        />
+        <>
+            <FlatList
+                data={sections}
+                renderItem={renderItem}
+                keyExtractor={item => item.id}
+                contentContainerStyle={styles.containerContent}
+                showsVerticalScrollIndicator={true}
+                removeClippedSubviews={false}
+                keyboardShouldPersistTaps="handled"
+            />
+            <Toast />
+        </>
     );
 }
 
@@ -427,5 +547,14 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#757575',
         textAlign: 'center',
-    }
+    },
+    selectedItemsHeader: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginVertical: 10,
+        color: '#212121',
+    },
+    disabledButton: {
+        backgroundColor: '#b0bec5',
+    },
 });

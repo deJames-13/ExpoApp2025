@@ -3,15 +3,14 @@ import { CartModel, NotificationService, ProductModel, ProductService, UserServi
 import { sendEmail } from '#utils';
 
 import { Service } from '#lib';
-import { parse } from 'path';
 import OrderModel from './order.model.js';
 
 class OrderService extends Service {
   model = OrderModel;
   shippingMethods = {
-    std: { key: 'std', fee: 100, method: 'Standard', day: 7},
-    exp: { key: 'exp', fee: 200, method: 'Express', day: 3},
-    smd: { key: 'smd', fee: 300, method: 'Same Day', day: 1},
+    std: { key: 'std', fee: 100, method: 'Standard', day: 7 },
+    exp: { key: 'exp', fee: 200, method: 'Express', day: 3 },
+    smd: { key: 'smd', fee: 300, method: 'Same Day', day: 1 },
   }
 
   setUserId(userId) {
@@ -32,12 +31,12 @@ class OrderService extends Service {
     let { userId, products, shipping, ...orderData } = data;
     const user = await UserService.getById(userId);
 
-    await CartModel.deleteMany({ 
+    await CartModel.deleteMany({
       user: userId,
       product: { $in: products.map(product => product.product) },
-     });
-  
-    
+    });
+
+
 
     const order = this.model.create({
       ...orderData,
@@ -51,7 +50,7 @@ class OrderService extends Service {
     });
 
     if (!order) throw new Error('Order not created');
-    
+
     const message = `Your order ${order.id} has been placed!`;
     const title = 'Order Confirmation';
     const altMessage = this.makeAltMessage(order);
@@ -59,7 +58,7 @@ class OrderService extends Service {
     sendEmail({
       email: user.email,
       subject: title,
-      message:  new EmailTemplate({ userName: user.username, message, altMessage }).generate(),
+      message: new EmailTemplate({ userName: user.username, message, altMessage }).generate(),
     })
 
 
@@ -67,15 +66,15 @@ class OrderService extends Service {
   }
 
   makeAltMessage(order) {
-    
+
     return `
     <div class="order-summary">
       <h3>Order Summary</h3>
       <ul>
         ${order?.products?.length && order.products.map((product, idx) => {
-          const qty = Object.values(order.quantities[idx])[0]
-          const itemTotal = product.price * parseInt(qty);
-          return `
+      const qty = Object.values(order.quantities[idx])[0]
+      const itemTotal = product.price * parseInt(qty);
+      return `
           <li>
             ${qty} x ${product.name} - $${itemTotal.toFixed(2)}
           </li>
@@ -95,14 +94,14 @@ class OrderService extends Service {
   }
 
   async update(data) {
-    let { 
-      user:userId, 
+    let {
+      user: userId,
       status,
       order: { id, products, shipping, ...orderData },
-     } = data;
+    } = data;
     const user = await UserService.getById(userId);
     const updatedOrder = this.model.findOneAndUpdate(
-      {_id: id},
+      { _id: id },
       {
         $set: {
           ...orderData,
@@ -120,7 +119,7 @@ class OrderService extends Service {
     if (status === 'shipped') this.manageStock(products);
 
 
-    if (user.fcmToken){
+    if (user.fcmToken) {
       const message = `Your order ${id} has been ${status}!`;
       const title = 'Order Status';
       NotificationService.sendNotification({
@@ -132,11 +131,53 @@ class OrderService extends Service {
       sendEmail({
         email: user.email,
         subject: title,
-        message:  new EmailTemplate({ userName: user.username, message, altMessage }).generate(),
+        message: new EmailTemplate({ userName: user.username, message, altMessage }).generate(),
       })
     }
 
     return updatedOrder;
+  }
+
+  async getProductsData(productIds) {
+    try {
+      if (!productIds || !productIds.length) return [];
+
+      const products = await ProductModel.find({
+        _id: { $in: productIds.filter(id => id) }
+      }).exec();
+
+      return products;
+    } catch (error) {
+      console.error('Error fetching product data:', error);
+      return [];
+    }
+  }
+
+  // Override getById to ensure products are populated with better error handling
+  async getById(id) {
+    try {
+      // First try to populate products
+      const order = await this.model.findById(id)
+        .populate('products.product')
+        .exec();
+
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
+      // Add debug logging
+      console.log('Order data (getById):', {
+        id: order._id,
+        hasProducts: Boolean(order.products),
+        productsLength: order.products?.length,
+        quantities: order.quantities
+      });
+
+      return order;
+    } catch (error) {
+      console.error('Error in OrderService.getById:', error);
+      throw error;
+    }
   }
 }
 

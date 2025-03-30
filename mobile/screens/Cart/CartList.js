@@ -7,7 +7,7 @@ const CartList = ({
     items,
     onViewDetails,
     onDeleteItem,
-    selectedItems,
+    selectedItems = {}, // Add default empty object
     onToggleSelection,
     loading,
     navigation,

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import useAuth from '~/hooks/useAuth';
 import LoadingScreen from '~/screens/LoadingScreen';
 import { logProtectedLayoutStatus } from '~/utils/logUtils';
+const LOG = false;
 
 export function ProtectedLayout({
     children,
@@ -23,7 +24,6 @@ export function ProtectedLayout({
         userHasVerifiedEmail
     } = useAuth({
         requireAuth: true,
-        // Use actual profile data from user object to determine if onboarding is needed
         requireBasicInfo: requireBasicInfo && !userHasCompletedProfile,
         requireAddressInfo: requireAddressInfo && !userHasCompletedProfile,
         requireEmailVerified: requireEmailVerified && !userHasVerifiedEmail && !isPendingVerification,
@@ -33,7 +33,7 @@ export function ProtectedLayout({
     // Debug user profile information at layout level
     useEffect(() => {
         if (currentUser) {
-            logProtectedLayoutStatus(
+            LOG && logProtectedLayoutStatus(
                 currentUser,
                 userHasCompletedProfile,
                 userHasVerifiedEmail,
@@ -42,40 +42,27 @@ export function ProtectedLayout({
         }
     }, [currentUser, userHasCompletedProfile, userHasVerifiedEmail, isPendingVerification]);
 
-    // Show loading while auth state is being determined
     if (!isReady) {
         return <LoadingScreen />;
     }
-
-    // Authentication check
     if (!isAuthenticated) {
         return null;
     }
-
-    // Admin check if required
     if (requireAdmin && !isAdmin) {
         return null;
     }
 
-    // Check if user has completed profile directly from user data
     const profileComplete = userHasCompletedProfile || (hasBasicInfo && hasAddressInfo);
-
-    // Check if email is verified or pending verification
     const emailVerificationComplete = userHasVerifiedEmail || isEmailVerified || isPendingVerification;
-
-    // Onboarding checks with prioritization of data from user object
     if (requireBasicInfo && !profileComplete) {
         return null;
     }
-
     if (requireAddressInfo && !profileComplete) {
         return null;
     }
-
     if (requireEmailVerified && !emailVerificationComplete) {
         return null;
     }
 
-    // All requirements met, render children
     return <>{children}</>;
 }
