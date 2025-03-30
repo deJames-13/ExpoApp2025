@@ -6,8 +6,8 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useDispatch } from 'react-redux';
 import { updateBasicInfo } from '~/states/slices/checkout';
+import LoadingScreen from '~/screens/LoadingScreen';
 
-// Validation schema
 const CheckoutSchema = Yup.object().shape({
     firstName: Yup.string()
         .min(2, 'Too Short!')
@@ -37,12 +37,15 @@ const CheckoutSchema = Yup.object().shape({
 
 export default function BasicInfoView({ navigation, checkoutData, updateCheckoutData }) {
     const dispatch = useDispatch();
-    const { currentUser, isAuthenticated } = useAuth();
+    const { currentUser, isAuthenticated, isLoading } = useAuth();
 
-    // Get initial values from redux store or user data
+    // If auth is in loading state, show the loading screen
+    if (isLoading) {
+        return <LoadingScreen />;
+    }
+
     const getInitialValues = () => {
         const userInfo = currentUser?.info || {};
-
         return {
             firstName: checkoutData.userInfo.firstName || userInfo.first_name || '',
             lastName: checkoutData.userInfo.lastName || userInfo.last_name || '',
@@ -56,9 +59,7 @@ export default function BasicInfoView({ navigation, checkoutData, updateCheckout
         };
     };
 
-    // Submit handler - save to redux and navigate if valid
     const handleSubmit = (values) => {
-        // Save form data to checkout data in the component's state
         updateCheckoutData('userInfo', {
             firstName: values.firstName,
             lastName: values.lastName,
@@ -73,8 +74,6 @@ export default function BasicInfoView({ navigation, checkoutData, updateCheckout
             zipCode: values.zipCode,
             country: values.country,
         });
-
-        // Save data to Redux for global state management
         dispatch(updateBasicInfo({
             userInfo: {
                 firstName: values.firstName,
@@ -91,7 +90,6 @@ export default function BasicInfoView({ navigation, checkoutData, updateCheckout
             }
         }));
 
-        // Navigate to payment step
         navigation.navigate('Payment');
     };
 

@@ -78,22 +78,12 @@ const ProductDetailView = ({ route, navigation }) => {
                 quantity: quantity
             };
 
-            // Proper error handling with more detailed logging
             const response = await addToCart(cartData);
-            console.log("Add to cart response:", response);
-
-            // Check for error object properties that might be returned from the API
             if (response && response.error) {
                 throw new Error(response.error);
             }
-
-            // Extract the actual response data - could be direct or nested in resource
             const responseData = response.resource || response;
-
-            // Check if this was an existing item (backend message will tell us)
             const wasUpdatedItem = response.message && response.message.includes('Quantity increased');
-
-            // Success message based on whether item was new or updated
             const successMessage = wasUpdatedItem
                 ? `Updated cart! Added ${quantity} more ${quantity > 1 ? 'items' : 'item'}`
                 : `Added ${quantity} ${quantity > 1 ? 'items' : 'item'} to your cart`;
@@ -104,8 +94,6 @@ const ProductDetailView = ({ route, navigation }) => {
                     text1: wasUpdatedItem ? 'Cart Updated' : 'Added to Cart',
                     text2: successMessage,
                 });
-
-                // Option to navigate to cart
                 Alert.alert(
                     wasUpdatedItem ? "Cart Updated" : "Added to Cart",
                     "Would you like to view your cart or continue shopping?",
@@ -117,7 +105,6 @@ const ProductDetailView = ({ route, navigation }) => {
                         {
                             text: "View Cart",
                             onPress: () => {
-                                // Same navigation logic as before
                                 navigation.navigate('DefaultNav', {
                                     screen: 'DefaultRoutes',
                                     params: {
@@ -173,7 +160,6 @@ const ProductDetailView = ({ route, navigation }) => {
                     ]
                 );
             } else {
-                // This is not actually an error - show info toast
                 console.info("Unexpected but valid response format:", response);
                 Toast.show({
                     type: 'info',
@@ -183,7 +169,6 @@ const ProductDetailView = ({ route, navigation }) => {
             }
         } catch (error) {
             console.error("Add to cart error:", error);
-            // Display more detailed error message
             Toast.show({
                 type: 'error',
                 text1: 'Error Adding to Cart',

@@ -115,9 +115,6 @@ export default function SummaryAndConfirmation({ navigation, checkoutData }) {
             dispatch(removeSelectedItems());
             dispatch(resetCheckout());
 
-
-            console.log(response)
-
             setTimeout(() => {
                 navigation.reset({
                     index: 0,

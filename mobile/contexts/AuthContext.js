@@ -1,11 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { View, ActivityIndicator, Text } from 'react-native';
-import { globalStyles } from '~/styles/global';
 import useAuth from '~/hooks/useAuth';
 import { navigationRef } from '~/navigation/navigationService';
 import LoadingScreen from '~/screens/LoadingScreen';
-
-// Create contexts
 const AuthContext = createContext(null);
 const ProtectedContext = createContext(null);
 const GuestContext = createContext(null);
@@ -45,13 +41,12 @@ export function AuthProvider({ children }) {
             }
         }, 100);
 
-        // Set a timeout to prevent infinite waiting
         checkNavTimeoutRef.current = setTimeout(() => {
             clearInterval(checkNavReady);
             console.warn('Timed out waiting for navigation to be ready');
             setWaitTimeout(true);
-            setNavigationReady(true); // Force proceed even if navigation isn't ready
-        }, 3000); // 3 second timeout
+            setNavigationReady(true);
+        }, 3000);
 
         return () => {
             clearInterval(checkNavReady);
@@ -61,7 +56,6 @@ export function AuthProvider({ children }) {
         };
     }, []);
 
-    // Only attempt navigation when both auth is ready and navigation is ready
     const attemptNavigation = () => {
         if (!navigationRef.isReady()) {
             console.log('Navigation not ready yet, skipping navigation');
@@ -69,7 +63,6 @@ export function AuthProvider({ children }) {
         }
 
         if (isAuthenticated) {
-            // Check if user needs to complete onboarding
             if (!hasBasicInfo) {
                 navigationRef.navigate('GuestNav', { screen: 'BasicInformation' });
                 return;
@@ -81,14 +74,12 @@ export function AuthProvider({ children }) {
                 return;
             }
 
-            // If onboarding complete, check if admin
             if (isAdmin) {
                 navigationRef.navigate('AdminNav');
             } else {
                 navigationRef.navigate('DefaultNav');
             }
         } else {
-            // Not authenticated
             navigationRef.navigate('GuestNav');
         }
     };
@@ -96,7 +87,6 @@ export function AuthProvider({ children }) {
     // Apply navigation logic using a more controlled approach
     useEffect(() => {
         if (isReady && navigationReady) {
-            // Use a timeout to ensure we're not in the middle of a render cycle
             const timer = setTimeout(() => {
                 attemptNavigation();
             }, 0);
@@ -104,7 +94,6 @@ export function AuthProvider({ children }) {
         }
     }, [isReady, navigationReady, isAuthenticated, hasBasicInfo, hasAddressInfo, isEmailVerified, isAdmin]);
 
-    // Force proceed after timeout or when ready
     if (!isReady && !waitTimeout) {
         return <LoadingScreen />;
     }

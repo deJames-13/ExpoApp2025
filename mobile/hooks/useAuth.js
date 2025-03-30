@@ -99,7 +99,7 @@ export default function useAuth({
 
         initializeAuth();
     }, [dispatch, isInitialized]);
-    const { data: profileData, error: profileError, refetch: refetchProfile } =
+    const { data: profileData, error: profileError, refetch: refetchProfile, isLoading: isProfileLoading } =
         useGetProfileQuery(undefined, {
             skip: !isAuthenticated || !accessToken || !isInitialized,
             refetchOnMountOrArgChange: true
@@ -251,6 +251,7 @@ export default function useAuth({
         validateRequirements,
         isRefreshing,
         handleLogout,
+        isLoading: isProfileLoading || isRefreshing || !isInitialized,
         userHasCompletedProfile: !!(
             currentUser?.info?.first_name &&
             currentUser?.info?.last_name &&

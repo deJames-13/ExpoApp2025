@@ -11,12 +11,10 @@ export default function OrderSuccess({ route, navigation }) {
         { data: null, isLoading: false, error: null };
     const orderData = orderFromParams || (data?.resource || data);
 
-    console.log('Using order data from:', orderFromParams ? 'navigation params: ' : 'API fetch',);
-
     const handleContinueShopping = () => {
         navigation.reset({
             index: 0,
-            routes: [{ name: 'Home' }],
+            routes: [{ name: 'DefaultNav' }],
         });
     };
 
@@ -77,7 +75,6 @@ export default function OrderSuccess({ route, navigation }) {
             );
         }
 
-        // Display fetched products
         return (
             <FlatList
                 data={orderData.products}
