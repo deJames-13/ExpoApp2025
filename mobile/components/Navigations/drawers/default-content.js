@@ -194,6 +194,7 @@ const styles = StyleSheet.create({
         paddingVertical: 18,
         paddingHorizontal: 16,
         backgroundColor: '#f8f9fa',
+        alignItems: 'center',
     },
     logoImage: {
         width: 28,

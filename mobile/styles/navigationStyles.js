@@ -9,11 +9,13 @@ export const navigationStyles = StyleSheet.create({
     },
     drawerHeader: {
         marginBottom: 16,
+        alignItems: 'center',
     },
     drawerLogo: {
         fontSize: 24,
         fontWeight: 'bold',
         color: colors.text.primary,
+
     },
     drawerItemsContainer: {
         flex: 1,
