@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Appbar, Snackbar } from 'react-native-paper';
-import { OrderForm } from './form';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { adminColors } from '~/styles/adminTheme';
 import useResource from '~/hooks/useResource';
+import OrderDetail from '~/components/OrderDetail';
 
 export function OrderDetailView() {
     const navigation = useNavigation();
@@ -95,10 +95,10 @@ export function OrderDetailView() {
                 <Appbar.Action icon="refresh" onPress={handleRefresh} color={adminColors.text.secondary} />
             </Appbar.Header>
 
-            <OrderForm
+            <OrderDetail
                 order={order}
+                isAdmin={true}
                 onStatusChange={handleStatusChange}
-                isModal={false}
                 isLoading={loading}
             />
 

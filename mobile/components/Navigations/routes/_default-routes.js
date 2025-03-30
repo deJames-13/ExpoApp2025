@@ -81,12 +81,5 @@ export const defaultRoutes = () => [
             ),
         },
     },
-    {
-        name: 'OrderDetailView',
-        component: Screens.OrderDetailView,
-        options: {
-            headerShown: true,
-        },
-    },
 ];
 

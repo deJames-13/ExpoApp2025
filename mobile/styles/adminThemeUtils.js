@@ -2,9 +2,9 @@ import { colors } from '../theme/colors';
 
 // Status color palette with proper opacity variants
 export const statusColors = {
-    // Success states
-    success: '#00C853',
-    successLight: 'rgba(0, 200, 83, 0.1)',
+    // Success states - slightly darkened for better contrast
+    success: '#00A046', // Darker green for better visibility
+    successLight: 'rgba(0, 160, 70, 0.1)',
 
     // Warning states
     warning: '#FF9100',
@@ -18,9 +18,9 @@ export const statusColors = {
     info: '#2979FF',
     infoLight: 'rgba(41, 121, 255, 0.1)',
 
-    // Neutral states
-    neutral: '#757575',
-    neutralLight: 'rgba(117, 117, 117, 0.1)',
+    // Neutral states - slightly darker for better contrast
+    neutral: '#616161', // Slightly darker for better contrast
+    neutralLight: 'rgba(97, 97, 97, 0.1)',
 };
 
 // Map status texts to appropriate colors
@@ -51,12 +51,12 @@ export const getStatusColor = (status) => {
     return { text: colors.text.primary, background: 'rgba(0, 0, 0, 0.05)' };
 };
 
-// Helper for status chip styling
+// Helper for status chip styling with improved contrast
 export const getStatusChipStyle = (status) => {
     const { text, background } = getStatusColor(status);
 
     return {
-        text: { color: text },
+        text: { color: text, fontWeight: '500' }, // Add font weight for better readability
         chip: { backgroundColor: background }
     };
 };

@@ -9,11 +9,11 @@ export const adminColors = {
     primary: theme.colors.primary,
     secondary: theme.colors.secondary,
     background: colors.background,
-    cardBackground: '#FFFFFF', // Making card background pure white for better visibility
+    cardBackground: '#FFFFFF', // Pure white for card backgrounds
     text: {
-        primary: '#212121',
-        secondary: '#424242',
-        light: '#757575',
+        primary: '#212121', // Dark text for good contrast
+        secondary: '#424242', // Medium dark for secondary text
+        light: '#757575',    // Light text for less emphasis
     },
     status: statusColors,
     card: {
@@ -79,7 +79,7 @@ export const adminStyles = StyleSheet.create({
     card: {
         ...globalStyles.card,
         marginBottom: 16,
-        backgroundColor: adminColors.cardBackground,
+        backgroundColor: adminColors.cardBackground, // Make sure card background is white
         // Enhanced shadow for better visibility
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
