@@ -11,6 +11,7 @@ import {
 import { signInWithCredential } from 'firebase/auth';
 import Toast from 'react-native-toast-message';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import useFirebaseMessaging from './useFirebaseMessaging'
 
 // Create auth context
 const FirebaseAuthContext = createContext();
@@ -20,6 +21,7 @@ export const FirebaseAuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    useFirebaseMessaging()
 
     // Listen for auth state changes
     useEffect(() => {

@@ -6,9 +6,7 @@ import { adminColors } from '~/styles/adminTheme';
 import { getStatusChipStyle } from '~/styles/adminThemeUtils';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-// Order Status Workflow component
-const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
-    // Helper function to confirm status changes
+const OrderStatusWorkflow = ({ currentStatus, onStatusChange, isLoading }) => {
     const confirmStatusChange = (newStatus) => {
         const statusLabels = {
             'pending': 'Pending',
@@ -28,7 +26,6 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
         );
     };
 
-    // Helper function to confirm cancellation
     const confirmCancellation = () => {
         Alert.alert(
             'Confirm Cancellation',
@@ -52,6 +49,9 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
 
     // Determine which buttons to show based on current status
     const renderStatusButtons = () => {
+        // Add disabled state based on isLoading prop
+        const buttonProps = { disabled: isLoading };
+
         switch (currentStatus) {
             case 'pending':
                 return (
@@ -62,6 +62,7 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
                             onPress={() => confirmStatusChange('processing')}
                             style={styles.actionButton}
                             labelStyle={styles.actionButtonLabel}
+                            {...buttonProps}
                         >
                             Process
                         </Button>
@@ -72,6 +73,7 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
                                 onPress={confirmCancellation}
                                 style={[styles.cancelButton]}
                                 textColor={adminColors.status.error}
+                                {...buttonProps}
                             >
                                 Cancel
                             </Button>
@@ -88,6 +90,7 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
                             onPress={() => confirmStatusChange('pending')}
                             style={styles.revertButton}
                             textColor={adminColors.text.secondary}
+                            {...buttonProps}
                         >
                             Revert
                         </Button>
@@ -97,6 +100,7 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
                             onPress={() => confirmStatusChange('shipped')}
                             style={styles.actionButton}
                             labelStyle={styles.actionButtonLabel}
+                            {...buttonProps}
                         >
                             Ship
                         </Button>
@@ -107,6 +111,7 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
                                 onPress={confirmCancellation}
                                 style={[styles.cancelButton]}
                                 textColor={adminColors.status.error}
+                                {...buttonProps}
                             >
                                 Cancel
                             </Button>
@@ -123,6 +128,7 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
                             onPress={() => confirmStatusChange('processing')}
                             style={styles.revertButton}
                             textColor={adminColors.text.secondary}
+                            {...buttonProps}
                         >
                             Revert
                         </Button>
@@ -132,6 +138,7 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
                             onPress={() => confirmStatusChange('delivered')}
                             style={styles.actionButton}
                             labelStyle={styles.actionButtonLabel}
+                            {...buttonProps}
                         >
                             Deliver
                         </Button>
@@ -147,6 +154,7 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
                             onPress={() => confirmStatusChange('shipped')}
                             style={styles.revertButton}
                             textColor={adminColors.text.secondary}
+                            {...buttonProps}
                         >
                             Revert
                         </Button>
@@ -260,7 +268,8 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange }) => {
     );
 };
 
-export function OrderForm({ order, onStatusChange, isModal = false }) {
+export function OrderForm({ order, onStatusChange, isModal = false, isLoading = false, onStatusChanged = null }) {
+    console.log(order.user.fcmToken)
     const [status, setStatus] = useState(order?.status || 'pending');
 
     useEffect(() => {
@@ -270,11 +279,17 @@ export function OrderForm({ order, onStatusChange, isModal = false }) {
     }, [order?.status]);
 
     const handleStatusChange = (newStatus) => {
-        setStatus(newStatus);
-        onStatusChange(order.id, newStatus);
+        const result = onStatusChange(order, newStatus);
+        if (result !== false) {
+            setStatus(newStatus);
+            if (onStatusChanged) {
+                onStatusChanged(newStatus);
+            }
+        }
+
+        return result !== false;
     };
 
-    // Get style for status chips
     const getStatusStyle = (status) => {
         const { text, chip } = getStatusChipStyle(status);
         return {
@@ -308,7 +323,7 @@ export function OrderForm({ order, onStatusChange, isModal = false }) {
 
                     <View style={styles.row}>
                         <Text style={styles.label}>Order Number:</Text>
-                        <Text style={styles.value}>#{order?.orderNumber}</Text>
+                        <Text style={styles.value}>#{order?.id?.substring(0, 8)}</Text>
                     </View>
 
                     <View style={styles.row}>
@@ -328,15 +343,28 @@ export function OrderForm({ order, onStatusChange, isModal = false }) {
 
                     <View style={styles.row}>
                         <Text style={styles.label}>Customer:</Text>
-                        <Text style={styles.value}>
-                            {order?.customer?.info?.first_name} {order?.customer?.info?.last_name}
-                        </Text>
+                        {order?.user?.info ? (
+                            <Text style={styles.value}>
+                                {order?.user?.info?.first_name} {order?.user?.info?.last_name}
+                            </Text>
+                        ) : (
+                            <Text style={styles.value}>
+                                {order?.user?.username || "Unknown User"}
+                            </Text>
+                        )}
                     </View>
 
                     <View style={styles.row}>
                         <Text style={styles.label}>Total Amount:</Text>
-                        <Text style={styles.valueHighlight}>${order?.totalAmount.toFixed(2)}</Text>
+                        <Text style={styles.valueHighlight}>${parseFloat(order?.total || 0).toFixed(2)}</Text>
                     </View>
+
+                    {/* {order?.note && (
+                        <View style={styles.row}>
+                            <Text style={styles.label}>Note:</Text>
+                            <Text style={styles.value}>{order?.note}</Text>
+                        </View>
+                    )} */}
                 </Card.Content>
             </Card>
 
@@ -347,7 +375,14 @@ export function OrderForm({ order, onStatusChange, isModal = false }) {
                     <OrderStatusWorkflow
                         currentStatus={status}
                         onStatusChange={handleStatusChange}
+                        isLoading={isLoading}
                     />
+                    {/* {order?.notes && (
+                        <View style={styles.notesContainer}>
+                            <Text style={styles.notesLabel}>Status Notes:</Text>
+                            <Text style={styles.notesText}>{order.notes}</Text>
+                        </View>
+                    )} */}
                 </Card.Content>
             </Card>
 
@@ -404,7 +439,7 @@ export function OrderForm({ order, onStatusChange, isModal = false }) {
 
                     <View style={styles.row}>
                         <Text style={styles.label}>Shipping Fee:</Text>
-                        <Text style={styles.value}>${order?.shipping?.fee.toFixed(2)}</Text>
+                        <Text style={styles.value}>${parseFloat(order?.shipping?.fee || 0).toFixed(2)}</Text>
                     </View>
                 </Card.Content>
             </Card>
@@ -417,11 +452,11 @@ export function OrderForm({ order, onStatusChange, isModal = false }) {
                     {order?.products?.map((item, index) => (
                         <View key={index} style={styles.productItem}>
                             <View style={styles.productRow}>
-                                <Text style={styles.productName}>{item.product.name}</Text>
-                                <Text style={styles.productQty}>x{item.quantity}</Text>
+                                <Text style={styles.productName}>{item.name || item.product?.name}</Text>
+                                <Text style={styles.productQty}>x{item.quantity || (order?.quantities && order.quantities[index][item._id])}</Text>
                             </View>
                             <Text style={styles.productPrice}>
-                                ${(item.product.price * item.quantity).toFixed(2)}
+                                ${parseFloat(item.price || (item.product?.price * (item.quantity || (order?.quantities && order.quantities[index]?.quantity) || 1)) || 0).toFixed(2)}
                             </Text>
                             <Divider style={index < order.products.length - 1 ? styles.itemDivider : {}} />
                         </View>
@@ -430,21 +465,21 @@ export function OrderForm({ order, onStatusChange, isModal = false }) {
                     <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>Subtotal:</Text>
                         <Text style={styles.totalValue}>
-                            ${order?.subtotal?.toFixed(2)}
+                            ${parseFloat(order?.subTotal || 0).toFixed(2)}
                         </Text>
                     </View>
 
                     <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>Shipping:</Text>
                         <Text style={styles.totalValue}>
-                            ${order?.shipping?.fee.toFixed(2)}
+                            ${parseFloat(order?.shipping?.fee || 0).toFixed(2)}
                         </Text>
                     </View>
 
                     <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>Total:</Text>
                         <Text style={styles.grandTotal}>
-                            ${order?.totalAmount.toFixed(2)}
+                            ${parseFloat(order?.total || 0).toFixed(2)}
                         </Text>
                     </View>
                 </Card.Content>
@@ -591,7 +626,20 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         textAlign: 'center',
     },
-    // Other existing styles
+    notesContainer: {
+        marginTop: 16,
+        padding: 12,
+        backgroundColor: 'rgba(0,0,0,0.03)',
+        borderRadius: 8,
+    },
+    notesLabel: {
+        fontWeight: '600',
+        marginBottom: 4,
+        color: adminColors.text.secondary,
+    },
+    notesText: {
+        color: adminColors.text.primary,
+    },
     productItem: {
         marginBottom: 8,
     },

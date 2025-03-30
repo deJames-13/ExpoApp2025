@@ -44,28 +44,28 @@ export const orderTableColumns = [
     {
         id: 'customer',
         title: 'Customer',
-        field: 'customer.info.first_name',
+        field: 'user.username',
         sortable: true,
         flex: 2,
         priority: 1, // High priority - always show
         render: (order) => (
             <View>
-                <Text>{order.customer?.info?.first_name} {order.customer?.info?.last_name}</Text>
-                <Text style={{ fontSize: 12, color: '#666' }}>{order.customer?.email}</Text>
+                <Text>{order.user?.info?.first_name || ''} {order.user?.info?.last_name || ''}</Text>
+                <Text style={{ fontSize: 12, color: '#666' }}>{order.user?.email || order.user?.username}</Text>
             </View>
         ),
     },
     {
         id: 'amount',
         title: 'Amount',
-        field: 'totalAmount',
+        field: 'total',
         sortable: true,
         textAlign: 'right',
         flex: 1,
         priority: 1, // High priority - always show
         render: (order) => (
             <Text style={{ fontWeight: 'bold' }}>
-                ${order.totalAmount?.toFixed(2)}
+                ${parseFloat(order.total || 0).toFixed(2)}
             </Text>
         ),
     },
@@ -94,20 +94,20 @@ export const orderTableColumns = [
             </View>
         ),
     },
-    // {
-    //     id: 'order',
-    //     title: 'Order #',
-    //     field: 'orderNumber',
-    //     sortable: true,
-    //     flex: 1.5,
-    //     priority: 2, // Medium priority - show on medium screens
-    //     render: (order) => (
-    //         <View>
-    //             <Text style={{ fontWeight: 'bold' }}>#{order.orderNumber}</Text>
-    //             <Text style={{ fontSize: 12, color: '#666' }}>{formatDate(order.createdAt)}</Text>
-    //         </View>
-    //     ),
-    // },
+    {
+        id: 'order',
+        title: 'Order #',
+        field: 'id',
+        sortable: true,
+        flex: 1.5,
+        priority: 2, // Medium priority - show on medium screens
+        render: (order) => (
+            <View>
+                <Text style={{ fontWeight: 'bold' }}>{order.id?.substring(0, 8)}</Text>
+                <Text style={{ fontSize: 12, color: '#666' }}>{formatDate(order.createdAt)}</Text>
+            </View>
+        ),
+    },
     {
         id: 'payment',
         title: 'Payment',

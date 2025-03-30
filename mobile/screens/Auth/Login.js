@@ -15,7 +15,7 @@ export function Login() {
     const [password, setPassword] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
-    const fcmToken = useSelector(selectFcmToken); // Get fcmToken from Redux store
+    const fcmToken = useSelector(selectFcmToken);
 
     const [login, { isLoading }] = useLoginMutation();
 
@@ -55,7 +55,7 @@ export function Login() {
                 const credentials = {
                     email,
                     password,
-                    fcmToken: fcmToken // Add FCM token to credentials
+                    fcmToken: fcmToken
                 };
 
                 const result = await login(credentials).unwrap();

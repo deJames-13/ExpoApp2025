@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Modal, View, StyleSheet, ScrollView } from 'react-native';
+import { Modal, View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Button, Text, Divider, Portal, Provider } from 'react-native-paper';
 import { OrderForm } from './form';
 import { adminColors } from '~/styles/adminTheme';
@@ -7,32 +7,69 @@ import { adminColors } from '~/styles/adminTheme';
 export function OrderModal({ visible, order, onClose, onStatusChange }) {
     const [hasChanges, setHasChanges] = useState(false);
     const [currentStatus, setCurrentStatus] = useState(order?.status || 'pending');
+    const [isLoading, setIsLoading] = useState(false);
+    const modalHeight = useRef(Math.min(Dimensions.get('window').height * 0.8, 600));
 
     // Reset status tracking when modal opens with new order
     useEffect(() => {
         if (visible && order) {
             setCurrentStatus(order.status || 'pending');
             setHasChanges(false);
+            setIsLoading(false);
         }
     }, [visible, order]);
 
-    // This handler will be called by OrderForm when user clicks save in the modal
-    const handleStatusUpdate = (orderId, newStatus) => {
-        onStatusChange(orderId, newStatus);
-        setHasChanges(false);
+    // This handler will be called by OrderForm when user changes status
+    const handleStatusUpdate = async (orderObj, newStatus) => {
+        try {
+            setIsLoading(true);
+            // Call the parent onStatusChange function
+            const success = await onStatusChange(orderObj, newStatus);
+
+            if (success) {
+                setCurrentStatus(newStatus);
+                setHasChanges(false);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Error updating status:', error);
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // This will be called from OrderForm when status changes
-    const handleFormStatusChange = (status) => {
-        setCurrentStatus(status);
-        setHasChanges(status !== order?.status);
+    const handleFormStatusChange = (newStatus) => {
+        if (newStatus !== currentStatus) {
+            setCurrentStatus(newStatus);
+            setHasChanges(newStatus !== order?.status);
+        }
     };
 
     // Handle save button click
-    const handleSaveChanges = () => {
+    const handleSaveChanges = async () => {
         if (hasChanges) {
-            onStatusChange(order.id, currentStatus);
+            setIsLoading(true);
+            try {
+                const success = await onStatusChange(order, currentStatus);
+                if (success) {
+                    setHasChanges(false);
+                }
+            } catch (error) {
+                console.error('Error saving changes:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+
+    // Clean up modal close to ensure parent component can handle it properly
+    const handleModalClose = () => {
+        if (!isLoading) {
             setHasChanges(false);
+            onClose();
         }
     };
 
@@ -43,28 +80,33 @@ export function OrderModal({ visible, order, onClose, onStatusChange }) {
                     visible={visible}
                     animationType="slide"
                     transparent={true}
-                    onRequestClose={onClose}
+                    onRequestClose={handleModalClose}
                 >
                     <View style={styles.centeredView}>
-                        <View style={styles.modalView}>
+                        <View style={[styles.modalView, { maxHeight: modalHeight.current }]}>
                             <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>Order #{order?.orderNumber}</Text>
+                                <Text style={styles.modalTitle}>Order #{order?.id?.substring(0, 8)}</Text>
                                 <Button
                                     icon="close"
                                     mode="text"
-                                    onPress={onClose}
+                                    onPress={handleModalClose}
                                     style={styles.closeButton}
+                                    disabled={isLoading}
                                 />
                             </View>
 
                             <Divider />
 
-                            <ScrollView style={styles.modalContent}>
+                            <ScrollView
+                                style={styles.modalContent}
+                                contentContainerStyle={styles.modalContentContainer}
+                            >
                                 <OrderForm
-                                    order={order}
+                                    order={{ ...order, status: currentStatus }}
                                     onStatusChange={handleStatusUpdate}
-                                    isModal={true} // Pass true to hide the button
+                                    isModal={true}
                                     onStatusChanged={handleFormStatusChange}
+                                    isLoading={isLoading}
                                 />
                             </ScrollView>
 
@@ -73,8 +115,9 @@ export function OrderModal({ visible, order, onClose, onStatusChange }) {
                             <View style={styles.modalFooter}>
                                 <Button
                                     mode="outlined"
-                                    onPress={onClose}
+                                    onPress={handleModalClose}
                                     style={styles.footerButton}
+                                    disabled={isLoading}
                                 >
                                     Close
                                 </Button>
@@ -85,6 +128,8 @@ export function OrderModal({ visible, order, onClose, onStatusChange }) {
                                         onPress={handleSaveChanges}
                                         style={[styles.footerButton, styles.saveButton]}
                                         textColor={adminColors.background}
+                                        loading={isLoading}
+                                        disabled={isLoading}
                                     >
                                         Save Changes
                                     </Button>
@@ -137,7 +182,10 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         padding: 15,
-        maxHeight: '70%',
+        flexGrow: 1,
+    },
+    modalContentContainer: {
+        paddingBottom: 10,
     },
     modalFooter: {
         flexDirection: 'row',

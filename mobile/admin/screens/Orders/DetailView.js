@@ -5,58 +5,93 @@ import { Appbar, Snackbar } from 'react-native-paper';
 import { OrderForm } from './form';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { adminColors } from '~/styles/adminTheme';
+import useResource from '~/hooks/useResource';
 
 export function OrderDetailView() {
     const navigation = useNavigation();
     const route = useRoute();
     const { order: initialOrder } = route.params || {};
 
+    // Initialize useResource hook
+    const api = useResource({ resourceName: 'orders', silent: false });
+    const { fetchData, doUpdate } = api.actions;
+    const { loading, current } = api.states;
+    const { showSuccess } = api.toast;
+
     const [order, setOrder] = useState(initialOrder);
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
 
-    // Update local order data when route params change
+    // Load order details on mount and when id changes
     useEffect(() => {
-        if (initialOrder) {
-            setOrder(initialOrder);
+        if (initialOrder?.id) {
+            loadOrderDetails(initialOrder.id);
         }
-    }, [initialOrder]);
+    }, [initialOrder?.id]);
 
-    const handleStatusChange = (orderId, newStatus) => {
-        // In a real app, this would make an API call to update the order
-        console.log(`Updating order ${orderId} status to ${newStatus}`);
+    // Update local state when api.current changes
+    useEffect(() => {
+        if (current) {
+            setOrder(current);
+        }
+    }, [current]);
 
-        // Update local order state
-        setOrder(prevOrder => ({
-            ...prevOrder,
-            status: newStatus
-        }));
+    const loadOrderDetails = async (id) => {
+        try {
+            await fetchData({ id });
+        } catch (error) {
+            console.error('Error fetching order details:', error);
+            setSnackbarMessage('Failed to load order details');
+            setSnackbarVisible(true);
+        }
+    };
 
-        // Show success message
-        const statusLabels = {
-            'pending': 'Pending',
-            'processing': 'Processing',
-            'shipped': 'Shipped',
-            'delivered': 'Delivered',
-            'cancelled': 'Cancelled'
-        };
+    const handleStatusChange = async (order, newStatus) => {
+        try {
+            let orderId = order.id;
+            await doUpdate(orderId, {
+                user: order?.user?.id,
+                status: newStatus,
+                order: order
+            });
 
-        setSnackbarMessage(`Order status updated to ${statusLabels[newStatus]}`);
-        setSnackbarVisible(true);
+            // Status labels for user feedback
+            const statusLabels = {
+                'pending': 'Pending',
+                'processing': 'Processing',
+                'shipped': 'Shipped',
+                'delivered': 'Delivered',
+                'cancelled': 'Cancelled'
+            };
+
+            setSnackbarMessage(`Order status updated to ${statusLabels[newStatus]}`);
+            setSnackbarVisible(true);
+
+            // Reload the order details
+            loadOrderDetails(orderId);
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            setSnackbarMessage('Failed to update order status');
+            setSnackbarVisible(true);
+        }
     };
 
     // Handler to refresh order data
     const handleRefresh = () => {
-        // In a real app, this would fetch updated order data from API
-        setSnackbarMessage('Order data refreshed');
-        setSnackbarVisible(true);
+        if (order?.id) {
+            loadOrderDetails(order.id);
+            showSuccess('Refreshed', 'Order data refreshed successfully');
+        }
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <Appbar.Header style={styles.header}>
                 <Appbar.BackAction onPress={() => navigation.goBack()} />
-                <Appbar.Content title={`Order #${order?.orderNumber}`} color={adminColors.text.primary} />
+                <Appbar.Content
+                    title={`Order #${order?.id?.substring(0, 8) || 'Detail'}`}
+                    color={adminColors.text.primary}
+                />
                 <Appbar.Action icon="refresh" onPress={handleRefresh} color={adminColors.text.secondary} />
             </Appbar.Header>
 
@@ -64,6 +99,7 @@ export function OrderDetailView() {
                 order={order}
                 onStatusChange={handleStatusChange}
                 isModal={false}
+                isLoading={loading}
             />
 
             <Snackbar

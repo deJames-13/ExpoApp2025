@@ -36,8 +36,6 @@ class OrderService extends Service {
       product: { $in: products.map(product => product.product) },
     });
 
-
-
     const order = this.model.create({
       ...orderData,
       user,
@@ -60,7 +58,6 @@ class OrderService extends Service {
       subject: title,
       message: new EmailTemplate({ userName: user.username, message, altMessage }).generate(),
     })
-
 
     return order;
   }
@@ -118,7 +115,6 @@ class OrderService extends Service {
     if (!updatedOrder) throw new Error('Order not found');
     if (status === 'shipped') this.manageStock(products);
 
-
     if (user.fcmToken) {
       const message = `Your order ${id} has been ${status}!`;
       const title = 'Order Status';
@@ -153,25 +149,19 @@ class OrderService extends Service {
     }
   }
 
-  // Override getById to ensure products are populated with better error handling
+  // Modified getById to follow the pattern expected by OrderResource
   async getById(id) {
     try {
-      // First try to populate products
-      const order = await this.model.findById(id)
-        .populate('products.product')
-        .exec();
+      this._checkModel();
+      this.query = this.model.findById(id);
+      this.applyForceFilter();
+
+      // Execute the query to get the order data
+      const order = await this.exec();
 
       if (!order) {
         throw new Error('Order not found');
       }
-
-      // Add debug logging
-      console.log('Order data (getById):', {
-        id: order._id,
-        hasProducts: Boolean(order.products),
-        productsLength: order.products?.length,
-        quantities: order.quantities
-      });
 
       return order;
     } catch (error) {

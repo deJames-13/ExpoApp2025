@@ -54,6 +54,7 @@ class UserController extends Controller {
     const { email, password } = req.body;
     const { user, token } = await this.service.authenticate(email, password);
     if (!user?._id) throw new Errors.BadRequest('Invalid credentials!');
+    console.log('USER TOKEN: ', req.body.fcmToken)
     if (req.body.fcmToken) {
       user.fcmToken = req.body.fcmToken;
       await user.save();
@@ -145,12 +146,12 @@ class UserController extends Controller {
     const { redirectUrl } = req.body;
     const { email } = req.user;
     await this.service.sendVerifyEmail(email, redirectUrl);
-    this.success({ 
-      res, 
+    this.success({
+      res,
       message: 'Verification email sent!',
       user: await this.resource.make(req.user),
       token: getBearerToken(req),
-     });
+    });
   };
 
   verifyEmail = async (req, res) => {

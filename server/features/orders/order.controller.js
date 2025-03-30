@@ -13,7 +13,13 @@ class OrderController extends Controller {
     if (user.role !== ROLES.ADMIN)
       this.service.setUserId(user._id);
 
+    if (!req.query.limit) req.query.limit = 10;
+    if (!req.query.page) req.query.page = 1;
     const meta = await this.service._getMeta(req.query);
+
+    this.service.query = this.service.model.find(this.service.forceFilter)
+      .sort({ createdAt: -1 });
+
     const data = await this.service.paginate(meta).exec();
     const message = data.length ? 'Data collection fetched!' : 'No data found!';
 
@@ -26,11 +32,7 @@ class OrderController extends Controller {
       const data = await this.service.getById(req.params.id);
       if (!data?._id) return this.error({ res, message: 'Order not found!' });
 
-      if (data.products && data.products.length > 0) {
-        const productIds = data.products.map(item => item.product);
-        const productData = await this.service.getProductsData(productIds);
-      }
-
+      // Use the resource transformation from OrderResource
       const resource = await this.resource.make(data);
       this.success({ res, message: 'Data fetched!', resource });
     } catch (error) {

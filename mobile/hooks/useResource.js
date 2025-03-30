@@ -438,7 +438,7 @@ export default function useResource({ resourceName, silent = true }) {
       showError,
       showInfo,
       showWarning,
-      showToast // Added this to also expose the generic showToast function
+      showToast
     }
   };
 }
