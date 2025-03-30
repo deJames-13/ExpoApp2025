@@ -14,6 +14,20 @@ export const tabRoutes = () => [
         isTab: true,
     },
     {
+        name: 'Account',
+        component: AdminScreens.AdminAccount,
+        icon: 'account-circle',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="account-circle" color={color} size={size} />
+            ),
+        },
+        isTab: true,
+    },
+];
+
+export const adminRoutes = () => [
+    {
         name: 'Products',
         component: AdminScreens.Products,
         icon: 'shopping-bag',
@@ -36,26 +50,22 @@ export const tabRoutes = () => [
         isTab: true,
     },
     {
-        name: 'Account',
-        component: AdminScreens.AdminAccount,
-        icon: 'account-circle',
-        options: {
-            tabBarIcon: ({ color, size }) => (
-                <Icon name="account-circle" color={color} size={size} />
-            ),
-        },
-        isTab: true,
-    },
-];
-
-export const adminRoutes = () => [
-    {
         name: 'AdminOrderDetail',
         component: AdminScreens.OrderDetailView,
         icon: 'receipt',
         options: {
             headerShown: false,
             title: 'Order Details',
+        },
+        hidden: true,
+    },
+    {
+        name: 'Notifications',
+        component: AdminScreens.AdminNotifications,
+        icon: 'notifications',
+        options: {
+            title: 'Send Notifications',
+            headerShown: true,
         },
     },
 ];

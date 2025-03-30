@@ -6,6 +6,7 @@ import resourcesReducer from './slices/resources';
 import onboardingReducer from './slices/onboarding';
 import cartReducer from './slices/cart';
 import checkoutReducer from './slices/checkout';
+import notificationReducer from './slices/notification';
 import apiSlice from "./api/"
 
 const rootReducer = combineReducers({
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
     cart: cartReducer,
     onboarding: onboardingReducer,
     checkout: checkoutReducer,
+    notification: notificationReducer,
     [apiSlice.reducerPath]: apiSlice.reducer
 });
 

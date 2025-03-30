@@ -7,10 +7,23 @@ const Notification = new Schema({
     {
       title: String,
       body: String,
+      data: Object,
+      status: {
+        type: String,
+        enum: ['none', 'active', 'important'],
+        default: 'active'
+      },
+
+      // Changed from enum to simple String to allow any value
       type: {
         type: String,
-        enum: ['info', 'warning', 'error'],
-      }
+        default: 'info'
+      },
+      isRead: {
+        type: Boolean,
+        default: false
+      },
+      user: { type: Schema.Types.ObjectId, ref: 'User' },
     },
     { timestamps: true },
   ],

@@ -106,7 +106,7 @@ export function AdminDrawerContent() {
                             <Text style={styles.sectionTitle}>Management</Text>
 
                             {/* Drawer Navigations */}
-                            {drawerRoutes.map((route) => (
+                            {drawerRoutes.map((route) => !route.hidden && (
                                 <TouchableOpacity
                                     key={route.name}
                                     style={[

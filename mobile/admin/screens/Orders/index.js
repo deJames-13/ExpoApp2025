@@ -7,6 +7,8 @@ import { orderTableColumns, orderActions } from './table-data';
 import { OrderModal } from './modal';
 import useResource from '~/hooks/useResource'
 
+export { OrderDetailView } from './DetailView'
+
 export function Orders({ navigation }) {
     const api = useResource({ resourceName: 'orders' });
     const { fetchDatas, doUpdate } = api.actions;
