@@ -15,7 +15,6 @@ function determineInitialRoute(isAuthenticated, isAdmin) {
     }
 
     if (isAdmin) {
-        console.log('User is admin, directing to admin panel');
         return 'AdminNav';
     }
 

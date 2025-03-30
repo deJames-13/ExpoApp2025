@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { productsData } from './data'
@@ -10,7 +10,6 @@ export function Products() {
     const [products, setProducts] = useState(productsData);
     const [loading, _setLoading] = useState(false); // Prefix with underscore to indicate intentionally unused
     const [refreshing, setRefreshing] = useState(false);
-    const [filteredProducts, setFilteredProducts] = useState(products);
     const [currentSort, setCurrentSort] = useState({ field: 'name', direction: 'asc' });
     const [searchText, setSearchText] = useState('');
     const searchFields = [
@@ -21,9 +20,9 @@ export function Products() {
         'brand.name'
     ];
 
-    useEffect(() => {
-        const result = processTableData(products, searchText, currentSort, searchFields);
-        setFilteredProducts(result);
+    // Use useMemo for filteredProducts to prevent recalculation on every render
+    const filteredProducts = useMemo(() => {
+        return processTableData(products, searchText, currentSort, searchFields);
     }, [products, currentSort, searchText, searchFields]);
 
     // Modal state
@@ -32,26 +31,26 @@ export function Products() {
     const [selectedProduct, setSelectedProduct] = useState(null);
 
     // Open modal for creating a new product
-    const handleAddProduct = () => {
+    const handleAddProduct = useCallback(() => {
         setModalMode('create');
         setSelectedProduct(null);
         setModalVisible(true);
-    };
+    }, []);
 
     // Action handlers
-    const handleEdit = (product) => {
+    const handleEdit = useCallback((product) => {
         setModalMode('edit');
         setSelectedProduct(product);
         setModalVisible(true);
-    };
+    }, []);
 
-    const handleView = (product) => {
+    const handleView = useCallback((product) => {
         setModalMode('view');
         setSelectedProduct(product);
         setModalVisible(true);
-    };
+    }, []);
 
-    const handleDelete = (product) => {
+    const handleDelete = useCallback((product) => {
         Alert.alert(
             "Delete Product",
             `Are you sure you want to delete ${product.name}?`,
@@ -66,35 +65,38 @@ export function Products() {
                 }
             ]
         );
-    };
+    }, [products]);
 
     // Handle saving product from modal
-    const handleSaveProduct = (productData) => {
+    const handleSaveProduct = useCallback((productData) => {
         if (modalMode === 'create') {
             const newProduct = {
                 ...productData,
                 id: Date.now().toString(),
                 createdAt: new Date().toISOString()
             };
-            setProducts([...products, newProduct]);
+            setProducts(prevProducts => [...prevProducts, newProduct]);
         } else if (modalMode === 'edit') {
-            setProducts(products.map(p =>
-                p.id === selectedProduct.id ? { ...p, ...productData } : p
-            ));
+            setProducts(prevProducts =>
+                prevProducts.map(p => p.id === selectedProduct.id ? { ...p, ...productData } : p)
+            );
         }
-    };
+        setModalVisible(false);
+    }, [modalMode, selectedProduct]);
 
     // Configure action handlers for the imported action definitions
-    const actions = productActions.map(action => {
-        if (action.id === 'view') {
-            return { ...action, onPress: handleView };
-        } else if (action.id === 'edit') {
-            return { ...action, onPress: handleEdit };
-        } else if (action.id === 'delete') {
-            return { ...action, onPress: handleDelete };
-        }
-        return action;
-    });
+    const actions = useMemo(() => {
+        return productActions.map(action => {
+            if (action.id === 'view') {
+                return { ...action, onPress: handleView };
+            } else if (action.id === 'edit') {
+                return { ...action, onPress: handleEdit };
+            } else if (action.id === 'delete') {
+                return { ...action, onPress: handleDelete };
+            }
+            return action;
+        });
+    }, [handleView, handleEdit, handleDelete]);
 
     // Refresh handler
     const handleRefresh = useCallback(async () => {
@@ -129,11 +131,13 @@ export function Products() {
         setCurrentSort(sortConfig);
     }, []);
 
-    const handleSomeAction = () => {
-        global.setTimeout(() => {
+    // Clean up setTimeout to avoid memory leaks
+    const handleSomeAction = useCallback(() => {
+        const timer = setTimeout(() => {
             // Function content
         }, 1000);
-    };
+        return () => clearTimeout(timer);
+    }, []);
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50">

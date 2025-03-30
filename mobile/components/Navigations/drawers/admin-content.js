@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Divider, Avatar, ActivityIndicator } from 'react-native-paper';
@@ -19,16 +19,15 @@ export function AdminDrawerContent() {
     const drawerRoutes = adminRoutes();
     const tabbedRoutes = tabRoutes();
 
-    // Enhanced admin check and redirect with clear logging
     useEffect(() => {
         if (isAuthenticated && !isAdmin) {
-            console.log('Non-admin user trying to access admin panel, redirecting...');
+            // console.log('Non-admin user trying to access admin panel, redirecting...');
             navigation.navigate('DefaultNav');
         } else if (!isAuthenticated) {
-            console.log('Unauthenticated user trying to access admin panel, redirecting to login...');
+            // console.log('Unauthenticated user trying to access admin panel, redirecting to login...');
             navigation.navigate("GuestNav", { screen: 'Login' });
         } else {
-            console.log('Admin user confirmed, allowing access to admin panel');
+            // console.log('Admin user confirmed, allowing access to admin panel');
         }
     }, [isAuthenticated, isAdmin, navigation]);
 
@@ -43,7 +42,10 @@ export function AdminDrawerContent() {
             {/* Admin Header with User Info */}
             <View style={[navigationStyles.drawerHeader, styles.header]}>
                 <View style={[globalStyles.row, styles.logoContainer]}>
-                    <Icon name="eye-outline" size={32} color="#007aff" />
+                    <Image
+                        source={require('~/assets/icon.png')}
+                        style={styles.logoImage}
+                    />
                     <Text style={styles.logoText}>
                         EyeZone Admin
                     </Text>
@@ -200,6 +202,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#007aff',
         marginLeft: 8,
+    },
+    logoImage: {
+        width: 28,
+        height: 28,
+        resizeMode: 'contain',
     },
     userInfo: {
         alignItems: 'center',

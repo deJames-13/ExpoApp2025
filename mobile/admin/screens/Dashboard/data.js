@@ -1,4 +1,3 @@
-
 export const statsData = {
     totalUsers: 1250,
     totalOrders: 843,
@@ -25,18 +24,20 @@ const timeoutDelay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const fetchDashboardData = () => {
     return new Promise((resolve) => {
-        timeoutDelay(1500).then(() => {
+        const timer = timeoutDelay(1500).then(() => {
             resolve({
                 stats: statsData,
                 recentOrders: recentOrdersData,
                 recentUsers: recentUsersData
             });
         });
+        return () => clearTimeout(timer);
     });
 };
 
 export const someFunction = () => {
-    global.setTimeout(() => {
+    const timer = setTimeout(() => {
         // Function content
     }, 1000);
+    return () => clearTimeout(timer);
 };
