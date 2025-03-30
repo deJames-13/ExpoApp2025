@@ -66,7 +66,11 @@ export default function useFirebaseMessaging() {
                         text1: `${orderText} ${statusText}`,
                         text2: 'Tap to view details',
                         type: 'info',
-                        onPress: () => navigateFromNotification(jsonData, navigation),
+                        onPress: () =>
+                            navigation.navigate('Orders', {
+                                screen: 'OrderDetailView',
+                                params: { orderId: jsonData.id }
+                            }),
                         visibilityTime: 5000,
                     });
                 } else {
@@ -75,7 +79,11 @@ export default function useFirebaseMessaging() {
                         type: 'actionable',
                         text1: title,
                         text2: 'Tap to view',
-                        onPress: () => navigateFromNotification(jsonData, navigation),
+                        onPress: () =>
+                            navigation.navigate('Orders', {
+                                screen: 'OrderDetailView',
+                                params: { orderId: jsonData.id }
+                            }),
                         visibilityTime: 4000,
                     });
                 }

@@ -37,10 +37,11 @@ function AppContent() {
         <FirebaseAuthProvider>
           <AuthProvider>
             <MainNav />
+            <Toast config={toastConfig} position="top" />
+
           </AuthProvider>
         </FirebaseAuthProvider>
       </PaperProvider>
-      <Toast config={toastConfig} position="top" />
     </NavigationContainer>
   );
 }
