@@ -29,15 +29,42 @@ const ReviewForm = ({ route, navigation }) => {
     const [description, setDescription] = useState('');
     const [isAnonymous, setIsAnonymous] = useState(false);
     const [images, setImages] = useState([]);
+    const [reviewId, setReviewId] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
 
     // Initialize the review resource
     const reviewApi = useResource({ resourceName: 'reviews', silent: false });
-    const { doStore } = reviewApi.actions;
+    const { doStore, doUpdate } = reviewApi.actions;
     const { loading } = reviewApi.states;
     const { showSuccess, showError } = reviewApi.toast;
 
     // Validation state
     const [errors, setErrors] = useState({});
+
+    // Check if the order has an existing review and pre-fill the form
+    useEffect(() => {
+        if (order && order.review) {
+            const { review } = order;
+
+            // Set form values from existing review
+            setRating(review.rating || 0);
+            setTitle(review.title || '');
+            setDescription(review.description || '');
+            setIsAnonymous(review.isAnonymous || false);
+            setReviewId(review.id);
+            setIsEditing(true);
+
+            // Handle existing images
+            if (review.images && review.images.length > 0) {
+                const formattedImages = review.images.map(img => ({
+                    uri: img.url,
+                    id: img.public_id, // Store original image ID for reference
+                    isExisting: true   // Flag to identify existing images
+                }));
+                setImages(formattedImages);
+            }
+        }
+    }, [order]);
 
     const validateForm = () => {
         const newErrors = {};
@@ -64,6 +91,7 @@ const ReviewForm = ({ route, navigation }) => {
         }
 
         try {
+            // Create the base review data
             const reviewData = {
                 rating,
                 title: title.trim() || '',
@@ -71,7 +99,6 @@ const ReviewForm = ({ route, navigation }) => {
                 isAnonymous,
                 order: order.id,
                 user: user.id,
-                images: [] // We'll handle image upload separately later
             };
 
             // Create FormData for image upload
@@ -79,14 +106,13 @@ const ReviewForm = ({ route, navigation }) => {
 
             // Add review data to FormData
             Object.keys(reviewData).forEach(key => {
-                if (key !== 'images') {
-                    formData.append(key, reviewData[key]);
-                }
+                formData.append(key, reviewData[key]);
             });
 
-            // Add images to FormData if any
-            if (images.length > 0) {
-                images.forEach((image, index) => {
+            // Add new images to FormData if any
+            const newImages = images.filter(img => !img.isExisting);
+            if (newImages.length > 0) {
+                newImages.forEach((image, index) => {
                     const fileExtension = image.uri.split('.').pop();
                     formData.append('image', {
                         uri: image.uri,
@@ -96,10 +122,32 @@ const ReviewForm = ({ route, navigation }) => {
                 });
             }
 
-            const response = await doStore(formData);
+            // For existing images that should be retained
+            const existingImageIds = images
+                .filter(img => img.isExisting)
+                .map(img => img.id)
+                .filter(Boolean);
+
+            if (existingImageIds.length > 0) {
+                formData.append('existingImages', JSON.stringify(existingImageIds));
+            }
+
+            let response;
+            if (isEditing && reviewId) {
+                // Update existing review
+                response = await doUpdate(reviewId, formData);
+                if (response && !response.error) {
+                    showSuccess('Review Updated', 'Your review has been updated successfully!');
+                }
+            } else {
+                // Create new review
+                response = await doStore(formData);
+                if (response && !response.error) {
+                    showSuccess('Review Submitted', 'Thank you for your feedback!');
+                }
+            }
 
             if (response && !response.error) {
-                showSuccess('Review Submitted', 'Thank you for your feedback!');
                 navigation.goBack();
             } else {
                 showError('Submission Failed', 'Please try again later');
@@ -143,12 +191,20 @@ const ReviewForm = ({ route, navigation }) => {
 
     // Show a confirmation dialog when the user tries to go back
     const handleGoBack = () => {
-        if (rating > 0 || title.trim() || description.trim() || images.length > 0) {
+        const hasChanges = isEditing ?
+            (rating !== order.review.rating ||
+                title !== order.review.title ||
+                description !== order.review.description ||
+                isAnonymous !== order.review.isAnonymous ||
+                images.length !== (order.review.images?.length || 0)) :
+            (rating > 0 || title.trim() || description.trim() || images.length > 0);
+
+        if (hasChanges) {
             Alert.alert(
-                'Discard Review?',
-                'Your review hasn\'t been submitted yet. Are you sure you want to discard it?',
+                isEditing ? 'Discard Changes?' : 'Discard Review?',
+                `Your ${isEditing ? 'changes' : 'review'} hasn't been ${isEditing ? 'saved' : 'submitted'} yet. Are you sure you want to discard ${isEditing ? 'them' : 'it'}?`,
                 [
-                    { text: 'Keep Editing', style: 'cancel' },
+                    { text: isEditing ? 'Keep Editing' : 'Continue Editing', style: 'cancel' },
                     { text: 'Discard', style: 'destructive', onPress: () => navigation.goBack() }
                 ]
             );
@@ -178,7 +234,9 @@ const ReviewForm = ({ route, navigation }) => {
                 <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Write a Review</Text>
+                <Text style={styles.headerTitle}>
+                    {isEditing ? 'Edit Review' : 'Write a Review'}
+                </Text>
                 <View style={{ width: 24 }} />
             </View>
 
@@ -311,9 +369,13 @@ const ReviewForm = ({ route, navigation }) => {
                         disabled={loading || rating === 0}
                     >
                         {loading ? (
-                            <Text style={styles.submitButtonText}>Submitting...</Text>
+                            <Text style={styles.submitButtonText}>
+                                {isEditing ? 'Updating...' : 'Submitting...'}
+                            </Text>
                         ) : (
-                            <Text style={styles.submitButtonText}>Submit Review</Text>
+                            <Text style={styles.submitButtonText}>
+                                {isEditing ? 'Update Review' : 'Submit Review'}
+                            </Text>
                         )}
                     </TouchableOpacity>
                 </View>

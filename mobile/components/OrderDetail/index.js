@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, ScrollView } from 'react-native';
-import { Text } from 'react-native-paper';
+import { View, ScrollView, TouchableOpacity, Text } from 'react-native';
+import { Text as PaperText } from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 // Import component files
 import OrderHeader from './OrderHeader';
@@ -28,10 +30,12 @@ const OrderDetail = ({
     onContactSupport = () => { },
     onCancelOrder = () => { },
 }) => {
+    const navigation = useNavigation();
+
     if (!order) {
         return (
             <View style={styles.loading}>
-                <Text>{error || 'No order data available'}</Text>
+                <PaperText>{error || 'No order data available'}</PaperText>
             </View>
         );
     }
@@ -52,6 +56,22 @@ const OrderDetail = ({
                 onBack={onBack}
                 getStatusColor={getOrderStatusColor}
             />
+
+            {/* Review button for delivered orders */}
+            {!isAdmin && order.status === 'delivered' && (
+                <View style={styles.reviewButtonContainer}>
+                    <TouchableOpacity
+                        style={styles.reviewButton}
+                        onPress={() => navigation.navigate('ReviewScreen', {
+                            screen: 'ReviewForm',
+                            params: { order }
+                        })}
+                    >
+                        <Ionicons name="star-outline" size={18} color="#fff" />
+                        <Text style={styles.reviewButtonText}>Write a Review</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {isAdmin ? (
                 <View style={styles.adminSection}>

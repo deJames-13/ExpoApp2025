@@ -40,7 +40,24 @@ export const containerStyles = StyleSheet.create({
     },
     spacer: {
         height: 24,
-    }
+    },
+    reviewButtonContainer: {
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+    },
+    reviewButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#4CAF50',
+        padding: 12,
+        borderRadius: 8,
+        justifyContent: 'center',
+    },
+    reviewButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        marginLeft: 8,
+    },
 });
 
 // OrderHeader styles

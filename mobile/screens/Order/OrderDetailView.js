@@ -137,6 +137,7 @@ const OrderDetailView = ({ route, navigation }) => {
                 onContactSupport={handleContactSupport}
                 onCancelOrder={handleCancelOrder}
                 error={error}
+                navigation={navigation} // Pass navigation prop to OrderDetail
             />
         </View>
     );
