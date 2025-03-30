@@ -11,6 +11,7 @@ export function ProfileHeader({ user, onEditProfile }) {
                     <Image
                         source={{ uri: user.avatar }}
                         className="w-24 h-24 rounded-full"
+                        style={{ backgroundColor: '#f3f4f6' }}
                     />
                 ) : (
                     <View className="w-24 h-24 rounded-full bg-gray-200 items-center justify-center">
@@ -28,10 +29,12 @@ export function ProfileHeader({ user, onEditProfile }) {
             <Text className="text-xl font-bold mt-3">{user.name}</Text>
             <Text className="text-gray-500">{user.email}</Text>
 
-            <View className="flex-row items-center mt-2">
-                <MaterialCommunityIcons name="map-marker" size={16} color="#666" />
-                <Text className="text-gray-500 ml-1">{user.location || 'Not specified'}</Text>
-            </View>
+            {user.location && user.location !== 'Location not set' && (
+                <View className="flex-row items-center mt-2">
+                    <MaterialCommunityIcons name="map-marker" size={16} color="#666" />
+                    <Text className="text-gray-500 ml-1">{user.location}</Text>
+                </View>
+            )}
         </View>
     );
 }

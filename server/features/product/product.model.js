@@ -51,7 +51,20 @@ const Product = new Schema({
   ],
 });
 
-Product.statics.fillables = [];
-Product.statics.hidden = [];
+// Define fillable properties
+Product.statics.fillables = [
+  'name',
+  'description',
+  'price',
+  'stock',
+  'category',
+  'brand',
+  'supplier',
+  'images',
+  'averageRating',
+  'slug'
+];
+
+Product.statics.hidden = ['__v'];
 
 export default Product.makeModel();

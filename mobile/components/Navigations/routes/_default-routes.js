@@ -39,6 +39,14 @@ export const defaultRoutes = () => [
         },
     },
     {
+        name: 'EditProfile',
+        component: Screens.Profile.EditProfile,
+        options: {
+            headerShown: true,
+            title: 'Edit Profile',
+        },
+    },
+    {
         name: 'Cart',
         component: Screens.CartScreen,
         icon: 'shopping-cart',

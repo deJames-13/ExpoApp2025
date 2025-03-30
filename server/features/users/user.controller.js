@@ -105,7 +105,8 @@ class UserController extends Controller {
       userInfo = await this.service.updateUserInfo(user, info);
     }
 
-    if (req.file || req.files && (userInfo && UserInfoModel.schema.paths['avatar'])) {
+    // Handle file upload - now supports both multer file and base64
+    if ((req.file || req.base64File) && (userInfo && UserInfoModel.schema.paths['avatar'])) {
       const avatar = this.addImage(req);
       userInfo.avatar = avatar[0];
       await userInfo.save();

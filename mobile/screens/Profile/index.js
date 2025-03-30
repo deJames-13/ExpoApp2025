@@ -1,38 +1,67 @@
-import { View, Text, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native'
-import React from 'react'
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert } from 'react-native'
+import React, { useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { globalStyles } from '../../styles/global';
 import { ProfileHeader } from './components/ProfileHeader';
 import { ProfileMenuItem } from './components/ProfileMenuItem';
 import { ProfileStats } from './components/ProfileStats';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../states/slices/auth';
+import LoadingScreen from '../LoadingScreen';
+import { useNavigation } from '@react-navigation/native';
+import useLogout from '../../hooks/useLogout';
 
-export function Profile({ navigation }) {
-    // Mock user data - in a real app, this would come from a state management solution or API
+export function Profile() {
+    const navigation = useNavigation();
+    const currentUser = useSelector(selectCurrentUser);
+    const { logout, isLoading } = useLogout();
+
+    if (isLoading) {
+        return <LoadingScreen />;
+    }
+
+    // Format user data for display
     const userData = {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        location: 'New York, USA',
+        name: currentUser?.info ? `${currentUser.info.first_name} ${currentUser.info.last_name}` : currentUser?.username || 'Guest User',
+        email: currentUser?.email || 'No email provided',
+        location: currentUser?.info ? `${currentUser.info.city}, ${currentUser.info.region}` : 'Location not set',
+        avatar: currentUser?.info?.avatar?.url || currentUser?.info?.photoUrl || null,
     };
 
-    // Mock stats data
+    // Stats data - can be connected to real data when available
     const statsData = [
-        { label: 'Orders', value: '12' },
-        { label: 'Reviews', value: '4' },
-        { label: 'Points', value: '256' },
+        { label: 'Orders', value: '0' },
+        { label: 'Reviews', value: '0' },
+        { label: 'Points', value: '0' },
     ];
 
     // Menu items
     const menuItems = [
-        { title: 'My Orders', route: 'orders', onPress: () => navigation.navigate('Orders'), showBadge: true, badgeCount: '2' },
-        { title: 'Favorites', route: 'favorites', onPress: () => navigation.navigate('Favorites') },
-        { title: 'Shipping Addresses', route: 'addresses', iconOverride: 'map-marker', onPress: () => navigation.navigate('Addresses') },
-        { title: 'Payment Methods', route: 'payment', iconOverride: 'credit-card', onPress: () => navigation.navigate('PaymentMethods') },
-        { title: 'Account Settings', route: 'settings', onPress: () => navigation.navigate('Settings') },
-        { title: 'Help Center', route: 'help', onPress: () => navigation.navigate('HelpCenter') },
+        { title: 'My Orders', route: 'orders', onPress: () => navigation.navigate('Orders'), showBadge: false },
+        { title: 'Cart', route: 'cart', onPress: () => navigation.navigate('Cart'), showBadge: false },
+        { title: 'Reviews', route: 'reviews', onPress: () => navigation.navigate('Reviews'), showBadge: false },
+        { title: 'Notifications', route: 'notifications', onPress: () => navigation.navigate('Notifications'), },
     ];
 
     const handleEditProfile = () => {
         navigation.navigate('EditProfile');
+    };
+
+    const handleLogout = () => {
+        Alert.alert(
+            "Logout",
+            "Are you sure you want to logout?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Logout",
+                    onPress: logout
+                }
+            ]
+        );
     };
 
     return (
@@ -40,7 +69,7 @@ export function Profile({ navigation }) {
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
                 <ProfileHeader user={userData} onEditProfile={handleEditProfile} />
 
-                <View className="px-4">
+                <View className="px-4 flex-1">
                     <ProfileStats stats={statsData} />
 
                     <Text className="text-lg font-bold mb-2">Account</Text>
@@ -57,9 +86,12 @@ export function Profile({ navigation }) {
                         />
                     ))}
 
+                    {/* Flexible spacer to push logout button to bottom */}
+                    <View style={{ flex: 1, minHeight: 20 }} />
+
                     <TouchableOpacity
                         className="mt-6 mb-10 flex-row items-center justify-center py-3 bg-red-50 rounded-xl"
-                        onPress={() => alert('Logout pressed')}
+                        onPress={handleLogout}
                     >
                         <MaterialCommunityIcons name="logout" size={20} color="#ef4444" />
                         <Text className="ml-2 text-red-500 font-medium">Log Out</Text>

@@ -120,6 +120,45 @@ export function ResourceForm({
     );
 }
 
+// Create a component that can be used to render fields from a form config
+ResourceForm.RenderFields = ({ formProps, fieldConfig }) => {
+    return (
+        <View style={styles.formContainer}>
+            {fieldConfig.map((config, index) => {
+                // If it's a row with multiple fields
+                if (config.row) {
+                    return (
+                        <FormRow key={`row-${index}`}>
+                            {config.fields.map((fieldConfig, fieldIndex) => (
+                                <HalfField key={fieldConfig.field || `field-${fieldIndex}`}>
+                                    <FieldMapper
+                                        {...fieldConfig}
+                                        formProps={formProps}
+                                    />
+                                </HalfField>
+                            ))}
+                        </FormRow>
+                    );
+                }
+
+                // Single field
+                return (
+                    <FieldMapper
+                        key={config.field || `field-${index}`}
+                        {...config}
+                        formProps={formProps}
+                    />
+                );
+            })}
+        </View>
+    );
+};
+
+// Attach components as static properties
+ResourceForm.FieldMapper = FieldMapper;
+ResourceForm.FormRow = FormRow;
+ResourceForm.HalfField = HalfField;
+
 const styles = StyleSheet.create({
     container: {
         width: '100%',

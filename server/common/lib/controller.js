@@ -26,7 +26,7 @@ export class Controller {
 
   getAll = async (req, res) => {
     let data, meta;
-    if (req.query.all){
+    if (req.query.all) {
       data = await this.service?.getAll();
     }
     else {
@@ -36,7 +36,7 @@ export class Controller {
     const message = data.length ? 'Data collection fetched!' : 'No data found!';
 
     const resource = (await this.resource?.collection(data)) || data;
-    this.success({ res, message, resource, meta: { ...(meta||[]), count: data.length } });
+    this.success({ res, message, resource, meta: { ...(meta || []), count: data.length } });
   };
 
   getById = async (req, res) => {
@@ -48,16 +48,52 @@ export class Controller {
   };
 
   addImage = (req, oldImages) => {
-    const files = Array.isArray(req.files) ? req.files : [req.file];
-    const images = files.map((file) => ({
-      folder: file.folder || '',
-      public_id: file.public_id || '',
-      resource_type: file.resource_type || '',
-      url: file.url || '',
-      secure_url: file.secure_url || '',
-      tags: file.tags || [],
-      allowed_formats: file.allowed_formats || [],
-    }));
+    let images = [];
+
+    // Handle array of base64Files if present
+    if (req.base64Files && req.base64Files.length > 0) {
+      const base64Images = req.base64Files.map(file => ({
+        folder: file.folder || '',
+        public_id: file.public_id || '',
+        resource_type: file.resource_type || '',
+        url: file.url || '',
+        secure_url: file.secure_url || '',
+        tags: file.tags || [],
+        allowed_formats: file.allowed_formats || [],
+      }));
+
+      images = [...images, ...base64Images];
+    }
+
+    // Handle single base64File if present
+    else if (req.base64File) {
+      images.push({
+        folder: req.base64File.folder || '',
+        public_id: req.base64File.public_id || '',
+        resource_type: req.base64File.resource_type || '',
+        url: req.base64File.url || '',
+        secure_url: req.base64File.secure_url || '',
+        tags: req.base64File.tags || [],
+        allowed_formats: req.base64File.allowed_formats || [],
+      });
+    }
+
+    // Handle regular file uploads
+    if (req.file || req.files) {
+      const files = Array.isArray(req.files) ? req.files : [req.file];
+      const fileImages = files.filter(Boolean).map((file) => ({
+        folder: file.folder || '',
+        public_id: file.public_id || '',
+        resource_type: file.resource_type || '',
+        url: file.url || '',
+        secure_url: file.secure_url || '',
+        tags: file.tags || [],
+        allowed_formats: file.allowed_formats || [],
+      }));
+
+      images = [...images, ...fileImages];
+    }
+
     return images;
   };
 

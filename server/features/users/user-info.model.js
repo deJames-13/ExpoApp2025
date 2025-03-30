@@ -45,5 +45,19 @@ const UserInfo = new Schema({
   ],
 });
 
+// Define fillable properties
+UserInfo.statics.fillables = [
+  'first_name',
+  'last_name',
+  'contact',
+  'birthdate',
+  'address',
+  'city',
+  'region',
+  'zip_code',
+  'avatar',
+  'photoUrl'
+];
+
 export default UserInfo.makeModel();
 

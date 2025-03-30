@@ -1,11 +1,18 @@
 export { default as Onboarding } from './Onboarding';
 
-
 export * from './Shop';
 export * from './Home';
-export * from './Profile';
-export * from './Auth';
 
+// Export Profile screens with proper structure
+import { Profile } from './Profile';
+import { EditProfile } from './Profile/EditProfile';
+Profile.EditProfile = EditProfile;
+
+export {
+    Profile,
+};
+
+export * from './Auth';
 export * from './Order';
 
 // Cart screens

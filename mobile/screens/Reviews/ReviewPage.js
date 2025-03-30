@@ -50,7 +50,7 @@ export function ReviewPage({ navigation }) {
     };
 
     const handleWriteReview = () => {
-        navigation.navigate('OrderScreen', {
+        navigation.navigate('Orders', {
             screen: 'OrderPage'
         });
     };

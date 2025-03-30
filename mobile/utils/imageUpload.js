@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import mime from 'mime';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 
 export const isValidUri = (uri) => {
     if (!uri) return false;
@@ -19,6 +20,32 @@ export const isValidUri = (uri) => {
 }
 
 /**
+ * Checks if a URI is a remote URL (http/https)
+ * 
+ * @param {string} uri - The URI to check
+ * @returns {boolean} - True if the URI is a remote URL
+ */
+export const isRemoteUrl = (uri) => {
+    if (!uri || typeof uri !== 'string') return false;
+
+    return uri.startsWith('http://') || uri.startsWith('https://');
+}
+
+/**
+ * Checks if a URI is a Cloudinary URL
+ * 
+ * @param {string} uri - The URI to check
+ * @returns {boolean} - True if the URI is a Cloudinary URL
+ */
+export const isCloudinaryUrl = (uri) => {
+    if (!uri || typeof uri !== 'string') return false;
+
+    // Check for common Cloudinary URL patterns
+    return uri.includes('cloudinary.com') ||
+        uri.includes('res.cloudinary');
+}
+
+/**
  * Normalizes image URI for cross-platform compatibility
  * 
  * @param {string} uri - The image URI to normalize
@@ -26,6 +53,11 @@ export const isValidUri = (uri) => {
  */
 export const normalizeImageUri = (uri) => {
     if (!uri) return null;
+
+    // Skip normalization for remote URLs
+    if (isRemoteUrl(uri)) {
+        return uri;
+    }
 
     // Fix Android-specific issue with file:/ vs file:///
     // Convert all URIs to the format file:///path/to/file
@@ -77,6 +109,14 @@ export const getMimeType = (uri) => {
 export const createImageObject = (uri, customFileName = null) => {
     if (!uri) return null;
 
+    // For remote URLs, we don't need to create a file object
+    // The server should access these directly via the URL
+    if (isRemoteUrl(uri)) {
+        // If it's already a remote URL (like a Cloudinary URL), return null
+        // to skip adding it to FormData as a file
+        return null;
+    }
+
     const normalizedUri = normalizeImageUri(uri);
     if (!normalizedUri) return null;
 
@@ -98,6 +138,13 @@ export const createImageObject = (uri, customFileName = null) => {
  */
 export const appendImageToFormData = (formData, fieldName, imageUri, customFileName = null) => {
     if (!formData || !imageUri) return formData;
+
+    // For remote URLs, just add the URL string directly
+    if (isRemoteUrl(imageUri)) {
+        console.log(`Remote URL detected for ${fieldName}, adding URL directly`);
+        formData.append(fieldName, imageUri);
+        return formData;
+    }
 
     const imageObject = createImageObject(imageUri, customFileName);
 
@@ -180,14 +227,49 @@ export const createFlatFormData = (jsonData = {}, images = {}) => {
 };
 
 /**
+ * Converts an image file to base64 string
+ * @param {string} uri - Image URI
+ * @returns {Promise<string|null>} - Base64 string or null if conversion fails
+ */
+export const imageToBase64 = async (uri) => {
+    if (!uri) return null;
+
+    // Skip conversion for remote URLs
+    if (isRemoteUrl(uri)) {
+        return uri;
+    }
+
+    try {
+        // Normalize URI first
+        const normalizedUri = normalizeImageUri(uri);
+        if (!normalizedUri) return null;
+
+        // Read the file as base64
+        const base64 = await FileSystem.readAsStringAsync(normalizedUri, {
+            encoding: FileSystem.EncodingType.Base64,
+        });
+
+        // Get the MIME type
+        const type = getMimeType(normalizedUri);
+
+        // Return the complete data URL
+        return `data:${type};base64,${base64}`;
+    } catch (error) {
+        console.error('Error converting image to base64:', error);
+        return null;
+    }
+};
+
+/**
  * Creates a hybrid FormData object with both root-level fields and 'info' JSON
  * This ensures compatibility with server endpoints that expect an 'info' field
  * 
  * @param {Object} jsonData - JSON data to include in FormData
  * @param {Object} images - Object mapping field names to image URIs
+ * @param {boolean} useBase64 - Whether to convert local images to base64
  * @returns {FormData} - Complete FormData object ready for submission
  */
-export const createHybridFormData = (jsonData = {}, images = {}) => {
+export const createHybridFormData = async (jsonData = {}, images = {}, useBase64 = true) => {
     const formData = new FormData();
 
     // Add JSON data as an 'info' field for server compatibility
@@ -211,11 +293,28 @@ export const createHybridFormData = (jsonData = {}, images = {}) => {
 
     // Add images
     if (images && typeof images === 'object') {
-        Object.entries(images).forEach(([fieldName, uri]) => {
-            if (uri) {
+        for (const [fieldName, uri] of Object.entries(images)) {
+            if (!uri) continue;
+
+            // For remote URLs, just pass the URL as a string
+            if (isRemoteUrl(uri)) {
+                console.log(`Remote URL detected for ${fieldName}, adding URL directly`);
+                formData.append(fieldName, uri);
+                continue;
+            }
+
+            // For local files, convert to base64 if requested
+            if (useBase64) {
+                const base64Data = await imageToBase64(uri);
+                if (base64Data) {
+                    console.log(`Converted ${fieldName} to base64`);
+                    formData.append(fieldName, base64Data);
+                }
+            } else {
+                // Fall back to the old method if base64 is not requested
                 appendImageToFormData(formData, fieldName, uri);
             }
-        });
+        }
     }
 
     return formData;

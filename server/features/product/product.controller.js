@@ -67,8 +67,8 @@ class ProductController extends Controller {
     let data = await this.service?.create(validData);
     if (!data._id) return this.error({ res, message: 'Invalid data!' });
 
-    // console.log('Found files', req.files);
-    if (req.file || req.files || this.service.hasField('images')) {
+    // Enhanced image handling for multiple sources (multer files or base64)
+    if (req.file || req.files || req.base64File || req.base64Files || this.service.hasField('images')) {
       const images = this.addImage(req);
       data.images = [...(data.images || []), ...images];
       await data.save();
@@ -98,7 +98,8 @@ class ProductController extends Controller {
     let data = await this.service?.update(req.params.id, validData);
     if (!data._id) return this.error({ res, message: 'Invalid data!' });
 
-    if (req.file || req.files || this.service.hasField('images')) {
+    // Enhanced image handling for multiple sources (multer files or base64)
+    if (req.file || req.files || req.base64File || req.base64Files || this.service.hasField('images')) {
       const images = this.addImage(req);
       const oldImages = new Set(
         (data.images || []).map((image) => image.public_id)
@@ -109,7 +110,6 @@ class ProductController extends Controller {
       data.images = [...(data.images || []), ...newImages];
       data = await data.save();
     }
-    // console.log('files', data);
 
     const resource = (await this.resource?.make(data)) || data;
     this.success({ res, message: 'Data updated!', resource });
