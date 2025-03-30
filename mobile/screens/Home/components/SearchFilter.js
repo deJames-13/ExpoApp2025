@@ -2,15 +2,26 @@ import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Text } from '~/components/ui';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
 
 export default function SearchFilter({ onSearch, onFilterChange }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
     const filters = ['All', 'Newest', 'Popular', 'Sale'];
+    const navigation = useNavigation();
 
     const handleSearch = (text) => {
         setSearchQuery(text);
         if (onSearch) onSearch(text);
+    };
+
+    const handleSearchSubmit = () => {
+        if (searchQuery.trim()) {
+            navigation.navigate('SearchedScreen', {
+                query: searchQuery,
+                filter: activeFilter
+            });
+        }
     };
 
     const handleFilterChange = (filter) => {
@@ -27,7 +38,17 @@ export default function SearchFilter({ onSearch, onFilterChange }) {
                     className="flex-1 ml-2 text-base"
                     value={searchQuery}
                     onChangeText={handleSearch}
+                    onSubmitEditing={handleSearchSubmit}
+                    returnKeyType="search"
                 />
+                {searchQuery.length > 0 && (
+                    <TouchableOpacity
+                        onPress={handleSearchSubmit}
+                        className="bg-blue-600 rounded-full p-1"
+                    >
+                        <Icon name="arrow-forward" size={16} color="white" />
+                    </TouchableOpacity>
+                )}
             </View>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">

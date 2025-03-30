@@ -14,6 +14,7 @@ import {
 export function Home({ navigation }) {
     const handleSearch = (query) => {
         console.log('Search query:', query);
+        // Search will be handled by SearchFilter component navigation
     };
 
     const handleFilterChange = (filter) => {
@@ -22,6 +23,7 @@ export function Home({ navigation }) {
 
     const handleCategorySelect = (category) => {
         console.log('Selected category:', category.name);
+        navigation.navigate('CategorizedProducts', { category });
     };
 
     const renderProduct = () => (

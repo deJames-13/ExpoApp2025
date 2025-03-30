@@ -120,6 +120,8 @@ export default function useResource({ resourceName, silent = true }) {
   const createMutation = resourceEndpoints[`useStore${pascalCaseName}Mutation`];
   const updateMutation = resourceEndpoints[`useUpdate${pascalCaseName}Mutation`];
   const deleteMutation = resourceEndpoints[`useDelete${pascalCaseName}Mutation`];
+  const searchProductsMutation = resourceEndpoints[`useSearchProductsMutation`];
+  const filterProductsMutation = resourceEndpoints[`useFilterProductsMutation`];
 
   // Use the mutation hooks if they exist
   const [getAll] = getAllMutation ? getAllMutation() : [() => Promise.reject(new Error(`getAllMutation for ${resourceName} not found`))];
@@ -128,6 +130,8 @@ export default function useResource({ resourceName, silent = true }) {
   const [create] = createMutation ? createMutation() : [() => Promise.reject(new Error(`createMutation for ${resourceName} not found`))];
   const [update] = updateMutation ? updateMutation() : [() => Promise.reject(new Error(`updateMutation for ${resourceName} not found`))];
   const [deleteItem] = deleteMutation ? deleteMutation() : [() => Promise.reject(new Error(`deleteMutation for ${resourceName} not found`))];
+  const [search] = searchProductsMutation ? searchProductsMutation() : [() => Promise.reject(new Error('searchProductsMutation not found'))];
+  const [filterProducts] = filterProductsMutation ? filterProductsMutation() : [() => Promise.reject(new Error('filterProductsMutation not found'))];
 
   // States
   const [data, setData] = useState(resourceData.list || []);
@@ -356,6 +360,68 @@ export default function useResource({ resourceName, silent = true }) {
     }
   }, [deleteItem, dispatch]);
 
+  const searchProducts = useCallback(async (params) => {
+    setLoading(true);
+    try {
+      console.log(`[${resourceName}] Searching products with params:`, params);
+      const response = await search(params).unwrap();
+      const results = Array.isArray(response)
+        ? response
+        : response.results || response.resource || [];
+
+      setData(results);
+      setMeta(response.meta || {});
+
+      dispatch(setResource({
+        resource: resourceName,
+        data: results,
+        type: 'list'
+      }));
+
+      setLoading(false);
+      return response;
+    } catch (error) {
+      setLoading(false);
+      console.error(`[${resourceName}] Search error:`, error);
+      showError(
+        'Error',
+        error?.data?.message || 'Failed to search products'
+      );
+      return error;
+    }
+  }, [search, resourceName, dispatch]);
+
+  const filterByPriceAndCategory = useCallback(async (filters) => {
+    setLoading(true);
+    try {
+      console.log(`[${resourceName}] Filtering products:`, filters);
+      const response = await filterProducts(filters).unwrap();
+      const results = Array.isArray(response)
+        ? response
+        : response.results || response.resource || [];
+
+      setData(results);
+      setMeta(response.meta || {});
+
+      dispatch(setResource({
+        resource: resourceName,
+        data: results,
+        type: 'list'
+      }));
+
+      setLoading(false);
+      return response;
+    } catch (error) {
+      setLoading(false);
+      console.error(`[${resourceName}] Filter error:`, error);
+      showError(
+        'Error',
+        error?.data?.message || 'Failed to filter products'
+      );
+      return error;
+    }
+  }, [filterProducts, resourceName, dispatch]);
+
   // Event handlers
   const onStore = useCallback(async (data) => {
     return doStore(data).then((response) => {
@@ -411,7 +477,9 @@ export default function useResource({ resourceName, silent = true }) {
       fetchBySlug,
       doStore,
       doUpdate,
-      doDestroy
+      doDestroy,
+      searchProducts,
+      filterByPriceAndCategory
     },
     states: {
       data,

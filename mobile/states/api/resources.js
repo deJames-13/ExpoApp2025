@@ -48,6 +48,42 @@ const customEndpoints = {
         }),
     }),
 
+    // Products custom endpoints
+    products: (builder) => ({
+        searchProducts: builder.mutation({
+            query: (queryParams = {}) => {
+                const { query, category, priceRange, filter, page = 1, limit = 10 } = queryParams;
+                let queryString = `?page=${page}&limit=${limit}`;
+
+                if (query) queryString += `&name[$regex]=${query}&name[$options]=i`;
+                if (category) queryString += `&category=${category}`;
+
+                if (priceRange && priceRange.length === 2) {
+                    queryString += `&price[$gte]=${priceRange[0]}&price[$lte]=${priceRange[1]}`;
+                }
+
+                if (filter === 'Newest') queryString += '&sort=-createdAt';
+                else if (filter === 'Popular') queryString += '&sort=-averageRating';
+                else if (filter === 'Sale') queryString += '&discount=true';
+
+                return {
+                    url: `/products${queryString}`,
+                    method: 'GET',
+                };
+            },
+            invalidatesTags: [{ type: 'PRODUCTS', id: 'SEARCH' }]
+        }),
+
+        filterProducts: builder.mutation({
+            query: (filters) => ({
+                url: '/products/filter',
+                method: 'POST',
+                body: filters
+            }),
+            invalidatesTags: [{ type: 'PRODUCTS', id: 'FILTER' }]
+        }),
+    }),
+
     // TODO: Orders custom endpoints
 
 
