@@ -14,8 +14,7 @@ import {
 } from '~/states/slices/auth';
 import { selectIsPendingVerification } from '~/states/slices/onboarding';
 import { useGetProfileQuery, useRefreshTokenQuery } from '~/states/api/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_KEYS, clearCredentials } from '~/states/utils/authUtils';
+import { STORAGE_KEYS, clearCredentials, getCredentials } from '~/states/utils/authUtils';
 import { logUserProfile } from '~/utils/logUtils';
 
 const LOG = false;
@@ -24,19 +23,14 @@ export const useLoadUser = () => {
     const dispatch = useDispatch();
     const [isHydrated, setIsHydrated] = useState(false);
 
-    // Load authentication state from AsyncStorage
+    // Load authentication state from SecureStore
     useEffect(() => {
         async function loadAuthState() {
             try {
-                const [tokenValue, userValue, fcmTokenValue] = await Promise.all([
-                    AsyncStorage.getItem(STORAGE_KEYS.TOKEN),
-                    AsyncStorage.getItem(STORAGE_KEYS.USER),
-                    AsyncStorage.getItem(STORAGE_KEYS.FCM_TOKEN)
-                ]);
+                const { token, user, fcmToken } = await getCredentials();
 
-                if (tokenValue && userValue) {
-                    const user = JSON.parse(userValue);
-                    dispatch(hydrate({ token: tokenValue, user, fcmToken: fcmTokenValue }));
+                if (token && user) {
+                    dispatch(hydrate({ token, user, fcmToken }));
                 }
             } catch (e) {
                 console.error('Failed to load auth state:', e);
@@ -79,15 +73,10 @@ export default function useAuth({
             if (isInitialized) return;
 
             try {
-                const [tokenValue, userValue, fcmTokenValue] = await Promise.all([
-                    AsyncStorage.getItem(STORAGE_KEYS.TOKEN),
-                    AsyncStorage.getItem(STORAGE_KEYS.USER),
-                    AsyncStorage.getItem(STORAGE_KEYS.FCM_TOKEN)
-                ]);
+                const { token, user, fcmToken } = await getCredentials();
 
-                if (tokenValue && userValue) {
-                    const user = JSON.parse(userValue);
-                    dispatch(hydrate({ token: tokenValue, user, fcmToken: fcmTokenValue }));
+                if (token && user) {
+                    dispatch(hydrate({ token, user, fcmToken }));
                 }
             } catch (e) {
                 console.error('Failed to initialize auth state:', e);
@@ -99,6 +88,7 @@ export default function useAuth({
 
         initializeAuth();
     }, [dispatch, isInitialized]);
+
     const { data: profileData, error: profileError, refetch: refetchProfile, isLoading: isProfileLoading } =
         useGetProfileQuery(undefined, {
             skip: !isAuthenticated || !accessToken || !isInitialized,

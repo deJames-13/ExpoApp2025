@@ -26,22 +26,22 @@ function AppContent() {
   }
 
   return (
-    <FirebaseAuthProvider>
-      <NavigationContainer
-        ref={navigationRef}
-        onReady={() => {
-          console.log('Navigation container is ready');
-        }}
-        fallback={<LoadingScreen />}
-      >
-        <PaperProvider>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        console.log('Navigation container is ready');
+      }}
+      fallback={<LoadingScreen />}
+    >
+      <PaperProvider>
+        <FirebaseAuthProvider>
           <AuthProvider>
             <MainNav />
           </AuthProvider>
-        </PaperProvider>
-      </NavigationContainer>
+        </FirebaseAuthProvider>
+      </PaperProvider>
       <Toast config={toastConfig} position="top" />
-    </FirebaseAuthProvider>
+    </NavigationContainer>
   );
 }
 

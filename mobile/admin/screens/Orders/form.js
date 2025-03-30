@@ -269,7 +269,6 @@ const OrderStatusWorkflow = ({ currentStatus, onStatusChange, isLoading }) => {
 };
 
 export function OrderForm({ order, onStatusChange, isModal = false, isLoading = false, onStatusChanged = null }) {
-    console.log(order.user.fcmToken)
     const [status, setStatus] = useState(order?.status || 'pending');
 
     useEffect(() => {

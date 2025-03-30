@@ -116,18 +116,34 @@ class OrderService extends Service {
     if (status === 'shipped') this.manageStock(products);
 
     if (user.fcmToken) {
-      const message = `Your order ${id} has been ${status}!`;
       const title = 'Order Status';
+
+      // Create JSON notification payload
+      const notificationData = {
+        type: 'order',
+        id: id,
+        status: status,
+        timestamp: new Date().toISOString()
+      };
+
+      // Format message with JSON prefix for special handling
+      const message = `JSON:${JSON.stringify(notificationData)}`;
+
+      // Plain text message as fallback for email
+      const plainTextMessage = `[${status.toUpperCase()}] Your order has been updated! Ref: ${id}`;
+
       NotificationService.sendNotification({
         deviceToken: user.fcmToken,
         title,
         body: message,
+        data: notificationData, // Also include as data for platforms that support it
       });
+
       const altMessage = this.makeAltMessage(data.order);
       sendEmail({
         email: user.email,
         subject: title,
-        message: new EmailTemplate({ userName: user.username, message, altMessage }).generate(),
+        message: new EmailTemplate({ userName: user.username, message: plainTextMessage, altMessage }).generate(),
       })
     }
 

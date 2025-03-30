@@ -149,6 +149,7 @@ export default function useResource({ resourceName, silent = true }) {
   // Fetch functions
   const fetchDatas = useCallback(async ({
     qStr = '',
+    verbose = false,
     doRefresh = false
   } = {}) => {
     setLoading(true);
@@ -171,8 +172,7 @@ export default function useResource({ resourceName, silent = true }) {
       setLoading(false);
       if (doRefresh) dispatch(toggleRefresh(false));
 
-      // Standardized success toast
-      showSuccess(
+      verbose && showSuccess(
         'Data Loaded',
         messages.fetch.success(capitalizeName)
       );
@@ -195,6 +195,7 @@ export default function useResource({ resourceName, silent = true }) {
   const fetchData = useCallback(async ({
     id,
     qStr = '',
+    verbose = false,
     doRefresh = false
   } = {}) => {
     setLoading(true);
@@ -209,7 +210,7 @@ export default function useResource({ resourceName, silent = true }) {
       setLoading(false);
       if (doRefresh) dispatch(toggleRefresh(false));
 
-      showInfo(
+      verbose && showInfo(
         'Success',
         messages.fetchOne.success(capitalizeName)
       );
@@ -235,7 +236,8 @@ export default function useResource({ resourceName, silent = true }) {
   const fetchBySlug = useCallback(async ({
     slug,
     qStr = '',
-    doRefresh = false
+    doRefresh = false,
+    verbose = true,
   } = {}) => {
     setLoading(true);
     try {
@@ -249,7 +251,7 @@ export default function useResource({ resourceName, silent = true }) {
       setLoading(false);
       if (doRefresh) dispatch(toggleRefresh(false));
 
-      showInfo(
+      verbose && showInfo(
         'Success',
         messages.fetchOne.success(capitalizeName)
       );
@@ -273,13 +275,13 @@ export default function useResource({ resourceName, silent = true }) {
   }, [getBySlug, resourceName, dispatch, capitalizeName]);
 
   // CRUD operations
-  const doStore = useCallback(async (data, silence = false) => {
+  const doStore = useCallback(async (data, verbose = false) => {
     setLoading(true);
     try {
       const response = await create(data).unwrap();
       setCurrent(response);
 
-      if (!silent && !silence) {
+      if (!silent && !verbose) {
         showInfo(
           'Success',
           messages.create.success()
@@ -303,13 +305,13 @@ export default function useResource({ resourceName, silent = true }) {
     }
   }, [create, dispatch]);
 
-  const doUpdate = useCallback(async (id, data) => {
+  const doUpdate = useCallback(async (id, data, verbose = true) => {
     setLoading(true);
     try {
       const response = await update({ id, data }).unwrap();
       setCurrent(response);
 
-      showInfo(
+      verbose && showInfo(
         'Success',
         messages.update.success()
       );
@@ -329,12 +331,12 @@ export default function useResource({ resourceName, silent = true }) {
     }
   }, [update, dispatch]);
 
-  const doDestroy = useCallback(async (id) => {
+  const doDestroy = useCallback(async (id, verbose = true) => {
     setLoading(true);
     try {
       const response = await deleteItem(id).unwrap();
 
-      showInfo(
+      verbose && showInfo(
         'Success',
         messages.delete.success()
       );
