@@ -165,26 +165,14 @@ class OrderService extends Service {
     }
   }
 
-  // Modified getById to follow the pattern expected by OrderResource
   async getById(id) {
-    try {
-      this._checkModel();
-      this.query = this.model.findById(id);
-      this.applyForceFilter();
-
-      // Execute the query to get the order data
-      const order = await this.exec();
-
-      if (!order) {
-        throw new Error('Order not found');
-      }
-
-      return order;
-    } catch (error) {
-      console.error('Error in OrderService.getById:', error);
-      throw error;
-    }
+    this._checkModel();
+    this.query = this.model.findById(id);
+    this.applyForceFilter();
+    return this.exec();
   }
+
+
 }
 
 export default new OrderService();

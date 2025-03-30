@@ -7,12 +7,12 @@ const OrderActions = ({ order, onContactSupport, onCancelOrder }) => {
     return (
         <Card style={styles.container}>
             <Card.Content style={styles.actionsContainer}>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     style={styles.supportButton}
                     onPress={onContactSupport}
                 >
                     <Text style={styles.supportButtonText}>Contact Support</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
                 {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
                     <TouchableOpacity
                         style={styles.cancelButton}

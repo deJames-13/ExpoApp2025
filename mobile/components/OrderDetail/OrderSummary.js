@@ -4,6 +4,11 @@ import { Card } from 'react-native-paper';
 import { summaryStyles as styles } from './styles';
 
 const OrderSummary = ({ order, isAdmin, formatCurrency }) => {
+    // Calculate or extract subtotal and shipping fee from order
+    const subtotal = order?.subTotal || 0;
+    const shippingFee = order?.shipping?.fee || 0;
+    const total = order?.total || (subtotal + shippingFee);
+
     return (
         <Card style={styles.container}>
             <Card.Content>
@@ -11,13 +16,13 @@ const OrderSummary = ({ order, isAdmin, formatCurrency }) => {
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Subtotal</Text>
                     <Text style={styles.summaryValue}>
-                        {formatCurrency(isAdmin ? order.subTotal : order.totalAmount)}
+                        {formatCurrency(subtotal)}
                     </Text>
                 </View>
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Shipping</Text>
                     <Text style={styles.summaryValue}>
-                        {formatCurrency(isAdmin ? (order.shipping?.fee || 0) : 0)}
+                        {formatCurrency(shippingFee)}
                     </Text>
                 </View>
                 <View style={styles.summaryRow}>
@@ -27,7 +32,7 @@ const OrderSummary = ({ order, isAdmin, formatCurrency }) => {
                 <View style={[styles.summaryRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Total</Text>
                     <Text style={styles.totalValue}>
-                        {formatCurrency(order.total || order.totalAmount)}
+                        {formatCurrency(total)}
                     </Text>
                 </View>
             </Card.Content>

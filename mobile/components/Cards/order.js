@@ -2,9 +2,13 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import React from 'react';
 
 const OrderCard = ({ order, onViewDetails }) => {
-    const { id, orderNumber, date, totalAmount, items, status } = order;
+    if (!order) return null;
+
+    const { id, orderNumber, date, totalAmount, items = [], status } = order;
 
     const getStatusColor = () => {
+        if (!status) return '#9E9E9E'; // default gray
+
         switch (status.toLowerCase()) {
             case 'delivered':
                 return '#4CAF50'; // green
@@ -12,6 +16,8 @@ const OrderCard = ({ order, onViewDetails }) => {
                 return '#2196F3'; // blue
             case 'processing':
                 return '#FF9800'; // orange
+            case 'pending':
+                return '#9E9E9E'; // gray
             case 'cancelled':
                 return '#F44336'; // red
             default:
@@ -20,7 +26,9 @@ const OrderCard = ({ order, onViewDetails }) => {
     };
 
     // Get the first item image to display as the order thumbnail
-    const mainItemImageUrl = process.env.EXPO_PUBLIC_APP_LOGO;
+    const mainItemImageUrl = items && items[0] && items[0].images && items[0].images[0]
+        ? items[0].images[0].url
+        : process.env.EXPO_PUBLIC_APP_LOGO;
 
     return (
         <TouchableOpacity
@@ -28,9 +36,9 @@ const OrderCard = ({ order, onViewDetails }) => {
             onPress={() => onViewDetails(id)}
         >
             <View style={styles.orderHeader}>
-                <Text style={styles.orderNumber}>Order #{orderNumber}</Text>
+                <Text style={styles.orderNumber}>Order #{orderNumber || 'Unknown'}</Text>
                 <Text style={[styles.status, { color: getStatusColor() }]}>
-                    {status}
+                    {status || 'Unknown'}
                 </Text>
             </View>
 
@@ -49,17 +57,23 @@ const OrderCard = ({ order, onViewDetails }) => {
                 </View>
 
                 <View style={styles.infoContainer}>
-                    <Text style={styles.date}>{date}</Text>
+                    <Text style={styles.date}>{date || 'Unknown date'}</Text>
                     <Text style={styles.itemCount}>{items.length} item{items.length !== 1 ? 's' : ''}</Text>
-                    <Text style={styles.totalAmount}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {totalAmount.toFixed(2)}</Text>
+                    <Text style={styles.totalAmount}>
+                        {process.env.EXPO_PUBLIC_APP_CURRENCY || '$'} {(totalAmount || 0).toFixed(2)}
+                    </Text>
                 </View>
             </View>
 
             <View style={styles.actionsContainer}>
-                <TouchableOpacity style={styles.actionButton}>
-                    <Text style={styles.actionText}>Track Order</Text>
+                <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => onViewDetails(id)}
+                >
+                    <Text style={styles.actionText}>View</Text>
                 </TouchableOpacity>
-                {status.toLowerCase() === 'delivered' && (
+
+                {status && status.toLowerCase() === 'delivered' && (
                     <TouchableOpacity style={styles.actionButton}>
                         <Text style={styles.actionText}>Review</Text>
                     </TouchableOpacity>

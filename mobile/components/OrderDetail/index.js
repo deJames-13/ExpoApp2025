@@ -5,6 +5,7 @@ import { Text } from 'react-native-paper';
 // Import component files
 import OrderHeader from './OrderHeader';
 import OrderStatusWorkflow from './OrderStatusWorkflow';
+import UserOrderStatusWorkflow from './UserOrderStatusWorkflow';
 import UserInfoCard from './UserInfoCard';
 import OrderItems from './OrderItems';
 import OrderSummary from './OrderSummary';
@@ -21,30 +22,24 @@ const OrderDetail = ({
     isAdmin = false,
     onStatusChange = null,
     isLoading = false,
-    onBack,
-    onTrackPackage,
-    onContactSupport,
-    onCancelOrder,
+    error = null,
+    onBack = () => { },
+    onTrackPackage = () => { },
+    onContactSupport = () => { },
+    onCancelOrder = () => { },
 }) => {
     if (!order) {
-        return <View style={styles.loading}><Text>Loading...</Text></View>;
+        return (
+            <View style={styles.loading}>
+                <Text>{error || 'No order data available'}</Text>
+            </View>
+        );
     }
 
     // Format currency
     const formatCurrency = (amount) => {
         return `${process.env.EXPO_PUBLIC_APP_CURRENCY || '$'}${parseFloat(amount || 0).toFixed(2)}`;
     };
-
-    // Determine which items to use based on admin/user
-    const orderItems = isAdmin
-        ? (order?.products || []).map(p => ({
-            id: p._id || p.id,
-            name: p.name || p.product?.name,
-            price: p.price || p.product?.price,
-            quantity: p.quantity || 1,
-            imageUrl: p.image || p.product?.images?.[0]
-        }))
-        : order.items || [];
 
     return (
         <ScrollView style={[
@@ -58,7 +53,7 @@ const OrderDetail = ({
                 getStatusColor={getOrderStatusColor}
             />
 
-            {isAdmin && (
+            {isAdmin ? (
                 <View style={styles.adminSection}>
                     <OrderStatusWorkflow
                         currentStatus={order.status?.toLowerCase()}
@@ -66,6 +61,10 @@ const OrderDetail = ({
                         isLoading={isLoading}
                     />
                 </View>
+            ) : (
+                <UserOrderStatusWorkflow
+                    currentStatus={order.status?.toLowerCase()}
+                />
             )}
 
             {isAdmin && order.user && (
@@ -73,7 +72,7 @@ const OrderDetail = ({
             )}
 
             <OrderItems
-                items={orderItems}
+                items={order.products || []}
                 formatCurrency={formatCurrency}
             />
 
@@ -86,6 +85,7 @@ const OrderDetail = ({
             <ShippingInfo
                 order={order}
                 isAdmin={isAdmin}
+                trackPackage={order.status === 'shipped'}
                 onTrackPackage={onTrackPackage}
             />
 
@@ -95,11 +95,11 @@ const OrderDetail = ({
                 getStatusColor={getOrderStatusColor}
             />
 
-            {!isAdmin && (
+            {!isAdmin && !(order.status === 'delivered' || order.status === 'cancelled') && (
                 <OrderActions
                     order={order}
                     onContactSupport={onContactSupport}
-                    onCancelOrder={onCancelOrder}
+                    onCancelOrder={!(order.status === 'delivered' || order.status === 'cancelled') ? onCancelOrder : () => { }}
                 />
             )}
 

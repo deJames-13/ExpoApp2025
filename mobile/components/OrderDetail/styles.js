@@ -363,6 +363,31 @@ export const shippingStyles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
     },
+    methodRow: {
+        flexDirection: 'row',
+        marginBottom: 12,
+    },
+    methodLabel: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#757575',
+        width: 80,
+    },
+    methodValue: {
+        fontSize: 16,
+        color: '#212121',
+        flex: 1,
+    },
+    addressContainer: {
+        marginTop: 8,
+        marginBottom: 16,
+    },
+    addressSectionTitle: {
+        fontSize: 16,
+        fontWeight: '500',
+        marginBottom: 8,
+        color: '#757575',
+    },
 });
 
 // PaymentInfo styles

@@ -1,44 +1,37 @@
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '~/states/slices/auth';
 import OrderHeader from './OrderHeader';
 import OrderList from './OrderList';
+import LoadingScreen from '../LoadingScreen';
+import useResource from '~/hooks/useResource';
 
 export function OrderPage({ navigation }) {
-    const [orders, setOrders] = useState([
-        {
-            id: '1',
-            orderNumber: '1234-5678',
-            date: 'June 12, 2023',
-            totalAmount: 149.99,
-            items: [{ id: '1', name: 'Ray-Ban Aviator' }],
-            status: 'Delivered'
-        },
-        {
-            id: '2',
-            orderNumber: '2345-6789',
-            date: 'May 30, 2023',
-            totalAmount: 259.98,
-            items: [
-                { id: '2', name: 'Oakley Holbrook' },
-                { id: '3', name: 'Gucci GG0036S' }
-            ],
-            status: 'Shipped'
-        },
-        {
-            id: '3',
-            orderNumber: '3456-7890',
-            date: 'May 15, 2023',
-            totalAmount: 429.97,
-            items: [
-                { id: '4', name: 'Persol PO3019S' },
-                { id: '5', name: 'Tom Ford FT0709' },
-                { id: '6', name: 'Maui Jim Red Sands' }
-            ],
-            status: 'Processing'
-        }
-    ]);
-
     const [searchQuery, setSearchQuery] = useState('');
+    const user = useSelector(selectCurrentUser);
+
+    // Initialize the resource hook for orders
+    const api = useResource({ resourceName: 'orders', silent: false });
+    const { fetchDatas } = api.actions;
+    const { loading, data: orders, refresh } = api.states;
+    const { showError } = api.toast;
+
+    useEffect(() => {
+        loadOrders();
+    }, [refresh]);
+
+    const loadOrders = async () => {
+        if (!user) return;
+
+        try {
+            // You can add query params here if needed
+            await fetchDatas({ verbose: false });
+        } catch (err) {
+            console.error('Error fetching orders:', err);
+            showError('Error', 'Failed to load your orders');
+        }
+    };
 
     const handleSearch = (query) => {
         setSearchQuery(query);
@@ -48,12 +41,22 @@ export function OrderPage({ navigation }) {
         navigation.navigate('OrderDetailView', { orderId });
     };
 
-    const filteredOrders = orders.filter(order =>
-        order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.items.some(item =>
-            item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const handleRefresh = () => {
+        loadOrders();
+    };
+
+    const filteredOrders = searchQuery
+        ? orders.filter(order =>
+            order.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            order.products?.some(product =>
+                product.name?.toLowerCase().includes(searchQuery.toLowerCase())
+            )
         )
-    );
+        : orders;
+
+    if (loading && !orders.length) {
+        return <LoadingScreen message="Loading your orders..." />;
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -61,6 +64,9 @@ export function OrderPage({ navigation }) {
             <OrderList
                 orders={filteredOrders}
                 onViewDetails={handleViewDetails}
+                onRefresh={handleRefresh}
+                isLoading={loading}
+                error={null}
             />
 
             {/* Order Summary or Stats */}
@@ -69,19 +75,19 @@ export function OrderPage({ navigation }) {
                 <View style={styles.statContainer}>
                     <View style={styles.stat}>
                         <Text style={styles.statValue}>
-                            {orders.filter(o => o.status === 'Delivered').length}
+                            {orders.filter(o => o.status === 'delivered').length}
                         </Text>
                         <Text style={styles.statLabel}>Delivered</Text>
                     </View>
                     <View style={styles.stat}>
                         <Text style={styles.statValue}>
-                            {orders.filter(o => o.status === 'Shipped').length}
+                            {orders.filter(o => o.status === 'shipped').length}
                         </Text>
                         <Text style={styles.statLabel}>Shipped</Text>
                     </View>
                     <View style={styles.stat}>
                         <Text style={styles.statValue}>
-                            {orders.filter(o => o.status === 'Processing').length}
+                            {orders.filter(o => o.status === 'processing' || o.status === 'pending').length}
                         </Text>
                         <Text style={styles.statLabel}>Processing</Text>
                     </View>

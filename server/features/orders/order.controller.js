@@ -29,14 +29,68 @@ class OrderController extends Controller {
 
   getById = async (req, res) => {
     try {
-      const data = await this.service.getById(req.params.id);
-      if (!data?._id) return this.error({ res, message: 'Order not found!' });
+      // Check if ID is provided
+      if (!req.params.id) {
+        return this.error({ res, message: 'Order ID is required', statusCode: 400 });
+      }
 
-      // Use the resource transformation from OrderResource
-      const resource = await this.resource.make(data);
-      this.success({ res, message: 'Data fetched!', resource });
+      // Check if user is authenticated
+      const { user } = req;
+      if (!user?._id) {
+        return this.error({ res, message: 'User not authenticated', statusCode: 401 });
+      }
+
+      // If user is not admin, set the filter to only show their orders
+      if (user.role !== ROLES.ADMIN) {
+        this.service.setUserId(user._id);
+      }
+
+      // Try to get the order with proper error handling
+      let data;
+      try {
+        data = await this.service.getById(req.params.id);
+      } catch (serviceError) {
+        console.error('Order service error:', serviceError);
+        return this.error({
+          res,
+          message: 'Error retrieving order',
+          statusCode: 500,
+          error: serviceError
+        });
+      }
+      if (Array.isArray(data)) {
+        data = data[0];
+      }
+
+
+      // Check if order exists
+      if (!data || !data._id) {
+        return this.error({ res, message: 'Order not found', statusCode: 404 });
+      }
+
+      // Try to transform the order resource
+      let resource;
+      try {
+        resource = await this.resource.make(data);
+      } catch (resourceError) {
+        console.error('Resource transformation error:', resourceError);
+        return this.error({
+          res,
+          message: 'Error processing order data',
+          statusCode: 500,
+          error: resourceError
+        });
+      }
+
+      return this.success({ res, message: 'Order fetched successfully', resource });
     } catch (error) {
-      return this.error({ res, message: 'Failed to fetch order details', error });
+      console.error('Unhandled error in getById:', error);
+      return this.error({
+        res,
+        message: 'Unexpected error while fetching order details',
+        statusCode: 500,
+        error
+      });
     }
   };
 
