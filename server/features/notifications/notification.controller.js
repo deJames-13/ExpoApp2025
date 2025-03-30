@@ -35,7 +35,7 @@ class NotificationController extends Controller {
 
       return this.success({
         res,
-        data: this.resource.collection(notifications),
+        data: (await this.resource.collection(notifications)) || notifications,
         message: "Notifications retrieved successfully"
       });
     } catch (error) {
@@ -189,6 +189,57 @@ class NotificationController extends Controller {
           count: result.length,
           success: result.filter(Boolean).length
         }
+      });
+    } catch (error) {
+      return this.error({
+        res,
+        message: error.message,
+        error
+      });
+    }
+  }
+
+  markAsRead = async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const notificationId = req.params.id;
+
+      if (!userId) {
+        return this.error({
+          res,
+          message: "User not authenticated",
+          statusCode: 401
+        });
+      }
+
+      if (!notificationId) {
+        return this.error({
+          res,
+          message: "Notification ID is required",
+          statusCode: 400
+        });
+      }
+
+      const notification = await this.service.model.findOne({
+        _id: notificationId,
+        user: userId
+      });
+
+      if (!notification) {
+        return this.error({
+          res,
+          message: "Notification not found",
+          statusCode: 404
+        });
+      }
+
+      notification.isRead = true;
+      await notification.save();
+
+      return this.success({
+        res,
+        data: this.resource.transform(notification),
+        message: "Notification marked as read"
       });
     } catch (error) {
       return this.error({

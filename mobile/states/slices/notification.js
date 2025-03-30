@@ -13,8 +13,10 @@ export const notificationSlice = createSlice({
     initialState,
     reducers: {
         setNotifications: (state, action) => {
-            state.notifications = action.payload;
-            state.unreadCount = action.payload.filter(notif => !notif.isRead).length;
+            // Ensure we always have an array, even if payload is undefined
+            const notifications = Array.isArray(action.payload) ? action.payload : [];
+            state.notifications = notifications;
+            state.unreadCount = notifications.filter(notif => !notif.isRead).length;
         },
         addNotification: (state, action) => {
             state.notifications.unshift(action.payload);

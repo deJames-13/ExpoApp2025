@@ -7,30 +7,35 @@ export default [
     url: '/notifications',
     router: [
       {
-        path: '/send',
-        method: METHODS.POST,
-        controller: [protectAndPermit(), controller.sendNotification],
-      },
-      {
         path: '/',
         method: METHODS.GET,
         controller: [protectAndPermit(), controller.getUserNotifications],
+      },
+      {
+        path: '/send',
+        method: METHODS.POST,
+        controller: [protectAndPermit(), controller.sendNotification],
       },
       {
         path: '/device',
         method: METHODS.POST,
         controller: [protectAndPermit(), controller.saveDevice],
       },
+      {
+        path: '/:id/read',
+        method: METHODS.PATCH,
+        controller: [protectAndPermit(READ_WRITE), controller.markAsRead],
+      },
       // Admin endpoints with appropriate protection
       {
         path: '/admin/batch',
         method: METHODS.POST,
-        controller: [protectAndPermit(BASIC_OPERATIONS), controller.sendBatchNotifications],
+        controller: [protectAndPermit(READ_WRITE), controller.sendBatchNotifications],
       },
       {
         path: '/admin/broadcast',
         method: METHODS.POST,
-        controller: [protectAndPermit(BASIC_OPERATIONS), controller.broadcastNotification],
+        controller: [protectAndPermit(READ_WRITE), controller.broadcastNotification],
       },
     ],
   },

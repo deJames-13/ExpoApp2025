@@ -1,18 +1,20 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
 import React, { useState, useRef } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const NotificationCard = ({
     notification,
-    level = notification?.read ? 0 : 1,
+    level = notification?.isRead ? 0 : 1,
     selectionMode,
     isSelected,
     onSelect,
     onMarkAsRead,
-    onDelete
+    onViewDetails
 }) => {
     const [expanded, setExpanded] = useState(false);
     const animatedHeight = useRef(new Animated.Value(0)).current;
+    const navigation = useNavigation();
 
     // Icons for different notification levels
     const notificationLevelIcon = {
@@ -43,7 +45,7 @@ const NotificationCard = ({
     // Toggle expanded state for accordion effect
     const toggleExpand = () => {
         if (!selectionMode) {
-            if (!expanded && level !== 0) {
+            if (!expanded && !notification.isRead) {
                 onMarkAsRead();
             }
 
@@ -57,6 +59,23 @@ const NotificationCard = ({
             onSelect();
         }
     };
+
+    // Handle navigation to order details
+    const handleViewOrder = () => {
+        // Get orderId from notification data
+        const orderId = notification.data?.id;
+
+        if (orderId) {
+            // Navigate to order details screen
+            navigation.navigate('Orders', {
+                screen: 'OrderDetailView',
+                params: { orderId }
+            });
+        }
+    };
+
+    // Determine if this is an order notification
+    const isOrderNotification = notification.data?.type === 'order';
 
     // Calculate max height for animation
     const maxHeight = animatedHeight.interpolate({
@@ -99,19 +118,21 @@ const NotificationCard = ({
                     <View style={styles.titleRow}>
                         <Text style={[
                             styles.title,
-                            level > 0 && styles.unreadTitle
+                            !notification.isRead && styles.unreadTitle
                         ]} numberOfLines={1}>
                             {notification.title}
-                            {level === 3 && ' ⚠️'}
+                            {notification.status === 'important' && ' ⚠️'}
                         </Text>
-                        <Text style={styles.timestamp}>{notification.timestamp}</Text>
+                        <Text style={styles.timestamp}>
+                            {notification.timestamp || new Date(notification.createdAt).toLocaleDateString()}
+                        </Text>
                     </View>
 
                     <Text style={styles.description} numberOfLines={2}>
-                        {notification.shortDescription}
+                        {notification.shortDescription || notification.body}
                     </Text>
 
-                    {level > 0 && (
+                    {!notification.isRead && (
                         <View style={[
                             styles.unreadIndicator,
                             { backgroundColor: notificationLevelColor[level] }
@@ -128,25 +149,37 @@ const NotificationCard = ({
 
             <Animated.View style={[styles.expandedSection, { maxHeight }]}>
                 <Text style={styles.fullContent}>
-                    {notification.fullContent}
+                    {notification.fullContent || notification.body}
                 </Text>
 
                 <View style={styles.cardActions}>
-                    {level > 0 && (
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => onViewDetails(notification)}
+                    >
+                        <MaterialIcons name="visibility" size={22} color="#2196F3" />
+                        <Text style={styles.actionText}>View</Text>
+                    </TouchableOpacity>
+
+                    {isOrderNotification && notification.data?.id && (
+                        <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={handleViewOrder}
+                        >
+                            <MaterialIcons name="shopping-bag" size={22} color="#3F51B5" />
+                            <Text style={styles.actionText}>Go to Order</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {!notification.isRead && (
                         <TouchableOpacity
                             style={styles.actionButton}
                             onPress={onMarkAsRead}
                         >
-                            <MaterialIcons name="done" size={22} color="#2196F3" />
+                            <MaterialIcons name="done" size={22} color="#4CAF50" />
+                            <Text style={styles.actionText}>Mark Read</Text>
                         </TouchableOpacity>
                     )}
-
-                    <TouchableOpacity
-                        style={styles.actionButton}
-                        onPress={onDelete}
-                    >
-                        <MaterialIcons name="delete-outline" size={22} color="#FF5252" />
-                    </TouchableOpacity>
                 </View>
             </Animated.View>
         </View>
@@ -246,8 +279,9 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
     actionText: {
-        fontSize: 14,
         marginLeft: 4,
+        fontSize: 14,
+        color: '#555',
     },
 });
 

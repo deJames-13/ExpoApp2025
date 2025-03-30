@@ -1,5 +1,5 @@
 import apiSlice from './index';
-import { setNotifications, addNotification, setLoading, setError } from '../slices/notification';
+import { setNotifications, addNotification, setLoading, setError, markAsRead } from '../slices/notification';
 
 const notificationApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -11,11 +11,20 @@ const notificationApi = apiSlice.injectEndpoints({
                 try {
                     dispatch(setLoading(true));
                     const { data } = await queryFulfilled;
-                    if (data?.data) {
+                    console.log('Notification API response:', data);
+
+                    // Ensure we have a valid array of notifications
+                    if (data?.data && Array.isArray(data.data)) {
                         dispatch(setNotifications(data.data));
+                    } else {
+                        console.warn('Invalid notification data structure:', data);
+                        dispatch(setNotifications([])); // Pass empty array as fallback
+                        dispatch(setError('Invalid notification data received'));
                     }
                 } catch (error) {
-                    dispatch(setError(error.message || 'Failed to fetch notifications'));
+                    console.error('Error fetching notifications:', error);
+                    dispatch(setNotifications([])); // Ensure we set empty array on error
+                    dispatch(setError(error?.error?.message || 'Failed to fetch notifications'));
                 } finally {
                     dispatch(setLoading(false));
                 }
@@ -64,11 +73,12 @@ const notificationApi = apiSlice.injectEndpoints({
                     await queryFulfilled;
                 } catch (error) {
                     // Revert on error by refetching
-                    dispatch(getUserNotifications.initiate());
+                    dispatch(apiSlice.endpoints.getUserNotifications.initiate());
                 }
             }
         })
-    })
+    }),
+    overrideExisting: process.env.NODE_ENV !== 'production', // Allow endpoint overrides in development
 });
 
 export const {

@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, SafeAreaView } from 'react-native';
 
-const LoadingScreen = ({ message }) => {
+const LoadingScreen = ({ message = "Loading..." }) => {
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.container}>
                 <ActivityIndicator size="large" color="#0066cc" />
-                <Text style={styles.text}>Loading...</Text>
+                <Text style={styles.text}>{message}</Text>
             </View>
         </SafeAreaView>
     );

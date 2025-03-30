@@ -8,12 +8,28 @@ const NotificationHeader = ({
     toggleSelectionMode,
     selectionMode,
     deleteSelected,
-    hasSelectedItems
+    hasSelectedItems,
+    onRefresh,
+    isRefreshing
 }) => {
     return (
         <View style={styles.container}>
             <View style={styles.titleContainer}>
                 <Text style={styles.title}>Notifications</Text>
+                {/* {!selectionMode && (
+                    <TouchableOpacity
+                        style={styles.refreshButton}
+                        onPress={onRefresh}
+                        disabled={isRefreshing}
+                    >
+                        <MaterialIcons
+                            name="refresh"
+                            size={24}
+                            color="#2196F3"
+                            style={isRefreshing ? styles.rotating : null}
+                        />
+                    </TouchableOpacity>
+                )} */}
             </View>
 
             <View style={styles.actionsContainer}>
@@ -80,11 +96,20 @@ const styles = StyleSheet.create({
     },
     titleContainer: {
         marginBottom: 8,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     title: {
         fontSize: 20,
         fontWeight: 'bold',
         color: '#333',
+    },
+    refreshButton: {
+        padding: 4,
+    },
+    rotating: {
+        opacity: 0.7,
     },
     actionsContainer: {
         flexDirection: 'row',

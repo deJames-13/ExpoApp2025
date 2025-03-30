@@ -1,24 +1,26 @@
-import { View, FlatList, Text, StyleSheet } from 'react-native';
+import { View, FlatList, Text, StyleSheet, RefreshControl } from 'react-native';
 import React from 'react';
+import { useDispatch } from 'react-redux';
 import NotificationCard from './NotificationCard';
+import { markAsRead } from '~/states/slices/notification';
+import { useMarkNotificationAsReadMutation } from '~/states/api/notification';
 
 const NotificationList = ({
     notifications,
     selectionMode,
     selectedNotifications,
     toggleSelectNotification,
-    setNotifications
+    onViewDetails,
+    refreshing,
+    onRefresh
 }) => {
+    const dispatch = useDispatch();
+    const [markNotificationAsRead] = useMarkNotificationAsReadMutation();
+
     // Function to handle marking a notification as read
     const handleMarkAsRead = (id) => {
-        setNotifications(notifications.map(notification =>
-            notification.id === id ? { ...notification, read: true } : notification
-        ));
-    };
-
-    // Function to handle deleting a specific notification
-    const handleDeleteNotification = (id) => {
-        setNotifications(notifications.filter(notification => notification.id !== id));
+        dispatch(markAsRead(id));
+        markNotificationAsRead(id);
     };
 
     // Empty list placeholder
@@ -40,12 +42,20 @@ const NotificationList = ({
                     isSelected={selectedNotifications.includes(item.id)}
                     onSelect={() => toggleSelectNotification(item.id)}
                     onMarkAsRead={() => handleMarkAsRead(item.id)}
-                    onDelete={() => handleDeleteNotification(item.id)}
+                    onViewDetails={() => onViewDetails(item)}
                 />
             )}
             ListEmptyComponent={renderEmptyList}
             showsVerticalScrollIndicator={false}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={['#2196F3']}
+                    tintColor={'#2196F3'}
+                />
+            }
         />
     );
 };
