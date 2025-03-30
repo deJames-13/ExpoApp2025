@@ -9,6 +9,18 @@ import LoadingScreen from '~/screens/LoadingScreen';
 
 const Stack = createStackNavigator();
 
+function determineInitialRoute(isAuthenticated, isAdmin) {
+    if (!isAuthenticated) {
+        return 'GuestNav';
+    }
+
+    if (isAdmin) {
+        console.log('User is admin, directing to admin panel');
+        return 'AdminNav';
+    }
+
+    return 'DefaultNav';
+}
 export default function MainNav() {
     useCheckConnection();
     const [isInitialized, setIsInitialized] = useState(false);
@@ -27,9 +39,7 @@ export default function MainNav() {
         return <LoadingScreen />;
     }
 
-    // Determine the initial route based on auth state
-    const initialRoute = !isAuthenticated ? 'GuestNav' :
-        isAdmin ? 'AdminNav' : 'DefaultNav';
+    const initialRoute = determineInitialRoute(isAuthenticated, isAdmin);
 
     return (
         <Stack.Navigator

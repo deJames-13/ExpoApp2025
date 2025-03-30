@@ -72,8 +72,8 @@ export default function useAuth({
     const isEmailVerified = useSelector(selectIsEmailVerified);
     const isPendingVerification = useSelector(selectIsPendingVerification);
     const fcmToken = useSelector(selectFcmToken);
+    const isAdmin = currentUser?.role.toUpperCase() === 'ADMIN';
 
-    const isAdmin = currentUser?.role === 'ADMIN';
     useEffect(() => {
         const initializeAuth = async () => {
             if (isInitialized) return;
@@ -146,7 +146,7 @@ export default function useAuth({
         }
     }, [currentUser, hasBasicInfo, hasAddressInfo, isEmailVerified, isPendingVerification]);
 
-    // Enhanced validation function that detects profile completion directly from user object
+    // Enhanced validation function that handles admin routes
     const validateRequirements = useCallback(() => {
         if (!isReady) return false;
 
@@ -156,10 +156,19 @@ export default function useAuth({
             return false;
         }
 
-        // Check admin status
+        // Enhanced admin validation and redirection
         if (requireAdmin && !isAdmin) {
+            console.log('Admin access required but user is not an admin');
             navigation.navigate('DefaultNav');
             return false;
+        }
+
+        // If user is admin and trying to access non-admin routes that don't need admin privileges
+        if (isAdmin && !requireAdmin && isAuthenticated && redirectTo === 'DefaultNav') {
+            // Option to redirect admins to admin dashboard instead
+            // Uncomment the next line to auto-redirect admins to admin panel
+            // navigation.navigate('AdminNav');
+            // return false;
         }
 
         if (isAuthenticated && currentUser) {

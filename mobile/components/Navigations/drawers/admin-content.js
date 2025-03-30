@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
@@ -12,24 +12,35 @@ import useAuth from '~/hooks/useAuth';
 import useLogout from '~/hooks/useLogout';
 
 export function AdminDrawerContent() {
-    const [curr, setCurr] = React.useState('Home');
+    const [curr, setCurr] = React.useState('Dashboard'); // Default to Dashboard
     const navigation = useNavigation();
     const { isAuthenticated, currentUser, isAdmin } = useAuth();
     const { logout, isLoading } = useLogout();
     const drawerRoutes = adminRoutes();
     const tabbedRoutes = tabRoutes();
 
-    // Redirect if not admin
-    React.useEffect(() => {
+    // Enhanced admin check and redirect with clear logging
+    useEffect(() => {
         if (isAuthenticated && !isAdmin) {
+            console.log('Non-admin user trying to access admin panel, redirecting...');
             navigation.navigate('DefaultNav');
         } else if (!isAuthenticated) {
+            console.log('Unauthenticated user trying to access admin panel, redirecting to login...');
             navigation.navigate("GuestNav", { screen: 'Login' });
+        } else {
+            console.log('Admin user confirmed, allowing access to admin panel');
         }
     }, [isAuthenticated, isAdmin, navigation]);
 
+    // Extract admin-specific user info for display
+    const adminName = currentUser?.username || 'Admin User';
+    const adminRole = currentUser?.role || 'Administrator';
+    const adminEmail = currentUser?.email || '';
+    const adminInitials = (currentUser?.username?.substring(0, 2) || 'AU').toUpperCase();
+
     return (
         <SafeAreaView style={[navigationStyles.drawerContainer, styles.container]}>
+            {/* Admin Header with User Info */}
             <View style={[navigationStyles.drawerHeader, styles.header]}>
                 <View style={[globalStyles.row, styles.logoContainer]}>
                     <Icon name="eye-outline" size={32} color="#007aff" />
@@ -40,16 +51,18 @@ export function AdminDrawerContent() {
                 <View style={styles.userInfo}>
                     <Avatar.Text
                         size={50}
-                        label={currentUser ? (currentUser.username.substring(0, 2).toUpperCase() || "AU") : "AU"}
+                        label={adminInitials}
                         style={styles.avatar}
                     />
-                    <Text style={styles.userName}>{currentUser?.username || 'Admin User'}</Text>
-                    <Text style={styles.userRole}>{currentUser?.role || 'Administrator'}</Text>
+                    <Text style={styles.userName}>{adminName}</Text>
+                    <Text style={styles.userRole}>{adminRole}</Text>
+                    {adminEmail && <Text style={styles.userEmail}>{adminEmail}</Text>}
                 </View>
             </View>
 
             <Divider style={globalStyles.divider} />
 
+            {/* Admin Navigation Menu */}
             <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
                 <View style={navigationStyles.drawerItemsContainer}>
                     {/* Tabbed Navigations */}
@@ -63,7 +76,7 @@ export function AdminDrawerContent() {
                             ]}
                             onPress={() => {
                                 setCurr(route.name);
-                                // Navigate to tab route structure
+                                // Navigate to tab route structure with clear intent
                                 navigation.navigate("AdminNav", {
                                     screen: "AdminTabsRoute",
                                     params: { screen: route.name },
@@ -85,45 +98,67 @@ export function AdminDrawerContent() {
                         </TouchableOpacity>
                     ))}
 
-                    <Divider style={[globalStyles.divider, styles.sectionDivider]} />
-                    <Text style={styles.sectionTitle}>Management</Text>
+                    {drawerRoutes.length > 0 && (
+                        <>
+                            <Divider style={[globalStyles.divider, styles.sectionDivider]} />
+                            <Text style={styles.sectionTitle}>Management</Text>
 
-                    {/* Drawer Navigations */}
-                    {drawerRoutes.map((route) => (
-                        <TouchableOpacity
-                            key={route.name}
-                            style={[
-                                navigationStyles.drawerItem,
-                                curr === route.name && styles.activeItem,
-                                globalStyles.row
-                            ]}
-                            onPress={() => {
-                                setCurr(route.name);
-                                // Navigate to management route structure
-                                navigation.navigate("AdminNav", {
-                                    screen: "AdminRoutesStack",
-                                    params: { screen: route.name },
-                                });
-                            }}
-                        >
-                            <MaterialIcon
-                                name={route.icon}
-                                size={22}
-                                color={curr === route.name ? "#007aff" : "#555"}
-                                style={{ marginRight: 12 }}
-                            />
-                            <Text style={[
-                                styles.itemText,
-                                curr === route.name && styles.activeItemText
-                            ]}>
-                                {route.name}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
+                            {/* Drawer Navigations */}
+                            {drawerRoutes.map((route) => (
+                                <TouchableOpacity
+                                    key={route.name}
+                                    style={[
+                                        navigationStyles.drawerItem,
+                                        curr === route.name && styles.activeItem,
+                                        globalStyles.row
+                                    ]}
+                                    onPress={() => {
+                                        setCurr(route.name);
+                                        // Navigate to management route structure
+                                        navigation.navigate("AdminNav", {
+                                            screen: "AdminRoutesStack",
+                                            params: { screen: route.name },
+                                        });
+                                    }}
+                                >
+                                    <MaterialIcon
+                                        name={route.icon}
+                                        size={22}
+                                        color={curr === route.name ? "#007aff" : "#555"}
+                                        style={{ marginRight: 12 }}
+                                    />
+                                    <Text style={[
+                                        styles.itemText,
+                                        curr === route.name && styles.activeItemText
+                                    ]}>
+                                        {route.name}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </>
+                    )}
+
+                    {/* Return to Regular User Mode */}
+                    <Divider style={[globalStyles.divider, styles.sectionDivider]} />
+                    <TouchableOpacity
+                        style={[navigationStyles.drawerItem, globalStyles.row]}
+                        onPress={() => navigation.navigate('DefaultNav')}
+                    >
+                        <MaterialIcon
+                            name="swap-horiz"
+                            size={22}
+                            color="#555"
+                            style={{ marginRight: 12 }}
+                        />
+                        <Text style={styles.itemText}>
+                            Switch to User Mode
+                        </Text>
+                    </TouchableOpacity>
                 </View>
                 <View style={styles.scrollPadding} />
             </ScrollView>
 
+            {/* Admin Footer with Logout */}
             <View style={navigationStyles.drawerFooter}>
                 <Divider style={globalStyles.divider} />
                 <TouchableOpacity
@@ -145,6 +180,7 @@ export function AdminDrawerContent() {
     );
 }
 
+// Existing styles remain unchanged
 const styles = StyleSheet.create({
     container: {
         backgroundColor: '#fff',
@@ -180,6 +216,11 @@ const styles = StyleSheet.create({
     userRole: {
         fontSize: 14,
         color: '#666',
+    },
+    userEmail: {
+        fontSize: 12,
+        color: '#888',
+        marginTop: 2,
     },
     scrollContainer: {
         flex: 1,

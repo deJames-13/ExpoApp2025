@@ -21,6 +21,7 @@ export function Register() {
     const [usernameError, setUsernameError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showSplash, setShowSplash] = useState(false); // Enhanced loading state with splash screen
 
     const hasBasicInfo = useSelector(selectHasBasicInfo);
     const isEmailVerified = useSelector(selectIsEmailVerified);
@@ -78,6 +79,8 @@ export function Register() {
     const handleRegister = async () => {
         if (validateForm()) {
             try {
+                setShowSplash(true); // Show splash screen before API call
+
                 const result = await register({
                     email,
                     password,
@@ -85,6 +88,8 @@ export function Register() {
                     username,
                     fcmToken: fcmToken // Add FCM token to registration data
                 }).unwrap();
+
+                setShowSplash(false); // Hide splash screen after success
 
                 Toast.show({
                     type: 'success',
@@ -95,6 +100,8 @@ export function Register() {
                 // Navigate to the appropriate onboarding step
                 navigateToNextOnboardingStep();
             } catch (error) {
+                setShowSplash(false); // Hide splash screen on error
+
                 console.log('Registration error:', JSON.stringify(error, null, 2));
 
                 let errorMessage = 'An error occurred during registration.';
@@ -134,6 +141,30 @@ export function Register() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar backgroundColor="#f8f8f8" barStyle="dark-content" />
+
+            {/* Splash Screen Overlay */}
+            {showSplash && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
+                }}>
+                    <Image
+                        source={require('../../assets/icon.png')}
+                        style={{ width: 120, height: 120, marginBottom: 20 }}
+                        resizeMode="contain"
+                    />
+                    <ActivityIndicator size="large" color="#6200ee" />
+                    <Text style={{ marginTop: 20, fontSize: 16, color: '#333' }}>Creating your account...</Text>
+                </View>
+            )}
+
             <View style={styles.container}>
                 <View style={styles.logoContainer}>
                     <Image

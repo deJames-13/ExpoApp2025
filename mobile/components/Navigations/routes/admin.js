@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import * as AdminScreens from '~/admin/screens';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { defaultOptions } from './_options';
@@ -8,8 +8,9 @@ import { AdminDrawerContent } from '../drawers/admin-content';
 import { tabRoutes, adminRoutes } from './_admin-routes';
 import ProductDetailView from '~/screens/Home/components/ProductDetailView';
 import { useAdminRoute } from '~/contexts/AuthContext';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
 import { globalStyles } from '~/styles/global';
+import LoadingScreen from '~/screens/LoadingScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -57,15 +58,32 @@ function AdminRoutesStack() {
     );
 }
 
-// Main Admin Navigation setup
+// Main Admin Navigation setup with enhanced validation
 export function AdminNav() {
-    const { isAuthorizedAdmin } = useAdminRoute();
+    const { isAuthorizedAdmin, currentAdminUser } = useAdminRoute();
+    const [isLoading, setIsLoading] = React.useState(true);
 
-    // Simplified admin check without blocking navigation
+    // Add a loading effect for better UX
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 800);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Enhanced admin check with proper loading state
+    if (isLoading) {
+        return <LoadingScreen message="Loading admin panel..." />;
+    }
+
     if (!isAuthorizedAdmin) {
         return (
             <View style={[globalStyles.container, globalStyles.centered]}>
                 <ActivityIndicator size="large" color="#007aff" />
+                <Text style={{ marginTop: 20, textAlign: 'center' }}>
+                    Verifying admin access...
+                </Text>
             </View>
         );
     }
@@ -75,7 +93,7 @@ export function AdminNav() {
             drawerContent={props => <AdminDrawerContent {...props} />}
             screenOptions={{
                 headerShown: true,
-                headerTitle: 'EyeZone Admin',
+                headerTitle: `EyeZone Admin ${currentAdminUser?.username ? currentAdminUser.username : ''}`,
                 drawerStyle: { width: 280 },
                 swipeEdgeWidth: 100,
             }}

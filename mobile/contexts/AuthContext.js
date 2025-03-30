@@ -225,7 +225,7 @@ export function useGuestRoute(allowAuthenticated = false) {
 }
 
 export function useAdminRoute() {
-    const { isAuthenticated, isAdmin, navigationReady } = useAuthContext();
+    const { isAuthenticated, isAdmin, currentUser, navigationReady } = useAuthContext();
 
     useEffect(() => {
         if (!navigationReady) return;
@@ -236,10 +236,14 @@ export function useAdminRoute() {
         }
 
         if (!isAdmin) {
+            console.log('User is not an admin, redirecting to DefaultNav');
             navigationRef.navigate('DefaultNav');
             return;
         }
     }, [isAuthenticated, isAdmin, navigationReady]);
 
-    return { isAuthorizedAdmin: isAuthenticated && isAdmin };
+    return {
+        isAuthorizedAdmin: isAuthenticated && isAdmin,
+        currentAdminUser: isAdmin ? currentUser : null
+    };
 }
