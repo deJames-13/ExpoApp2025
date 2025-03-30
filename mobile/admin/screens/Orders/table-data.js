@@ -94,20 +94,20 @@ export const orderTableColumns = [
             </View>
         ),
     },
-    {
-        id: 'order',
-        title: 'Order #',
-        field: 'orderNumber',
-        sortable: true,
-        flex: 1.5,
-        priority: 2, // Medium priority - show on medium screens
-        render: (order) => (
-            <View>
-                <Text style={{ fontWeight: 'bold' }}>#{order.orderNumber}</Text>
-                <Text style={{ fontSize: 12, color: '#666' }}>{formatDate(order.createdAt)}</Text>
-            </View>
-        ),
-    },
+    // {
+    //     id: 'order',
+    //     title: 'Order #',
+    //     field: 'orderNumber',
+    //     sortable: true,
+    //     flex: 1.5,
+    //     priority: 2, // Medium priority - show on medium screens
+    //     render: (order) => (
+    //         <View>
+    //             <Text style={{ fontWeight: 'bold' }}>#{order.orderNumber}</Text>
+    //             <Text style={{ fontSize: 12, color: '#666' }}>{formatDate(order.createdAt)}</Text>
+    //         </View>
+    //     ),
+    // },
     {
         id: 'payment',
         title: 'Payment',

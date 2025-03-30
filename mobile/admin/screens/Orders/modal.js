@@ -1,56 +1,100 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Modal, View, StyleSheet, ScrollView } from 'react-native';
-import { Button, Text, Divider } from 'react-native-paper';
+import { Button, Text, Divider, Portal, Provider } from 'react-native-paper';
 import { OrderForm } from './form';
+import { adminColors } from '~/styles/adminTheme';
 
 export function OrderModal({ visible, order, onClose, onStatusChange }) {
+    const [hasChanges, setHasChanges] = useState(false);
+    const [currentStatus, setCurrentStatus] = useState(order?.status || 'pending');
+
+    // Reset status tracking when modal opens with new order
+    useEffect(() => {
+        if (visible && order) {
+            setCurrentStatus(order.status || 'pending');
+            setHasChanges(false);
+        }
+    }, [visible, order]);
+
+    // This handler will be called by OrderForm when user clicks save in the modal
     const handleStatusUpdate = (orderId, newStatus) => {
         onStatusChange(orderId, newStatus);
+        setHasChanges(false);
+    };
+
+    // This will be called from OrderForm when status changes
+    const handleFormStatusChange = (status) => {
+        setCurrentStatus(status);
+        setHasChanges(status !== order?.status);
+    };
+
+    // Handle save button click
+    const handleSaveChanges = () => {
+        if (hasChanges) {
+            onStatusChange(order.id, currentStatus);
+            setHasChanges(false);
+        }
     };
 
     return (
-        <Modal
-            visible={visible}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={onClose}
-        >
-            <View style={styles.centeredView}>
-                <View style={styles.modalView}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Order #{order?.orderNumber}</Text>
-                        <Button
-                            icon="close"
-                            mode="text"
-                            onPress={onClose}
-                            style={styles.closeButton}
-                        />
+        <Provider>
+            <Portal>
+                <Modal
+                    visible={visible}
+                    animationType="slide"
+                    transparent={true}
+                    onRequestClose={onClose}
+                >
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>Order #{order?.orderNumber}</Text>
+                                <Button
+                                    icon="close"
+                                    mode="text"
+                                    onPress={onClose}
+                                    style={styles.closeButton}
+                                />
+                            </View>
+
+                            <Divider />
+
+                            <ScrollView style={styles.modalContent}>
+                                <OrderForm
+                                    order={order}
+                                    onStatusChange={handleStatusUpdate}
+                                    isModal={true} // Pass true to hide the button
+                                    onStatusChanged={handleFormStatusChange}
+                                />
+                            </ScrollView>
+
+                            <Divider />
+
+                            <View style={styles.modalFooter}>
+                                <Button
+                                    mode="outlined"
+                                    onPress={onClose}
+                                    style={styles.footerButton}
+                                >
+                                    Close
+                                </Button>
+
+                                {hasChanges && (
+                                    <Button
+                                        mode="contained"
+                                        onPress={handleSaveChanges}
+                                        style={[styles.footerButton, styles.saveButton]}
+                                        textColor={adminColors.background}
+                                    >
+                                        Save Changes
+                                    </Button>
+                                )}
+                            </View>
+                        </View>
                     </View>
-
-                    <Divider />
-
-                    <ScrollView style={styles.modalContent}>
-                        <OrderForm
-                            order={order}
-                            onStatusChange={handleStatusUpdate}
-                            isModal={true}
-                        />
-                    </ScrollView>
-
-                    <Divider />
-
-                    <View style={styles.modalFooter}>
-                        <Button
-                            mode="outlined"
-                            onPress={onClose}
-                            style={styles.footerButton}
-                        >
-                            Close
-                        </Button>
-                    </View>
-                </View>
-            </View>
-        </Modal>
+                </Modal>
+            </Portal>
+        </Provider>
     );
 }
 
@@ -64,7 +108,7 @@ const styles = StyleSheet.create({
     modalView: {
         width: '90%',
         maxHeight: '80%',
-        backgroundColor: 'white',
+        backgroundColor: adminColors.cardBackground,
         borderRadius: 10,
         overflow: 'hidden',
         shadowColor: '#000',
@@ -85,6 +129,7 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 18,
         fontWeight: 'bold',
+        color: adminColors.text.primary,
     },
     closeButton: {
         margin: 0,
@@ -101,5 +146,8 @@ const styles = StyleSheet.create({
     },
     footerButton: {
         marginLeft: 10,
+    },
+    saveButton: {
+        backgroundColor: adminColors.primary,
     },
 });

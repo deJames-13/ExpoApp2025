@@ -11,6 +11,7 @@ import { CheckboxField } from './CheckboxField';
 import { RadioField } from './RadioField';
 import { ImageField } from './Image';
 import { CameraField } from './CameraField';
+import { SelectField } from './SelectField';
 
 export const FieldMapper = (props) => {
     const {
@@ -244,6 +245,20 @@ export const FieldMapper = (props) => {
                     field={field}
                     value={values[field]}
                     setFieldValue={setFieldValue}
+                    errors={errors}
+                    touched={touched}
+                    disabled={isDisabled}
+                    {...rest}
+                />
+            );
+
+        case 'select':
+            return (
+                <SelectField
+                    field={field}
+                    value={values[field]}
+                    setFieldValue={setFieldValue}
+                    options={options}
                     errors={errors}
                     touched={touched}
                     disabled={isDisabled}

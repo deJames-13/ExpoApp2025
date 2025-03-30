@@ -35,6 +35,8 @@ export const RadioField = ({
                 {options.map((option, index) => {
                     const optionValue = typeof option === 'object' ? option.value : option;
                     const optionLabel = typeof option === 'object' ? option.label : option;
+                    const customLabelStyle = typeof option === 'object' ? option.customLabelStyle : null;
+                    const isSelected = value === optionValue;
 
                     return (
                         <TouchableOpacity
@@ -48,15 +50,16 @@ export const RadioField = ({
                         >
                             <RadioButton
                                 value={optionValue}
-                                status={value === optionValue ? 'checked' : 'unchecked'}
+                                status={isSelected ? 'checked' : 'unchecked'}
                                 onPress={() => handleSelect(optionValue)}
                                 disabled={disabled}
-                                color={adminColors.primary}
+                                color={customLabelStyle?.color || adminColors.primary}
                             />
                             <Text style={[
                                 styles.radioLabel,
                                 disabled && styles.disabledText,
-                                value === optionValue && styles.radioLabelActive
+                                isSelected && styles.radioLabelActive,
+                                customLabelStyle // Apply custom label styling if provided
                             ]}>
                                 {optionLabel}
                             </Text>

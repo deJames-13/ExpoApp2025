@@ -9,13 +9,12 @@ import { OrderModal } from './modal';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-export function Orders() {
+export function Orders({ navigation }) {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [totalItems, setTotalItems] = useState(0);
-    const navigation = useNavigation();
 
     useEffect(() => {
         // Simulate API fetch
@@ -43,7 +42,11 @@ export function Orders() {
     };
 
     const handleViewDetails = (order) => {
-        navigation.navigate('OrderDetailView', { order });
+        // Updated to use the new screen name
+        navigation.navigate('AdminRoutesStack', {
+            screen: 'AdminOrderDetail',
+            params: { order }
+        });
     };
 
     const handleStatusChange = (orderId, newStatus) => {

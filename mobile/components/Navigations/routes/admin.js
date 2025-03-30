@@ -160,14 +160,6 @@ function AdminRoutesStack() {
                 component={ProductDetailView}
                 options={{ headerShown: false }}
             />
-            <Stack.Screen
-                name="OrderDetailView"
-                component={AdminScreens.OrderDetailView}
-                options={{
-                    headerShown: true,
-                    title: 'Order Details'
-                }}
-            />
         </Stack.Navigator>
     );
 }

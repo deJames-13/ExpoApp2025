@@ -50,33 +50,13 @@ export const tabRoutes = () => [
 
 export const adminRoutes = () => [
     {
-        name: 'OrderDetailView',
+        name: 'AdminOrderDetail',
         component: AdminScreens.OrderDetailView,
         icon: 'receipt',
         options: {
-            headerShown: true,
+            headerShown: false,
             title: 'Order Details',
         },
     },
-    // {
-    //     name: 'Users',
-    //     component: AdminScreens.Users,
-    //     icon: 'people',
-    //     options: {
-    //         tabBarIcon: ({ color, size }) => (
-    //             <Icon name="people" color={color} size={size} />
-    //         ),
-    //     },
-    // },
-    // {
-    //     name: 'Feedbacks',
-    //     component: AdminScreens.Feedbacks,
-    //     icon: 'feedback',
-    //     options: {
-    //         tabBarIcon: ({ color, size }) => (
-    //             <Icon name="feedback" color={color} size={size} />
-    //         ),
-    //     },
-    // },
 ];
 
