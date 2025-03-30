@@ -45,6 +45,14 @@ export function OrderPage({ navigation }) {
         loadOrders();
     };
 
+    const handleReviewPress = (order) => {
+        // Navigate to review form with order info
+        navigation.navigate('Reviews', {
+            screen: 'ReviewForm',
+            params: { order }
+        });
+    };
+
     const filteredOrders = searchQuery
         ? orders.filter(order =>
             order.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -64,6 +72,7 @@ export function OrderPage({ navigation }) {
             <OrderList
                 orders={filteredOrders}
                 onViewDetails={handleViewDetails}
+                onReviewPress={handleReviewPress}
                 onRefresh={handleRefresh}
                 isLoading={loading}
                 error={null}

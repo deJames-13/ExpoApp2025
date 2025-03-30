@@ -15,3 +15,4 @@ export { default as CartDetailView } from './Cart/CartDetailView';
 export * from './Cart';
 export * from './Checkout';
 export * from './Notification';
+export * from './Reviews';

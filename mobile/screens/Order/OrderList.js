@@ -2,7 +2,7 @@ import { View, FlatList, Text, StyleSheet, RefreshControl } from 'react-native';
 import React from 'react';
 import OrderCard from '~/components/Cards/order';
 
-const OrderList = ({ orders, onViewDetails, onRefresh, isLoading, error }) => {
+const OrderList = ({ orders, onViewDetails, onReviewPress, onRefresh, isLoading, error }) => {
     const renderItem = ({ item }) => (
         <OrderCard
             order={{
@@ -17,6 +17,7 @@ const OrderList = ({ orders, onViewDetails, onRefresh, isLoading, error }) => {
                 items: item.products || [],
                 status: item.status || 'pending'
             }}
+            onReviewPress={() => { onReviewPress(item) }}
             onViewDetails={onViewDetails}
         />
     );

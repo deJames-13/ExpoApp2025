@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const OrderCard = ({ order, onViewDetails, onReviewPress = () => { } }) => {
+const OrderDetail = ({ order, navigation }) => {
     if (!order) return null;
 
     const { id, orderNumber, date, totalAmount, items = [], status } = order;
@@ -25,18 +26,12 @@ const OrderCard = ({ order, onViewDetails, onReviewPress = () => { } }) => {
         }
     };
 
-    // Get the first item image to display as the order thumbnail
     const mainItemImageUrl = items && items[0] && items[0].images && items[0].images[0]
         ? items[0].images[0].url
         : process.env.EXPO_PUBLIC_APP_LOGO;
 
-    const canReview = status && status.toLowerCase() === 'delivered';
-
     return (
-        <TouchableOpacity
-            style={styles.cardContainer}
-            onPress={() => onViewDetails(id)}
-        >
+        <View style={styles.container}>
             <View style={styles.orderHeader}>
                 <Text style={styles.orderNumber}>Order #{orderNumber || 'Unknown'}</Text>
                 <Text style={[styles.status, { color: getStatusColor() }]}>
@@ -67,29 +62,24 @@ const OrderCard = ({ order, onViewDetails, onReviewPress = () => { } }) => {
                 </View>
             </View>
 
-            <View style={styles.actionsContainer}>
+            {order.status === 'delivered' && (
                 <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => onViewDetails(id)}
+                    style={styles.reviewButton}
+                    onPress={() => navigation.navigate('ReviewScreen', {
+                        screen: 'ReviewForm',
+                        params: { order }
+                    })}
                 >
-                    <Text style={styles.actionText}>View</Text>
+                    <Ionicons name="star-outline" size={18} color="#fff" />
+                    <Text style={styles.reviewButtonText}>Write a Review</Text>
                 </TouchableOpacity>
-
-                {canReview && (
-                    <TouchableOpacity
-                        style={[styles.actionButton, styles.reviewButton]}
-                        onPress={onReviewPress}
-                    >
-                        <Text style={[styles.actionText, styles.reviewText]}>Review</Text>
-                    </TouchableOpacity>
-                )}
-            </View>
-        </TouchableOpacity>
+            )}
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    cardContainer: {
+    container: {
         backgroundColor: '#fff',
         borderRadius: 8,
         padding: 16,
@@ -161,31 +151,20 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#2196F3',
     },
-    actionsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginTop: 12,
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
-    },
-    actionButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        marginLeft: 8,
-        backgroundColor: '#f5f5f5',
-        borderRadius: 4,
-    },
-    actionText: {
-        color: '#2196F3',
-        fontSize: 14,
-    },
     reviewButton: {
-        backgroundColor: '#E3F2FD',
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#4CAF50',
+        padding: 12,
+        borderRadius: 8,
+        justifyContent: 'center',
+        marginTop: 16,
     },
-    reviewText: {
-        color: '#1565C0',
+    reviewButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        marginLeft: 8,
     },
 });
 
-export default OrderCard;
+export default OrderDetail;

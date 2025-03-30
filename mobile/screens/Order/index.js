@@ -30,3 +30,4 @@ const OrderScreen = () => {
 };
 
 export { OrderScreen };
+export { default as OrderCard } from '../../components/Cards/order';

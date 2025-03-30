@@ -81,5 +81,15 @@ export const defaultRoutes = () => [
             ),
         },
     },
+    {
+        name: 'Reviews',
+        component: Screens.ReviewsScreen,
+        icon: 'review',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="review" color={color} size={size} />
+            ),
+        },
+    },
 ];
 

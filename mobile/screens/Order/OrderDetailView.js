@@ -56,8 +56,6 @@ const OrderDetailView = ({ route, navigation }) => {
         try {
             setError(null);
             const response = await fetchData({ id: orderId, verbose: false });
-            console.log('response', response)
-            // Check if the response indicates an error
             if (!response || response.error || !response?.resource.id) {
                 handleRedirectToOrdersList('Order not found or access denied');
                 return;

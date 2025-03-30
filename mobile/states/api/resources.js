@@ -9,7 +9,44 @@ const customEndpoints = {
 
 
     // TODO: Reviews custom endpoints
-
+    reviews: (builder) => ({
+        getAllReviews: builder.mutation({
+            query: (qStr = '') => ({
+                url: `/reviews${qStr ? `?${qStr}` : ''}`,
+                method: 'GET',
+            }),
+        }),
+        getReviewById: builder.mutation({
+            query: ({ id, qStr = '' }) => ({
+                url: `/reviews/${id}${qStr ? `?${qStr}` : ''}`,
+                method: 'GET',
+            }),
+        }),
+        storeReview: builder.mutation({
+            query: (data) => {
+                return {
+                    url: `/reviews`,
+                    method: 'POST',
+                    body: data,
+                    formData: true,
+                };
+            },
+        }),
+        updateReview: builder.mutation({
+            query: ({ id, data }) => ({
+                url: `/reviews/${id}`,
+                method: 'PATCH',
+                body: data,
+                formData: true,
+            }),
+        }),
+        deleteReview: builder.mutation({
+            query: (id) => ({
+                url: `/reviews/${id}`,
+                method: 'DELETE',
+            }),
+        }),
+    }),
 
     // TODO: Orders custom endpoints
 
