@@ -26,7 +26,7 @@ class NotificationService extends Service {
     }
   }
 
-  async sendNotification({ deviceToken, title = '', body = '', data = {}, priority = 'normal', timeToLive = 3600, options = {} }) {
+  async sendNotification({ deviceToken, title = '', body = '', data = {}, priority = 'high', timeToLive = 3600, options = {} }) {
     const message = {
       notification: {
         title, body
