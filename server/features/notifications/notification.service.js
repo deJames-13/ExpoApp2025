@@ -1,6 +1,6 @@
 import admin from '#firebase/utils';
 import { Service } from '#lib';
-import { UserModel } from '#features'
+import { UserModel } from '#features';
 import NotificationModel from './notification.model.js';
 
 class NotificationService extends Service {
@@ -26,21 +26,32 @@ class NotificationService extends Service {
     }
   }
 
-  async sendNotification({ deviceToken, title = '', body = '', data = {} }) {
+  async sendNotification({ deviceToken, title = '', body = '', data = {}, priority = 'normal', timeToLive = 3600, options = {} }) {
     const message = {
       notification: {
         title, body
       },
       token: deviceToken,
-      data
-    }
+      data,
+      android: {
+        priority,
+        ttl: timeToLive * 1000 // timeToLive is in seconds
+      },
+      apns: {
+        headers: {
+          'apns-priority': priority === 'high' ? '10' : '5',
+          'apns-expiration': Math.floor(Date.now() / 1000) + timeToLive
+        }
+      },
+      ...options // Merge custom options
+    };
 
     return admin.messaging().send(message).then((response) => {
       console.log('Successfully sent message:', response);
       return response;
     }).catch((e) => {
       console.log('Error sending message:', e);
-    })
+    });
   }
 
   async saveNotification({ user, title, body, data = {}, status = 'active', type = 'info' }) {
@@ -66,7 +77,7 @@ class NotificationService extends Service {
     // Implementation can be added later for scheduled notifications
   }
 
-  async sendBatchNotifications({ userIds, title, body, data = {}, status = 'active', type = 'info', sendPush = true }) {
+  async sendBatchNotifications({ userIds, title, body, data = {}, status = 'active', type = 'info', sendPush = true, priority = 'normal', timeToLive = 3600, options = {} }) {
     try {
       if (!userIds || !userIds.length) {
         throw new Error('User IDs are required');
@@ -101,7 +112,10 @@ class NotificationService extends Service {
               deviceToken: user.fcmToken,
               title,
               body,
-              data
+              data,
+              priority,
+              timeToLive,
+              options
             });
           }
           return null;
@@ -138,7 +152,10 @@ class NotificationService extends Service {
     data = {},
     status = 'active',
     type = 'info',
-    sendPush = true
+    sendPush = true,
+    priority = 'normal',
+    timeToLive = 3600,
+    options = {}
   }) {
     try {
       const users = await UserModel.find(filter).select('_id').lean();
@@ -151,7 +168,10 @@ class NotificationService extends Service {
         data,
         status,
         type,
-        sendPush
+        sendPush,
+        priority,
+        timeToLive,
+        options
       });
     } catch (error) {
       console.error('Error broadcasting notification:', error);
