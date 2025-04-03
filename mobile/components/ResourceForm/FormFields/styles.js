@@ -85,7 +85,15 @@ export const styles = StyleSheet.create({
         marginBottom: 8,
     },
     menuContent: {
-        maxHeight: 300,
+        maxHeight: 250,
+        padding: 0,
+    },
+    menu: {
+        marginTop: 5,
+        // Remove width constraint here to use dynamic width
+    },
+    menuScrollView: {
+        maxHeight: 250,
     },
     searchResultHeader: {
         padding: 8,
@@ -232,3 +240,4 @@ export const styles = StyleSheet.create({
         width: '100%',
     },
 });
+export { adminColors };

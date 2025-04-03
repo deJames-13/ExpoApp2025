@@ -1,5 +1,6 @@
 import * as AdminScreens from '~/admin/screens';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import ProductDetail from '~/admin/screens/Products/detail';
 
 export const tabRoutes = () => [
     {
@@ -37,6 +38,16 @@ export const adminRoutes = () => [
             ),
         },
         isTab: true,
+    },
+    {
+        name: 'ProductDetail',
+        component: ProductDetail,
+        icon: 'inventory',
+        options: {
+            headerShown: false,
+            title: 'Product Details',
+        },
+        hidden: true,
     },
     {
         name: 'Orders',

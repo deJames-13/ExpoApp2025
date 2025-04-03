@@ -48,6 +48,7 @@ export default function MainNav() {
             <Stack.Screen name="DefaultNav" component={DefaultNav} />
             <Stack.Screen name="GuestNav" component={GuestNav} />
             <Stack.Screen name="AdminNav" component={AdminNav} />
+            {/* Keep these screens for customer-facing views */}
             <Stack.Screen name="ProductDetailView" component={ProductDetailView} />
             <Stack.Screen name="CategorizedProducts" component={CategorizedProducts} />
             <Stack.Screen

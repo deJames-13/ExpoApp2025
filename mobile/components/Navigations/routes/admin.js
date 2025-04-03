@@ -6,7 +6,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AdminDrawerContent } from '../drawers/admin-content';
 import { tabRoutes, adminRoutes } from './_admin-routes';
-import ProductDetailView from '~/screens/Home/components/ProductDetailView';
 import { useAdminRoute } from '~/contexts/AuthContext';
 import { View, ActivityIndicator, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { globalStyles } from '~/styles/global';
@@ -155,11 +154,6 @@ function AdminRoutesStack() {
                     options={route.options}
                 />
             ))}
-            <Stack.Screen
-                name="ProductDetailView"
-                component={ProductDetailView}
-                options={{ headerShown: false }}
-            />
         </Stack.Navigator>
     );
 }

@@ -163,6 +163,7 @@ export default function useResource({ resourceName, silent = true }) {
       const results = Array.isArray(response)
         ? response
         : response.results || response.resource || [];
+      console.log(`[${resourceName}]`, results)
 
       setData(results);
       setMeta(response.meta || {});

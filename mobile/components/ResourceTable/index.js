@@ -117,7 +117,7 @@ function TableContent() {
                     {actions.map((action) => (
                         <TouchableOpacity
                             key={action.id}
-                            className="p-2 mx-1"
+                            className="mx-1"
                             onPress={() => action.onPress(item)}
                         >
                             <Ionicons name={action.icon} size={18} color={action.color} />

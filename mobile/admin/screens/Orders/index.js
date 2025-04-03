@@ -7,7 +7,7 @@ import { orderTableColumns, orderActions } from './table-data';
 import { OrderModal } from './modal';
 import useResource from '~/hooks/useResource'
 
-export { OrderDetailView } from './DetailView'
+export { OrderDetailView } from './detail'
 
 export function Orders({ navigation }) {
     const api = useResource({ resourceName: 'orders' });
@@ -16,8 +16,7 @@ export function Orders({ navigation }) {
 
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
-    const [tableKey, setTableKey] = useState('orders-table-0'); // Add a key to force remount
-
+    const [tableKey, setTableKey] = useState('orders-table-0'); 
     // Server-side state
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);

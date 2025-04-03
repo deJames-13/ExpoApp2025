@@ -9,8 +9,8 @@ export const initialProductValues = {
     price: '',
     description: '',
     stock: '',
-    category: { id: '', name: '' },
-    brand: { id: '', name: '' },
+    category: '',  // Changed from object to string
+    brand: '',     // Changed from object to string
     status: 'active',
     image: null,
     featured: false,
@@ -64,17 +64,17 @@ export const getProductValidationSchema = (options = {}) => {
         stockValidation = stockValidation.required('Stock is required');
     }
 
-    // Build brand validation
-    let brandValidation = Yup.object().shape({
-        id: Yup.string(),
-        name: requireBrand ? Yup.string().required('Brand name is required') : Yup.string()
-    });
+    // Build brand validation - changed to string
+    let brandValidation = Yup.string();
+    if (requireBrand) {
+        brandValidation = brandValidation.required('Brand is required');
+    }
 
-    // Build category validation
-    let categoryValidation = Yup.object().shape({
-        id: Yup.string(),
-        name: requireCategory ? Yup.string().required('Category name is required') : Yup.string()
-    });
+    // Build category validation - changed to string
+    let categoryValidation = Yup.string();
+    if (requireCategory) {
+        categoryValidation = categoryValidation.required('Category is required');
+    }
 
     // Build status validation
     let statusValidation = Yup.string();

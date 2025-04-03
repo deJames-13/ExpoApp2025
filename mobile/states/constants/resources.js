@@ -8,6 +8,8 @@ export const resources = [
     'cart',
     'notifications',
     'reviews',
+    'suppliers',
+    'brands',
 ];
 
 // Export function to add a new resource type

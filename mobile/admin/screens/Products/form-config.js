@@ -8,6 +8,10 @@ import { productStatusOptions } from './validation';
  * @param {boolean} options.includeCamera - Whether to include camera field
  * @param {boolean} options.includeAdvancedFields - Whether to include advanced fields like ratings
  * @param {boolean} options.allowMultipleImages - Whether to allow multiple image selection
+ * @param {Array} options.brandOptions - Options for brand dropdown
+ * @param {Array} options.categoryOptions - Options for category dropdown
+ * @param {Array} options.supplierOptions - Options for supplier dropdown
+ * @param {boolean} options.fieldLoading - Whether fields are in loading state
  * @param {Object} options.customFields - Custom fields to include
  * @param {Array} options.exclude - Field names to exclude
  * @returns {Array} Field configuration array
@@ -18,6 +22,10 @@ export const getProductFields = (options = {}) => {
         includeCamera = true,
         includeAdvancedFields = true,
         allowMultipleImages = false,
+        brandOptions = [],
+        categoryOptions = [],
+        supplierOptions = [],
+        fieldLoading = false,
         customFields = {},
         exclude = []
     } = options;
@@ -47,19 +55,28 @@ export const getProductFields = (options = {}) => {
             ]
         },
         {
-            row: true,
-            fields: [
-                {
-                    type: 'object',
-                    field: 'brand',
-                    label: 'Brand'
-                },
-                {
-                    type: 'object',
-                    field: 'category',
-                    label: 'Category'
-                }
-            ]
+            type: 'select',
+            field: 'brand',
+            label: 'Brand',
+            options: brandOptions,
+            placeholder: fieldLoading ? 'Loading brands...' : 'Select brand',
+            disabled: fieldLoading || brandOptions.length === 0
+        },
+        {
+            type: 'select',
+            field: 'category',
+            label: 'Category',
+            options: categoryOptions,
+            placeholder: fieldLoading ? 'Loading categories...' : 'Select category',
+            disabled: fieldLoading || categoryOptions.length === 0
+        },
+        {
+            type: 'select',
+            field: 'supplier',
+            label: 'Supplier',
+            options: supplierOptions,
+            placeholder: fieldLoading ? 'Loading suppliers...' : 'Select supplier',
+            disabled: fieldLoading || supplierOptions.length === 0
         },
         {
             type: 'radio',
