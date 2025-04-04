@@ -13,6 +13,31 @@ export default [
         controller: controller.refresh,
       },
       {
+        path: '/auth/google/login',
+        method: METHODS.POST,
+        controller: controller.googleLogin,
+      },
+      {
+        path: '/auth/google/register',
+        method: METHODS.POST,
+        controller: controller.googleRegister,
+      },
+      {
+        path: '/forgot-password',
+        method: METHODS.POST,
+        controller: controller.forgotPassword,
+      },
+      {
+        path: '/reset-password/:token',
+        method: METHODS.POST,
+        controller: controller.resetPassword,
+      },
+      {
+        path: '/verify-email/:verifyToken',
+        method: METHODS.GET,
+        controller: controller.verifyEmail,
+      },
+      {
         path: '/',
         method: METHODS.GET,
         controller: controller.getAll,

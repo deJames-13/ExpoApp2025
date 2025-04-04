@@ -6,7 +6,13 @@ import {
     signOut as firebaseSignOut,
     sendPasswordResetEmail,
     onAuthStateChanged,
-    GoogleAuthProvider
+    GoogleAuthProvider,
+    // Import the Google One Tap Sign-In helpers
+    GoogleOneTapSignIn,
+    isSuccessResponse,
+    isNoSavedCredentialFoundResponse,
+    isErrorWithCode,
+    statusCodes
 } from './index';
 import { signInWithCredential } from 'firebase/auth';
 import Toast from 'react-native-toast-message';
@@ -116,24 +122,65 @@ export const FirebaseAuthProvider = ({ children }) => {
         setLoading(true);
         setError(null);
         try {
-            await GoogleSignin.configure({
-                webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+            await GoogleOneTapSignIn.configure({
+                webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || 'autoDetect',
             });
 
-            await GoogleSignin.hasPlayServices();
-            const userInfo = await GoogleSignin.signIn();
+            // Check Play Services first (on Android)
+            await GoogleOneTapSignIn.checkPlayServices();
 
-            const { idToken } = userInfo;
-            const credential = GoogleAuthProvider.credential(idToken);
-            const result = await signInWithCredential(auth, credential);
+            // Try automatic sign-in
+            const response = await GoogleOneTapSignIn.signIn();
 
-            Toast.show({
-                type: 'success',
-                text1: 'Google Sign-in Successful',
-                text2: 'You have successfully signed in with Google'
-            });
+            if (isSuccessResponse(response)) {
+                const { idToken } = response.data;
+                const credential = GoogleAuthProvider.credential(idToken);
+                const result = await signInWithCredential(auth, credential);
 
-            return result;
+                Toast.show({
+                    type: 'success',
+                    text1: 'Google Sign-in Successful',
+                    text2: 'You have successfully signed in with Google'
+                });
+
+                return result;
+            } else if (isNoSavedCredentialFoundResponse(response)) {
+                // No saved credentials, try to create account
+                const createAccountResponse = await GoogleOneTapSignIn.createAccount();
+
+                if (isSuccessResponse(createAccountResponse)) {
+                    const { idToken } = createAccountResponse.data;
+                    const credential = GoogleAuthProvider.credential(idToken);
+                    const result = await signInWithCredential(auth, credential);
+
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Google Sign-in Successful',
+                        text2: 'You have successfully signed in with Google'
+                    });
+
+                    return result;
+                }
+            }
+
+            // If we get here, try explicit sign-in as last resort
+            const explicitSignInResponse = await GoogleOneTapSignIn.presentExplicitSignIn();
+
+            if (isSuccessResponse(explicitSignInResponse)) {
+                const { idToken } = explicitSignInResponse.data;
+                const credential = GoogleAuthProvider.credential(idToken);
+                const result = await signInWithCredential(auth, credential);
+
+                Toast.show({
+                    type: 'success',
+                    text1: 'Google Sign-in Successful',
+                    text2: 'You have successfully signed in with Google'
+                });
+
+                return result;
+            }
+
+            throw new Error('Failed to sign in with Google');
         } catch (err) {
             setError(err);
             Toast.show({
@@ -141,7 +188,7 @@ export const FirebaseAuthProvider = ({ children }) => {
                 text1: 'Google Sign-in Error',
                 text2: err.message || 'Failed to authenticate with Google'
             });
-            console.log(err)
+            console.log(err);
             throw err;
         } finally {
             setLoading(false);

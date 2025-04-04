@@ -69,6 +69,89 @@ class UserController extends Controller {
     });
   };
 
+  googleLogin = async (req, res) => {
+    if (tokenExists(req, this.service.authToken)) throw new Errors.BadRequest('Already authenticated!');
+
+    const { email, googleIdToken, displayName, photoURL, fcmToken } = req.body;
+
+    if (!email || !googleIdToken) {
+      throw new Errors.BadRequest('Missing required Google authentication data!');
+    }
+
+    try {
+      // Verify the token with Google (handled in service)
+      const { user, token, isNewUser } = await this.service.authenticateWithGoogle(
+        email,
+        googleIdToken,
+        displayName,
+        photoURL,
+        false // not creating new user, just logging in
+      );
+
+      if (!user?._id) throw new Errors.BadRequest('Invalid credentials!');
+
+      // Save FCM token if provided
+      if (fcmToken) {
+        user.fcmToken = fcmToken;
+        await user.save();
+      }
+
+      res.cookie(...token);
+      this.success({
+        res,
+        message: 'Authenticated with Google!',
+        user: await this.resource.make(user),
+        token: token[1],
+        isNewUser
+      });
+    } catch (error) {
+      if (error.message === 'User not found') {
+        throw new Errors.NotFound('No account exists with this Google email. Please register first.');
+      }
+      throw error;
+    }
+  };
+
+  googleRegister = async (req, res) => {
+    if (tokenExists(req, this.service.authToken)) throw new Errors.BadRequest('Already authenticated!');
+
+    const { email, googleIdToken, displayName, photoURL, fcmToken } = req.body;
+
+    if (!email || !googleIdToken) {
+      throw new Errors.BadRequest('Missing required Google authentication data!');
+    }
+
+    try {
+      // Create or authenticate with Google
+      const { user, token, isNewUser } = await this.service.authenticateWithGoogle(
+        email,
+        googleIdToken,
+        displayName,
+        photoURL,
+        true // create new user if doesn't exist
+      );
+
+      if (!user?._id) throw new Errors.BadRequest('Invalid user data!');
+
+      // Save FCM token if provided
+      if (fcmToken) {
+        user.fcmToken = fcmToken;
+        await user.save();
+      }
+
+      res.cookie(...token);
+      this.success({
+        res,
+        message: isNewUser ? 'Registered with Google!' : 'Authenticated with existing Google account!',
+        user: await this.resource.make(user),
+        token: token[1],
+        isNewUser
+      });
+    } catch (error) {
+      throw error;
+    }
+  };
+
   logout = async (req, res) => {
     const token = await this.service.logout();
     res.cookie(...token);

@@ -1,13 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Image, StatusBar, SafeAreaView, ActivityIndicator } from 'react-native';
-import { Text, TextInput, TouchableRipple, Button } from 'react-native-paper';
+import { Text, TextInput, TouchableRipple, Button, Divider } from 'react-native-paper';
 import { H1 } from '~/components/ui/typography';
 import styles, { colors } from '~/styles/auth';
 import Toast from 'react-native-toast-message';
 import { useRegisterMutation } from '~/states/api/auth';
 import { useSelector } from 'react-redux';
 import { selectHasBasicInfo, selectIsEmailVerified, selectFcmToken } from '~/states/slices/auth';
+import GoogleSignInButton from '~/components/ui/GoogleSignInButton';
 
 export function Register() {
     const navigation = useNavigation();
@@ -177,6 +178,18 @@ export function Register() {
                 <View style={styles.card}>
                     <H1 style={styles.title}>Create Account</H1>
                     <Text style={styles.subtitle}>Sign up to get started</Text>
+
+                    {/* Google Sign-In (at the top for easier visibility) */}
+                    <GoogleSignInButton 
+                        onStart={() => setShowSplash(true)}
+                        onSuccess={() => setShowSplash(false)}
+                        onError={() => setShowSplash(false)}
+                        mode="register"
+                    />
+                    
+                    <Divider style={styles.divider}>
+                        <Text style={styles.dividerText}>OR</Text>
+                    </Divider>
 
                     <TextInput
                         label="Username"
