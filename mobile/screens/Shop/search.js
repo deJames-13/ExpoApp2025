@@ -16,8 +16,11 @@ import useResource from '~/hooks/useResource';
 import CategoryList from '../Home/components/CategoryList';
 import Slider from '@react-native-community/slider';
 
+const MIN_PRICE = 1000;
+const MAX_PRICE = 10000;
+
 // Search Header Component
-const SearchHeader = ({ navigation, searchQuery, setSearchQuery, handleSearchSubmit }) => (
+const SearchHeader = ({ navigation, searchQuery, setSearchQuery, handleSearchSubmit, setShowFilterModal }) => (
     <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2 mx-4 mt-4">
         <TouchableOpacity onPress={() => navigation.goBack()} className="mr-2">
             <Icon name="arrow-back" size={20} color="gray" />
@@ -32,6 +35,12 @@ const SearchHeader = ({ navigation, searchQuery, setSearchQuery, handleSearchSub
             autoFocus={!searchQuery}
             returnKeyType="search"
         />
+        <TouchableOpacity
+            className="ml-2 p-2 bg-gray-200 rounded-full"
+            onPress={() => setShowFilterModal(true)}
+        >
+            <Icon name="options-outline" size={20} color="black" />
+        </TouchableOpacity>
     </View>
 );
 
@@ -57,18 +66,12 @@ const FilterBar = ({ activeFilter, filters, handleFilterChange, setShowFilterMod
             className="flex-1"
         />
 
-        <TouchableOpacity
-            className="ml-2 p-2 bg-gray-200 rounded-full"
-            onPress={() => setShowFilterModal(true)}
-        >
-            <Icon name="options-outline" size={20} color="black" />
-        </TouchableOpacity>
     </View>
 );
 
 // Active Filters Component
 const ActiveFilters = ({ selectedCategory, priceRange, setSelectedCategory, setPriceRange, setMinPrice, setMaxPrice }) => {
-    if (!selectedCategory && priceRange[0] === 0 && priceRange[1] === 1000) return null;
+    if (!selectedCategory && priceRange[0] === MIN_PRICE && priceRange[1] === MAX_PRICE) return null;
 
     return (
         <View className="flex-row flex-wrap px-4 mb-2">
@@ -81,16 +84,16 @@ const ActiveFilters = ({ selectedCategory, priceRange, setSelectedCategory, setP
                 </View>
             )}
 
-            {(priceRange[0] > 0 || priceRange[1] < 1000) && (
+            {(priceRange[0] > 0 || priceRange[1] < MAX_PRICE) && (
                 <View className="flex-row items-center bg-blue-100 rounded-full px-3 py-1 mr-2 mb-2">
                     <Text className="text-blue-800 text-sm">
                         ${priceRange[0]} - ${priceRange[1]}
                     </Text>
                     <TouchableOpacity
                         onPress={() => {
-                            setPriceRange([0, 1000]);
-                            setMinPrice('0');
-                            setMaxPrice('1000');
+                            setPriceRange([MIN_PRICE, MAX_PRICE]);
+                            setMinPrice(MIN_PRICE);
+                            setMaxPrice(MAX_PRICE);
                         }}
                         className="ml-1"
                     >
@@ -104,35 +107,64 @@ const ActiveFilters = ({ selectedCategory, priceRange, setSelectedCategory, setP
 
 // Price Range Slider Component
 const PriceRangeSlider = ({ priceRange, setPriceRange, setMinPrice, setMaxPrice }) => {
-    const [sliderValue, setSliderValue] = useState([priceRange[0], priceRange[1]]);
+    const [minValue, setMinValue] = useState(priceRange[0]);
+    const [maxValue, setMaxValue] = useState(priceRange[1]);
 
-    const handleSliderChange = (values) => {
-        setSliderValue(values);
+    const handleMinChange = (value) => {
+        // Ensure min doesn't exceed max
+        setMinValue(value > maxValue ? maxValue : value);
     };
 
-    const handleSliderComplete = () => {
-        setPriceRange(sliderValue);
-        setMinPrice(sliderValue[0].toString());
-        setMaxPrice(sliderValue[1].toString());
+    const handleMaxChange = (value) => {
+        // Ensure max doesn't go below min
+        setMaxValue(value < minValue ? minValue : value);
+    };
+
+    const handleValueComplete = () => {
+        setPriceRange([minValue, maxValue]);
+        setMinPrice(minValue.toString());
+        setMaxPrice(maxValue.toString());
     };
 
     return (
         <View className="px-4 mb-4">
-            <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-500">${sliderValue[0]}</Text>
-                <Text className="text-gray-500">${sliderValue[1]}</Text>
+            <View className="mb-4">
+                <View className="flex-row justify-between mb-2">
+                    <Text className="text-gray-500">Min: PHP{minValue}</Text>
+                </View>
+                <Slider
+                    value={minValue}
+                    minimumValue={MIN_PRICE}
+                    maximumValue={maxValue}
+                    step={10}
+                    minimumTrackTintColor="#3b82f6"
+                    maximumTrackTintColor="#e5e7eb"
+                    thumbTintColor="#3b82f6"
+                    onValueChange={handleMinChange}
+                    onSlidingComplete={handleValueComplete}
+                />
             </View>
-            <Slider
-                value={sliderValue}
-                minimumValue={0}
-                maximumValue={1000}
-                step={10}
-                minimumTrackTintColor="#3b82f6"
-                maximumTrackTintColor="#e5e7eb"
-                thumbTintColor="#3b82f6"
-                onValueChange={handleSliderChange}
-                onSlidingComplete={handleSliderComplete}
-            />
+
+            <View>
+                <View className="flex-row justify-between mb-2">
+                    <Text className="text-gray-500">Max: PHP{maxValue}</Text>
+                </View>
+                <Slider
+                    value={maxValue}
+                    minimumValue={minValue}
+                    maximumValue={MAX_PRICE}
+                    step={10}
+                    minimumTrackTintColor="#3b82f6"
+                    maximumTrackTintColor="#e5e7eb"
+                    thumbTintColor="#3b82f6"
+                    onValueChange={handleMaxChange}
+                    onSlidingComplete={handleValueComplete}
+                />
+            </View>
+
+            <View className="flex-row justify-between mt-4">
+                <Text className="text-gray-700 font-medium">Range: PHP{minValue} - PHP{maxValue}</Text>
+            </View>
         </View>
     );
 };
@@ -230,13 +262,13 @@ export function SearchedScreen({ route, navigation }) {
     const [searchQuery, setSearchQuery] = useState(query);
     const [activeFilter, setActiveFilter] = useState(filter);
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [priceRange, setPriceRange] = useState([0, 1000]);
-    const [minPrice, setMinPrice] = useState('0');
-    const [maxPrice, setMaxPrice] = useState('1000');
+    const [priceRange, setPriceRange] = useState([MIN_PRICE, MAX_PRICE]);
+    const [minPrice, setMinPrice] = useState(MIN_PRICE);
+    const [maxPrice, setMaxPrice] = useState(MAX_PRICE);
     const [showFilterModal, setShowFilterModal] = useState(false);
     const { width } = useWindowDimensions();
 
-    const filters = ['All', 'Newest', 'Popular', 'Sale'];
+    const filters = ['All', 'Newest', 'Popular'];
 
     const {
         states: { data: products, loading },
@@ -299,9 +331,9 @@ export function SearchedScreen({ route, navigation }) {
 
     const clearFilters = () => {
         setSelectedCategory(null);
-        setPriceRange([0, 1000]);
-        setMinPrice('0');
-        setMaxPrice('1000');
+        setPriceRange([MIN_PRICE, MAX_PRICE]);
+        setMinPrice(MIN_PRICE);
+        setMaxPrice(MAX_PRICE);
         setActiveFilter('All');
     };
 
@@ -339,6 +371,7 @@ export function SearchedScreen({ route, navigation }) {
                 searchQuery={searchQuery}
                 setSearchQuery={handleSearch}
                 handleSearchSubmit={handleSearchSubmit}
+                setShowFilterModal={setShowFilterModal}
             />
 
             <FilterBar
