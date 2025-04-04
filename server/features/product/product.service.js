@@ -8,16 +8,16 @@ class ProductService extends Service {
   fieldToSlugify = 'name';
 
   async getProductStocks() {
-    const data = await this.model.find({}).select('name stock'); 
+    const data = await this.model.find({}).select('name stock');
     if (!data || !data.length) {
-       throw new Error('No data found');
+      throw new Error('No data found');
     }
 
     const totalStocks = data.reduce((acc, item) => acc + item.stock, 0);
 
     const totalPercentage = data.map((item) => ({
       name: item.name,
-      stock: item.stock, 
+      stock: item.stock,
       percent: totalStocks
         ? ((item.stock / totalStocks) * 100).toFixed(2)
         : 0,
@@ -36,7 +36,7 @@ class ProductService extends Service {
     this._checkModel();
     const { filters, ...rest } = filter;
 
-    const priceQuery = filters.price.map(p=>({price: rest.priceRanges[p]}));
+    const priceQuery = filters.price.map(p => ({ price: rest.priceRanges[p] }));
 
     const query = {
       $or: [
@@ -51,24 +51,45 @@ class ProductService extends Service {
 
     this.query = this.model.find(query);;
     return this.paginate(meta).exec();
-    
+
   }
 
   async getCategoryId(name) {
-    const category = await CategoryModel.findOne({ name });
-    if (!category) throw new Error('Category not found');
+    let category = await CategoryModel.findOne({ name });
+    if (!category) {
+      // Create new category if not found
+      category = await CategoryModel.create({
+        name,
+        description: `Auto-created category for "${name}"`,
+      });
+    }
     return category._id;
   }
 
   async getBrandId(name) {
-    const brand = await BrandModel.findOne({ name });
-    if (!brand) throw new Error('Brand not found');
+    let brand = await BrandModel.findOne({ name });
+    if (!brand) {
+      // Create new brand if not found
+      brand = await BrandModel.create({
+        name,
+        description: `Auto-created brand for "${name}"`,
+      });
+    }
     return brand._id;
   }
 
   async getSupplierId(name) {
-    const supplier = await SupplierModel.findOne({ name });
-    if (!supplier) throw new Error('Supplier not found');
+    let supplier = await SupplierModel.findOne({ name });
+    if (!supplier) {
+      // Create new supplier if not found
+      supplier = await SupplierModel.create({
+        name,
+        contactPerson: 'TBD',
+        emailAddress: `contact@${name.toLowerCase().replace(/\s+/g, '-')}.com`,
+        contactNumber: '0000000000',
+        description: `Auto-created supplier for "${name}"`,
+      });
+    }
     return supplier._id;
   }
 

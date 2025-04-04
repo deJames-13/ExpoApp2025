@@ -9,7 +9,7 @@ import { ProductImageGallery } from './components/ProductImageGallery';
 import { IconButton } from 'react-native-paper';
 import { ProductModal } from './modal';
 import { createHybridFormData } from '~/utils/imageUpload';
-
+const VERBOSE = false;
 const ProductDetail = ({ route, navigation }) => {
     const { productId } = route.params || {};
 
@@ -36,7 +36,6 @@ const ProductDetail = ({ route, navigation }) => {
         setRefreshing(true);
         try {
             const response = await fetchData({ id: productId });
-            console.log(response)
         } catch (error) {
             console.error('Error loading product details:', error);
             showError('Error', 'Failed to load product details');
@@ -52,62 +51,66 @@ const ProductDetail = ({ route, navigation }) => {
     };
 
     // Handle saving product from modal with image upload
-    const handleSaveProduct = async (productData) => {
+    const handleSaveProduct = async (rawData) => {
         try {
-            // Extract images from product data
-            const { images, productImages, ...productInfo } = productData;
-
-            // Get the images array from either source
-            const uploadImages = productImages || images || [];
-
-            // Log update request
-            console.log('[ProductDetail] Update Request Data:', {
+            const { productData, images } = rawData;
+            const uploadImages = images || [];
+            VERBOSE && console.log('[ProductDetail] Update Request Data:', {
                 productId: product._id || product.id,
-                productInfo,
+                productData,
                 hasImages: uploadImages.length > 0
             });
 
-            // Create FormData with images for upload
             let formData;
+            const productId = product._id || product.id;
 
             if (uploadImages && uploadImages.length > 0) {
-                // Handle image uploads - convert to form data
                 formData = await createHybridFormData(
-                    productInfo,
-                    { image: uploadImages[0] }, // Send first image for upload
-                    true // Use base64
+                    productData,
+                    { image: uploadImages[0] },
+                    true
                 );
+
+                // Add additional images if available
+                if (uploadImages.length > 1) {
+                    const additionalImages = uploadImages.slice(1).filter(Boolean);
+                    if (additionalImages.length > 0) {
+                        formData.append('additionalImages', JSON.stringify(additionalImages));
+                    }
+                }
+
+                // Handle existing image public_ids if needed
+                if (product.images && product.images.length > 0) {
+                    const publicIds = product.images
+                        .filter(img => img.public_id)
+                        .map(img => img.public_id);
+
+                    if (publicIds.length > 0) {
+                        formData.append('public_ids', JSON.stringify(publicIds));
+                    }
+                }
             } else {
-                // No images to upload
-                formData = await createHybridFormData(productInfo, {}, true);
+                formData = await createHybridFormData(productData, {}, true);
             }
 
-            // Log the request payload
-            console.log('[ProductDetail] Sending update request to API');
-
-            const response = await doUpdate(product._id || product.id, formData);
-
-            // Log the response
-            console.log('[ProductDetail] Update Response:', response);
+            // Pass FormData directly to doUpdate without additional wrapping
+            const response = await doUpdate(productId, formData);
+            VERBOSE && console.log('[ProductDetail] Update Response:', response);
 
             showSuccess('Success', 'Product updated successfully');
             setModalVisible(false);
 
-            // Fetch fresh data after update
             await loadProductDetails();
         } catch (error) {
-            // Log error
             console.error('[ProductDetail] Update Error:', error);
             showError('Error', 'Failed to update product');
         }
     };
 
-    // Handle modal close
     const handleModalClose = () => {
         setModalVisible(false);
     };
 
-    // Get status style based on stock level
     const getStockStatusStyle = (stock) => {
         let status = 'out of stock';
         if (stock > 10) status = 'active';

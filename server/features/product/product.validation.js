@@ -18,13 +18,10 @@ const commonRules = () => {
       .notEmpty()
       .withMessage('Category is required!'),
     check('brand')
-      .notEmpty()
       .withMessage('Brand is required!'),
     check('category')
-      .notEmpty()
       .withMessage('Category is required!'),
     check('supplier')
-      .notEmpty()
       .withMessage('Supplier is required!'),
   ];
 };

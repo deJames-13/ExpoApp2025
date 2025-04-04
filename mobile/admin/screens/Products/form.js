@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ResourceForm } from '~/components/ResourceForm';
 import {
     getProductValidationSchema,
@@ -7,10 +6,8 @@ import {
 } from './validation';
 import { getProductFields } from './form-config';
 import useResource from '~/hooks/useResource';
-
-/**
- * Helper function to ensure each URI is a valid string
- */
+import { createHybridFormData, isRemoteUrl, normalizeImageUri } from '~/utils/imageUpload';
+const VERBOSE = true;
 const validateUri = (uri) => {
     if (!uri) return null;
     if (typeof uri === 'object' && uri !== null) {
@@ -24,138 +21,89 @@ export function ProductForm({ product, mode = 'create', onSubmit, formRef }) {
     const [fieldConfig, setFieldConfig] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Fetch related data (brands, categories, suppliers) using RTK Query
+    const isMounted = useRef(true);
+    const initialLoadComplete = useRef(false);
+    const lastOptionsUpdate = useRef(null);
+
     const brandResource = useResource({ resourceName: 'brands', silent: true });
     const categoryResource = useResource({ resourceName: 'categories', silent: true });
     const supplierResource = useResource({ resourceName: 'suppliers', silent: true });
 
-    // Track loading states more specifically
-    const [brandsLoading, setBrandsLoading] = useState(false);
-    const [categoriesLoading, setCategoriesLoading] = useState(false);
-    const [suppliersLoading, setSuppliersLoading] = useState(false);
+    const brands = useMemo(() => brandResource.states.data || [], [brandResource.states.data]);
+    const categories = useMemo(() => categoryResource.states.data || [], [categoryResource.states.data]);
+    const suppliers = useMemo(() => supplierResource.states.data || [], [supplierResource.states.data]);
 
-    useEffect(() => {
-        // Fetch related data for dropdowns
-        const fetchRelatedData = async () => {
-            setLoading(true);
-            setBrandsLoading(true);
-            setCategoriesLoading(true);
-            setSuppliersLoading(true);
+    const brandsLoading = useMemo(() => brandResource.states.loading, [brandResource.states.loading]);
+    const categoriesLoading = useMemo(() => categoryResource.states.loading, [categoryResource.states.loading]);
+    const suppliersLoading = useMemo(() => supplierResource.states.loading, [supplierResource.states.loading]);
 
-            try {
-                const brandPromise = brandResource.actions.fetchDatas()
-                    .finally(() => setBrandsLoading(false));
+    const hasMoreFlags = useMemo(() => ({
+        brands: !!(brandResource.states.meta && brandResource.states.meta.hasMore),
+        categories: !!(categoryResource.states.meta && categoryResource.states.meta.hasMore),
+        suppliers: !!(supplierResource.states.meta && supplierResource.states.meta.hasMore),
+    }), [
+        brandResource.states.meta,
+        categoryResource.states.meta,
+        supplierResource.states.meta
+    ]);
 
-                const categoryPromise = categoryResource.actions.fetchDatas()
-                    .finally(() => setCategoriesLoading(false));
-
-                const supplierPromise = supplierResource.actions.fetchDatas()
-                    .finally(() => { setSuppliersLoading(false) });
-
-                await Promise.all([
-                    brandPromise,
-                    categoryPromise,
-                    supplierPromise
-                ]);
-            } catch (error) {
-                console.error('Error fetching related data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchRelatedData();
-    }, []);
-
-    useEffect(() => {
-        // Get brand, category, and supplier options for form fields
-        const brands = brandResource.states.data?.map(brand => ({
+    const optionMappings = useMemo(() => ({
+        brandOptions: brands.map(brand => ({
             label: brand.name,
             value: brand._id || brand.id,
             item: brand
-        })) || [];
-
-        const categories = categoryResource.states.data?.map(category => ({
+        })),
+        categoryOptions: categories.map(category => ({
             label: category.name,
             value: category._id || category.id,
             item: category
-        })) || [];
-
-        const suppliers = supplierResource.states.data?.map(supplier => ({
+        })),
+        supplierOptions: suppliers.map(supplier => ({
             label: supplier.name,
             value: supplier._id || supplier.id,
             item: supplier
-        })) || [];
+        }))
+    }), [brands, categories, suppliers]);
 
-        const fieldsOptions = {
-            includeAdvancedFields: mode !== 'create',
-            includeImages: true,
-            includeCamera: true,
-            allowMultipleImages: true,
-            brandOptions: brands,
-            categoryOptions: categories,
-            supplierOptions: suppliers,
-            fieldLoading: loading,
-            brandsLoading: brandsLoading,
-            categoriesLoading: categoriesLoading,
-            suppliersLoading: suppliersLoading,
-            returnObjectValue: true // Add this to ensure brand and category are returned as objects
-        };
-
-        // Configure validation based on mode
-        const validationOptions = {
-            requireName: true,
-            requirePrice: true,
-            requireStock: mode !== 'view',
-            requireBrand: true,
-            requireCategory: true,
-            requireStatus: true
-        };
-
-        // Set dynamic configuration
-        setFieldConfig(getProductFields(fieldsOptions));
-        setValidationSchema(getProductValidationSchema(validationOptions));
-    }, [mode, product,
-        brandResource.states.data,
-        categoryResource.states.data,
-        supplierResource.states.data,
-        loading, brandsLoading, categoriesLoading, suppliersLoading]);
-
-    // Process images from product
     const getInitialImages = useCallback(() => {
         if (!product) return null;
+        const processImageUrl = (url) => {
+            const validUri = validateUri(url);
+            if (!validUri) return null;
+            return isRemoteUrl(validUri) ? validUri : normalizeImageUri(validUri);
+        };
 
-        // Handle existing single image or array of images
         if (product.images && Array.isArray(product.images)) {
-            // Filter and validate each URI in the array
             const validImages = product.images
-                .map(img => img.url || img.uri || img)
+                .map(img => {
+                    if (typeof img === 'string') return processImageUrl(img);
+                    return processImageUrl(img.url || img.uri || img);
+                })
                 .filter(uri => uri !== null);
+
             return validImages.length > 0 ? validImages : null;
         } else if (product.image) {
-            const validUri = validateUri(product.image);
+            const validUri = processImageUrl(product.image);
             return validUri ? [validUri] : null;
         } else if (product.productImage) {
             if (typeof product.productImage === 'string') {
-                return [product.productImage];
+                return [processImageUrl(product.productImage)].filter(Boolean);
             } else if (Array.isArray(product.productImage)) {
-                // Filter and validate each URI in the array
                 const validImages = product.productImage
-                    .map(validateUri)
+                    .map(processImageUrl)
                     .filter(uri => uri !== null);
                 return validImages.length > 0 ? validImages : null;
             } else {
-                const validUri = validateUri(product.productImage);
+                const validUri = processImageUrl(product.productImage);
                 return validUri ? [validUri] : null;
             }
         } else if (product.cameraImage) {
-            const validUri = validateUri(product.cameraImage);
+            const validUri = processImageUrl(product.cameraImage);
             return validUri ? [validUri] : null;
         }
         return null;
     }, [product]);
 
-    // Format current brand and category for form display
     const formatInitialValues = useCallback(() => {
         if (!product) return initialProductValues;
 
@@ -171,41 +119,156 @@ export function ProductForm({ product, mode = 'create', onSubmit, formRef }) {
         };
     }, [product, getInitialImages]);
 
-    // Process form submission with proper data structure for backend
-    const handleSubmit = useCallback((values) => {
-        const processedData = {
-            ...values,
-            price: parseFloat(values.price) || 0,
-            stock: parseInt(values.stock) || 0,
-            category: typeof values.category === 'object' ? values.category.name : values.category,
-            brand: typeof values.brand === 'object' ? values.brand.name : values.brand,
-            supplier: typeof values.supplier === 'object' ? values.supplier.name : values.supplier,
-            images: values.productImages || values.images || []
-        };
+    const handleSubmit = useCallback(async (values) => {
+        try {
+            const { productImages, images, ...productInfo } = values;
+            const uploadImages = productImages || images || [];
+            const processedData = {
+                ...productInfo,
+                price: parseFloat(productInfo.price) || 0,
+                stock: parseInt(productInfo.stock) || 0,
+                category: typeof productInfo.category === 'object' ? productInfo.category.name : productInfo.category,
+                brand: typeof productInfo.brand === 'object' ? productInfo.brand.name : productInfo.brand,
+                supplier: typeof productInfo.supplier === 'object' ? productInfo.supplier.name : productInfo.supplier,
+            };
+            VERBOSE && console.log(`[ProductForm] ${mode.toUpperCase()} Request Payload:`, {
+                id: product?._id || product?.id,
+                ...processedData,
+                hasImages: uploadImages.length > 0
+            });
 
-        // Log the request payload
-        console.log(`[ProductForm] ${mode.toUpperCase()} Request Payload:`, {
-            id: product?._id || product?.id,
-            ...processedData
+            // Return raw data instead of creating FormData
+            const rawSubmitData = {
+                productData: processedData,
+                images: uploadImages,
+                productId: product?._id || product?.id
+            };
+
+            const response = await onSubmit(rawSubmitData);
+            VERBOSE && console.log(`[ProductForm] ${mode.toUpperCase()} Response:`, response);
+            return response;
+        } catch (error) {
+            VERBOSE && console.error(`[ProductForm] ${mode.toUpperCase()} Error:`, error);
+            throw error;
+        }
+    }, [onSubmit, product, mode]);
+
+    const handleSearchBrand = useCallback((query) => {
+        return brandResource.actions.fetchDatas({ qStr: `?search=${query}` });
+    }, [brandResource.actions]);
+
+    const handleSearchCategory = useCallback((query) => {
+        return categoryResource.actions.fetchDatas({ qStr: `?search=${query}` });
+    }, [categoryResource.actions]);
+
+    const handleSearchSupplier = useCallback((query) => {
+        return supplierResource.actions.fetchDatas({ qStr: `?search=${query}` });
+    }, [supplierResource.actions]);
+
+    const handleLoadMoreBrands = useCallback(() => {
+        const page = brandResource.states.meta?.currentPage || 1;
+        return brandResource.actions.fetchDatas({
+            qStr: `?page=${page + 1}`,
+            verbose: false
         });
+    }, [brandResource.actions, brandResource.states.meta]);
 
-        // Create a wrapped onSubmit function to log the response
-        const submitWithLogging = async (data) => {
+    const handleLoadMoreCategories = useCallback(() => {
+        const page = categoryResource.states.meta?.currentPage || 1;
+        return categoryResource.actions.fetchDatas({
+            qStr: `?page=${page + 1}`,
+            verbose: false
+        });
+    }, [categoryResource.actions, categoryResource.states.meta]);
+
+    const handleLoadMoreSuppliers = useCallback(() => {
+        const page = supplierResource.states.meta?.currentPage || 1;
+        return supplierResource.actions.fetchDatas({
+            qStr: `?page=${page + 1}`,
+            verbose: false
+        });
+    }, [supplierResource.actions, supplierResource.states.meta]);
+
+    useEffect(() => {
+        const loadInitialData = async () => {
+            setLoading(true);
             try {
-                const response = await onSubmit(data);
-                // Log successful response
-                console.log(`[ProductForm] ${mode.toUpperCase()} Response:`, response);
-                return response;
+                await Promise.all([
+                    brandResource.actions.fetchDatas(),
+                    categoryResource.actions.fetchDatas(),
+                    supplierResource.actions.fetchDatas()
+                ]);
             } catch (error) {
-                // Log error response
-                console.error(`[ProductForm] ${mode.toUpperCase()} Error:`, error);
-                throw error;
+                console.error('Error loading product form data:', error);
+            } finally {
+                if (isMounted.current) {
+                    setLoading(false);
+                    initialLoadComplete.current = true;
+                }
             }
         };
 
-        // Execute the wrapped function
-        return submitWithLogging(processedData);
-    }, [onSubmit, product, mode]);
+        if (!initialLoadComplete.current) {
+            loadInitialData();
+        }
+
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        const currentState = JSON.stringify({
+            brands: optionMappings.brandOptions.length,
+            categories: optionMappings.categoryOptions.length,
+            suppliers: optionMappings.supplierOptions.length,
+            loading,
+            brandsLoading,
+            categoriesLoading,
+            suppliersLoading,
+            hasMoreBrands: hasMoreFlags.brands,
+            hasMoreCategories: hasMoreFlags.categories,
+            hasMoreSuppliers: hasMoreFlags.suppliers
+        });
+
+        if (lastOptionsUpdate.current !== currentState) {
+            lastOptionsUpdate.current = currentState;
+
+            const config = getProductFields({
+                includeImages: true,
+                includeCamera: true,
+                includeAdvancedFields: true,
+                allowMultipleImages: true,
+                brandOptions: optionMappings.brandOptions,
+                categoryOptions: optionMappings.categoryOptions,
+                supplierOptions: optionMappings.supplierOptions,
+                fieldLoading: loading,
+                brandsLoading,
+                categoriesLoading,
+                suppliersLoading,
+                hasMoreBrands: hasMoreFlags.brands,
+                hasMoreCategories: hasMoreFlags.categories,
+                hasMoreSuppliers: hasMoreFlags.suppliers,
+                onSearchBrand: handleSearchBrand,
+                onSearchCategory: handleSearchCategory,
+                onSearchSupplier: handleSearchSupplier,
+                onLoadMoreBrands: handleLoadMoreBrands,
+                onLoadMoreCategories: handleLoadMoreCategories,
+                onLoadMoreSuppliers: handleLoadMoreSuppliers,
+                allowCreateBrand: true,
+                allowCreateCategory: true,
+                allowCreateSupplier: true
+            });
+
+            setFieldConfig(config);
+        }
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            initialLoadComplete.current = false;
+        };
+    }, []);
 
     return (
         <ResourceForm
@@ -214,18 +277,14 @@ export function ProductForm({ product, mode = 'create', onSubmit, formRef }) {
             onSubmit={handleSubmit}
             mode={mode}
             formRef={formRef}
-            layoutProps={{ style: styles.customFormLayout }}
             fieldConfig={fieldConfig}
-            scrollViewProps={{ showsVerticalScrollIndicator: false }}
             enableReinitialize={true}
-            isLoading={loading}
+            wrapWithScrollView={true}
+            scrollViewProps={{
+                showsVerticalScrollIndicator: false,
+                contentContainerStyle: { padding: 16 }
+            }}
         />
     );
 }
 
-const styles = StyleSheet.create({
-    customFormLayout: {
-        width: '100%',
-        paddingBottom: 20,
-    }
-});

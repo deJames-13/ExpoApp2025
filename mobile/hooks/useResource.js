@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo, useEffect } from 'react';
+import { useCallback, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createSelector } from '@reduxjs/toolkit';
 import { setResource, toggleRefresh } from '~/states/slices/resources';
@@ -8,7 +8,6 @@ import Toast from 'react-native-toast-message';
 import * as changeCase from "change-case";
 import resourceEndpoints from '~/states/api/resources';
 
-// Message templates
 const messages = {
   fetch: {
     success: (resource) => `${resource} data loaded successfully`,
@@ -36,7 +35,6 @@ export default function useResource({ resourceName, silent = true }) {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  // Standardized Toast Helper Functions - moved inside the hook
   const showToast = (options = {}) => {
     if (!silent) {
       Toast.show(options);
@@ -139,18 +137,8 @@ export default function useResource({ resourceName, silent = true }) {
   const [current, setCurrent] = useState(resourceData.detail || null);
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
+  const dataUpdateRef = useRef(false);
 
-  // Update local state when redux state changes
-  useEffect(() => {
-    if (resourceData.list && resourceData.list.length > 0) {
-      setData(resourceData.list);
-    }
-    if (resourceData.detail) {
-      setCurrent(resourceData.detail);
-    }
-  }, [resourceData]);
-
-  // Fetch functions
   const fetchDatas = useCallback(async ({
     qStr = '',
     verbose = false,
@@ -163,7 +151,7 @@ export default function useResource({ resourceName, silent = true }) {
       const results = Array.isArray(response)
         ? response
         : response.results || response.resource || [];
-      console.log(`[${resourceName}]`, results)
+      console.log(`[${resourceName}]`, results?.length)
 
       setData(results);
       setMeta(response.meta || {});
@@ -283,7 +271,29 @@ export default function useResource({ resourceName, silent = true }) {
   const doStore = useCallback(async (data, verbose = false) => {
     setLoading(true);
     try {
-      const response = await create(data).unwrap();
+      // Check if data is FormData
+      const isFormData = data instanceof FormData;
+
+      // Prepare payload based on what type of data we have
+      let payload;
+      if (isFormData) {
+        // Just pass the FormData with the formData flag
+        payload = {
+          data,
+          options: { formData: true }
+        };
+        console.log(`[${resourceName}] Sending FormData to store endpoint`);
+      } else if (data && typeof data === 'object' && data.formData === true) {
+        // Already processed data with formData flag
+        payload = data;
+        console.log(`[${resourceName}] Sending pre-processed FormData to store endpoint`);
+      } else {
+        // Regular JSON data
+        payload = data;
+        console.log(`[${resourceName}] Sending JSON data to store endpoint`);
+      }
+
+      const response = await create(payload).unwrap();
       setCurrent(response);
 
       if (!silent && !verbose) {
@@ -299,7 +309,7 @@ export default function useResource({ resourceName, silent = true }) {
     } catch (error) {
       setLoading(false);
 
-      if (!silent && !silence) {
+      if (!silent) {
         showError(
           'Error',
           messages.create.error(error)
@@ -308,12 +318,35 @@ export default function useResource({ resourceName, silent = true }) {
 
       return error;
     }
-  }, [create, dispatch]);
+  }, [create, dispatch, resourceName, silent]);
 
   const doUpdate = useCallback(async (id, data, verbose = true) => {
     setLoading(true);
     try {
-      const response = await update({ id, data }).unwrap();
+      // Check if data is FormData
+      const isFormData = data instanceof FormData;
+
+      // Prepare payload based on what type of data we have
+      let payload;
+      if (isFormData) {
+        // Create a properly structured payload for FormData
+        payload = {
+          id,
+          data,
+          options: { formData: true }
+        };
+        console.log(`[${resourceName}] Sending FormData to update endpoint`);
+      } else if (data && typeof data === 'object' && data.formData === true) {
+        // Already processed data with formData flag
+        payload = { id, ...data };
+        console.log(`[${resourceName}] Sending pre-processed FormData to update endpoint`);
+      } else {
+        // Regular JSON data
+        payload = { id, data };
+        console.log(`[${resourceName}] Sending JSON data to update endpoint`);
+      }
+
+      const response = await update(payload).unwrap();
       setCurrent(response);
 
       verbose && showInfo(
@@ -334,7 +367,7 @@ export default function useResource({ resourceName, silent = true }) {
 
       return error;
     }
-  }, [update, dispatch]);
+  }, [update, dispatch, resourceName]);
 
   const doDestroy = useCallback(async (id, verbose = true) => {
     setLoading(true);

@@ -141,35 +141,68 @@ export function Products({ navigation }) {
         );
     }, [doDestroy, showSuccess, showError, loadProducts]);
 
-    // Handle saving product from modal with image upload
-    const handleSaveProduct = useCallback(async (productData) => {
+    const handleSaveProduct = useCallback(async (rawData) => {
         try {
-            // Extract images from product data
-            const { images, productImages, ...productInfo } = productData;
-
-            // Get the images array from either source
-            const uploadImages = productImages || images || [];
-
-            // Create FormData with images for upload
-            let formData;
-
-            if (uploadImages && uploadImages.length > 0) {
-                // Handle image uploads - convert to form data
-                formData = await createHybridFormData(
-                    productInfo,
-                    { image: uploadImages[0] }, // Send first image for upload
-                    true // Use base64
-                );
-            } else {
-                // No images to upload
-                formData = await createHybridFormData(productInfo, {}, true);
-            }
+            const { productData, images } = rawData;
+            const uploadImages = images || [];
 
             if (modalMode === 'create') {
+                let formData;
+                if (uploadImages && uploadImages.length > 0) {
+                    formData = await createHybridFormData(
+                        productData,
+                        { image: uploadImages[0] },
+                        true
+                    );
+
+                    // Add additional images if available
+                    if (uploadImages.length > 1) {
+                        const additionalImages = uploadImages.slice(1).filter(Boolean);
+                        if (additionalImages.length > 0) {
+                            formData.append('additionalImages', JSON.stringify(additionalImages));
+                        }
+                    }
+                } else {
+                    formData = await createHybridFormData(productData, {}, true);
+                }
+
+                // Pass FormData directly without wrapping it further
                 await doStore(formData);
                 showSuccess('Success', 'Product created successfully');
             } else if (modalMode === 'edit') {
-                await doUpdate(selectedProduct._id || selectedProduct.id, formData);
+                const productId = selectedProduct._id || selectedProduct.id;
+
+                let formData;
+                if (uploadImages && uploadImages.length > 0) {
+                    formData = await createHybridFormData(
+                        productData,
+                        { image: uploadImages[0] },
+                        true
+                    );
+
+                    if (selectedProduct.images && selectedProduct.images.length > 0) {
+                        const publicIds = selectedProduct.images
+                            .filter(img => img.public_id)
+                            .map(img => img.public_id);
+
+                        if (publicIds.length > 0) {
+                            formData.append('public_ids', JSON.stringify(publicIds));
+                        }
+                    }
+
+                    // Add additional images if available
+                    if (uploadImages.length > 1) {
+                        const additionalImages = uploadImages.slice(1).filter(Boolean);
+                        if (additionalImages.length > 0) {
+                            formData.append('additionalImages', JSON.stringify(additionalImages));
+                        }
+                    }
+                } else {
+                    formData = await createHybridFormData(productData, {}, true);
+                }
+
+                // Pass FormData directly to doUpdate
+                await doUpdate(productId, formData);
                 showSuccess('Success', 'Product updated successfully');
             }
 

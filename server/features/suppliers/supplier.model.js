@@ -9,23 +9,23 @@ const Supplier = new Schema({
       name: {
         type: String,
         unique: [true, 'Supplier name must be unique'],
-        required: [true, 'Supplier name is required'],
+        required: ['Supplier name is required'],
       },
       slug: {
         type: String,
       },
       contactPerson: {
         type: String,
-        required: [true, 'Contact person is required'],
+        required: ['Contact person is required'],
       },
       emailAddress: {
         type: String,
-        required: [true, 'Email address is required'],
+        required: ['Email address is required'],
         unique: [true, 'Email already exists'],
       },
       contactNumber: {
         type: String,
-        required: [true, 'Please enter supplier contact number'],
+        required: ['Please enter supplier contact number'],
         maxLength: [11, 'Supplier contact number cannot exceed 11 characters']
       },
       description: {

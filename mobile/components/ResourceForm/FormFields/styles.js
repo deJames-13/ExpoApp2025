@@ -196,7 +196,6 @@ export const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
 
-
     // Image field styles
     imageFieldContainer: {
         alignItems: 'center',
@@ -238,6 +237,93 @@ export const styles = StyleSheet.create({
     // Custom layout container
     customLayoutContainer: {
         width: '100%',
+    },
+
+    // Modal select field styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '90%',
+        maxHeight: '80%',
+        backgroundColor: adminColors.cardBackground,
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: adminColors.divider,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: adminColors.text.primary,
+    },
+    modalCloseButton: {
+        fontSize: 22,
+        color: adminColors.text.primary,
+    },
+    modalSearchBar: {
+        margin: 8,
+        elevation: 0,
+        backgroundColor: adminColors.background,
+    },
+    modalDivider: {
+        backgroundColor: adminColors.divider,
+    },
+    modalSelectList: {
+        paddingVertical: 8,
+    },
+    modalSelectItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: adminColors.divider,
+    },
+    modalSelectItemSelected: {
+        backgroundColor: `${adminColors.primary}20`,
+    },
+    modalSelectItemText: {
+        fontSize: 16,
+        color: adminColors.text.primary,
+    },
+    modalSelectItemTextSelected: {
+        color: adminColors.primary,
+        fontWeight: 'bold',
+    },
+    modalSelectItemIcon: {
+        fontSize: 18,
+        color: adminColors.primary,
+    },
+    modalSelectEmptyContainer: {
+        padding: 16,
+        alignItems: 'center',
+    },
+    modalSelectEmptyText: {
+        marginTop: 8,
+        color: adminColors.text.secondary,
+    },
+    modalSelectCreateOption: {
+        padding: 16,
+        borderTopWidth: 1,
+        borderTopColor: adminColors.divider,
+        alignItems: 'center',
+    },
+    modalSelectCreateOptionText: {
+        color: adminColors.primary,
+        fontWeight: 'bold',
+    },
+    modalSelectLoadMoreButton: {
+        marginTop: 8,
     },
 });
 export { adminColors };

@@ -12,6 +12,7 @@ import { RadioField } from './RadioField';
 import { ImageField } from './Image';
 import { CameraField } from './CameraField';
 import { SelectField } from './SelectField';
+import { ModalSelectField } from './ModalSelectField';
 
 export const FieldMapper = (props) => {
     const {
@@ -255,6 +256,20 @@ export const FieldMapper = (props) => {
         case 'select':
             return (
                 <SelectField
+                    field={field}
+                    value={values[field]}
+                    setFieldValue={setFieldValue}
+                    options={options}
+                    errors={errors}
+                    touched={touched}
+                    disabled={isDisabled}
+                    {...rest}
+                />
+            );
+
+        case 'modal-select':
+            return (
+                <ModalSelectField
                     field={field}
                     value={values[field]}
                     setFieldValue={setFieldValue}

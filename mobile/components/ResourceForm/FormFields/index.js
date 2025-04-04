@@ -12,6 +12,7 @@ export { CheckboxField } from './CheckboxField';
 export { RadioField } from './RadioField';
 export { ImageField } from './Image';
 export { SelectField } from './SelectField';
+export { ModalSelectField } from './ModalSelectField';
 export { FieldMapper } from './FieldMapper';
 export { CustomLayout } from './CustomLayout';
 export { styles } from './styles';

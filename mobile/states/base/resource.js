@@ -41,11 +41,23 @@ export default function resourceBuilder(resource, customEndpoints = (builder) =>
                 const headers = isOptionsObject && payload.headers ? payload.headers : undefined;
                 const method = isOptionsObject && payload.method ? payload.method : 'POST';
 
+                // Check if we're dealing with FormData (either explicitly or through options)
+                const hasFormDataFlag = isOptionsObject && payload.options && payload.options.formData;
+                const isFormData = data instanceof FormData || hasFormDataFlag;
+
+                // For FormData, let the browser set the Content-Type with correct boundary
+                const formDataHeaders = isFormData ? {
+                    // Don't set Content-Type for FormData - browser will set it with boundary
+                    'Content-Type': undefined,
+                    ...headers
+                } : headers;
+
                 return {
                     url: `${resource}${qStr}`,
                     method,
                     body: data,
-                    headers,
+                    headers: formDataHeaders,
+                    formData: isFormData,
                     ...(isOptionsObject && payload.options)
                 };
             },
@@ -59,11 +71,23 @@ export default function resourceBuilder(resource, customEndpoints = (builder) =>
                 const headers = payload.headers;
                 const method = payload.method || 'PATCH';
 
+                // Check if we're dealing with FormData (either explicitly or through options)
+                const hasFormDataFlag = payload.options && payload.options.formData;
+                const isFormData = data instanceof FormData || hasFormDataFlag;
+
+                // For FormData, let the browser set the Content-Type with correct boundary
+                const formDataHeaders = isFormData ? {
+                    // Don't set Content-Type for FormData - browser will set it with boundary
+                    'Content-Type': undefined,
+                    ...headers
+                } : headers;
+
                 return {
                     url: `${resource}/edit/${id}${qStr}`,
                     method,
                     body: data,
-                    headers,
+                    headers: formDataHeaders,
+                    formData: isFormData,
                     ...(payload.options)
                 };
             },
