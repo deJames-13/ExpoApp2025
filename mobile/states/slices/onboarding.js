@@ -67,7 +67,15 @@ const onboardingSlice = createSlice({
                 isEmailVerified: state.isEmailVerified,
                 isPendingVerification: state.isPendingVerification
             };
-        }
+        },
+        // Add this new reducer
+        setBasicInfoFromGoogle: (state, action) => {
+            state.basicInfo = {
+                ...state.basicInfo,
+                ...action.payload,
+                isCompleted: false // Always mark as incomplete so user can review
+            };
+        },
     }
 });
 
@@ -77,7 +85,8 @@ export const {
     setAddressInfo,
     setEmailVerified,
     setPendingVerification, // Export the new action
-    resetOnboarding
+    resetOnboarding,
+    setBasicInfoFromGoogle
 } = onboardingSlice.actions;
 
 export const selectCurrentStep = (state) => state.onboarding.currentStep;

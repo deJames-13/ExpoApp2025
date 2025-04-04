@@ -18,7 +18,8 @@ module.exports = {
             bundleIdentifier: "com.eyezone.app",
             infoPlist: {
                 NSCameraUsageDescription: "Allow $(PRODUCT_NAME) to access your camera."
-            }
+            },
+            googleServicesFile: "./GoogleService-Info.plist"
         },
         android: {
             package: "com.eyezone.app",
@@ -39,11 +40,12 @@ module.exports = {
             tsconfigPaths: true
         },
         plugins: [
+            "expo-dev-client",
             "expo-secure-store",
             [
                 "@react-native-google-signin/google-signin",
                 {
-                    "iosUrlScheme": "com.googleusercontent.apps._some_id",
+                    "iosUrlScheme": "com.googleusercontent.apps.30159689923-smgoi9h65q5q63jqh5ju7rbf1c51erdk",
                 }
             ],
             [

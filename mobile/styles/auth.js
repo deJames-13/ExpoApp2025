@@ -149,6 +149,20 @@ const styles = StyleSheet.create({
         marginTop: 16,
         alignItems: 'center',
     },
+    socialLoginContainer: {
+        marginTop: 16,
+        width: '100%',
+    },
+    divider: {
+        marginVertical: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    dividerText: {
+        color: '#888',
+        paddingHorizontal: 10,
+        fontSize: 14,
+    },
 });
 
 export { colors }

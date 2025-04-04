@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { View, TouchableOpacity, Image, StatusBar, SafeAreaView, ActivityIndicator, Platform } from 'react-native';
-import { Text, TextInput, TouchableRipple, Button } from 'react-native-paper';
+import { Text, TextInput, TouchableRipple, Button, Divider } from 'react-native-paper';
 import { H1 } from '~/components/ui/typography';
 import styles, { colors } from '~/styles/auth';
 import { useState } from 'react';
@@ -8,6 +8,7 @@ import Toast from 'react-native-toast-message';
 import { useLoginMutation } from '~/states/api/auth';
 import { useSelector } from 'react-redux';
 import { selectFcmToken } from '~/states/slices/auth';
+import GoogleSignInButton from '~/components/ui/GoogleSignInButton';
 
 export function Login() {
     const navigation = useNavigation();
@@ -168,6 +169,20 @@ export function Login() {
                             <Text style={styles.buttonText}>LOGIN</Text>
                         )}
                     </TouchableRipple>
+
+                    {/* Google Sign-In */}
+                    <View style={styles.socialLoginContainer}>
+                        <Divider style={styles.divider}>
+                            <Text style={styles.dividerText}>OR</Text>
+                        </Divider>
+                        
+                        <GoogleSignInButton 
+                            onStart={() => setShowSplash(true)}
+                            onSuccess={() => setShowSplash(false)}
+                            onError={() => setShowSplash(false)}
+                            mode="login"
+                        />
+                    </View>
 
                     <View style={styles.guestButtonContainer}>
                         <Button

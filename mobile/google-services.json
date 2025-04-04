@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "30159689923-3rcb64lk9jdfc4v5hhnjc9kfu9jf87vk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.eyezone.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
           "client_id": "30159689923-fh7vim3ulhr232gaq8kgdbjkar8mj4nh.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

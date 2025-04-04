@@ -170,6 +170,96 @@ const authApi = apiSlice.injectEndpoints({
                 }
             },
         }),
+
+        // Update these endpoints for Google auth
+        loginWithGoogle: builder.mutation({
+            query: (googleData) => ({
+                url: '/users/auth/google/login',
+                method: 'POST',
+                body: googleData
+            }),
+            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    const { user, token, isNewUser } = data;
+
+                    // Store credentials with FCM token
+                    await persistCredentials(user, token, arg.fcmToken);
+
+                    // Update Redux state
+                    dispatch(setCredentials({
+                        userInfo: user,
+                        token,
+                        fcmToken: arg.fcmToken
+                    }));
+
+                    // If this is an existing user, update onboarding status
+                    if (!isNewUser) {
+                        let updatedStatus = {};
+
+                        if (user?.info) {
+                            // Check if basic info is complete
+                            if (user.info.first_name && user.info.last_name) {
+                                updatedStatus.hasBasicInfo = true;
+                            }
+
+                            // Check if address info is complete
+                            if (user.info.address && user.info.city) {
+                                updatedStatus.hasAddressInfo = true;
+                            }
+                        }
+
+                        // Check if email is verified (Google emails are auto-verified)
+                        if (user?.emailVerifiedAt) {
+                            updatedStatus.isEmailVerified = true;
+                        }
+
+                        dispatch(updateOnboardingStatus(updatedStatus));
+                    }
+                } catch (error) {
+                    console.error('Google login error:', error);
+                }
+            },
+        }),
+
+        registerWithGoogle: builder.mutation({
+            query: (googleData) => ({
+                url: '/users/auth/google/register',
+                method: 'POST',
+                body: googleData
+            }),
+            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    const { user, token, isNewUser } = data;
+
+                    // Store credentials with FCM token
+                    await persistCredentials(user, token, arg.fcmToken);
+
+                    // Update Redux state
+                    dispatch(setCredentials({
+                        userInfo: user,
+                        token,
+                        fcmToken: arg.fcmToken
+                    }));
+
+                    // Set email as verified since Google emails are verified
+                    dispatch(updateOnboardingStatus({
+                        isEmailVerified: true,
+                    }));
+
+                    // For new users, they still need to complete onboarding
+                    if (isNewUser) {
+                        dispatch(updateOnboardingStatus({
+                            hasBasicInfo: false,
+                            hasAddressInfo: false,
+                        }));
+                    }
+                } catch (error) {
+                    console.error('Google registration error:', error);
+                }
+            },
+        }),
     }),
 });
 
@@ -182,6 +272,8 @@ export const {
     useRefreshTokenQuery,
     useSendVerificationEmailMutation,
     useVerifyEmailMutation,
+    useLoginWithGoogleMutation,
+    useRegisterWithGoogleMutation
 } = authApi;
 
 export { authApi };

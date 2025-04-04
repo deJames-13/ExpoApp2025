@@ -15,6 +15,14 @@ import {
   GoogleAuthProvider
 } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  GoogleOneTapSignIn,
+  statusCodes,
+  isErrorWithCode,
+  isSuccessResponse,
+  isNoSavedCredentialFoundResponse,
+  isCancelledResponse
+} from '@react-native-google-signin/google-signin';
 
 const requiredEnvVars = [
   'EXPO_PUBLIC_FIREBASE_API_KEY',
@@ -63,6 +71,13 @@ export {
   signOut,
   sendPasswordResetEmail,
   onAuthStateChanged,
-  GoogleAuthProvider
+  GoogleAuthProvider,
+  // Export new Google Sign-In helpers
+  GoogleOneTapSignIn,
+  statusCodes,
+  isErrorWithCode,
+  isSuccessResponse,
+  isNoSavedCredentialFoundResponse,
+  isCancelledResponse
 };
-export default app
+export default app;
