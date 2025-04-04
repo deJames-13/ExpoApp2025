@@ -1,171 +1,44 @@
-// Sample product data that follows the structure of the mongoose schema
-export const productsData = [
-    {
-        id: '1',
-        name: 'Ray-Ban Aviator',
-        description: 'Classic aviator sunglasses with gold frame',
-        slug: 'ray-ban-aviator',
-        price: 150.00,
-        stock: 24,
-        category: { _id: 'cat1', name: 'Sunglasses' },
-        brand: { _id: 'brand1', name: 'Ray-Ban' },
-        supplier: { _id: 'sup1', name: 'Luxottica' },
-        averageRating: 4.7,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Ray-Ban Aviator' }]
-    },
-    {
-        id: '2',
-        name: 'Oakley Holbrook',
-        description: 'Sports sunglasses with polarized lenses',
-        slug: 'oakley-holbrook',
-        price: 129.99,
-        stock: 15,
-        category: { _id: 'cat1', name: 'Sunglasses' },
-        brand: { _id: 'brand2', name: 'Oakley' },
-        supplier: { _id: 'sup2', name: 'Oakley Direct' },
-        averageRating: 4.5,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Oakley Holbrook' }]
-    },
-    {
-        id: '3',
-        name: 'Gucci Optical',
-        description: 'Luxury optical frames with Gucci branding',
-        slug: 'gucci-optical',
-        price: 310.00,
-        stock: 8,
-        category: { _id: 'cat2', name: 'Eyeglasses' },
-        brand: { _id: 'brand3', name: 'Gucci' },
-        supplier: { _id: 'sup3', name: 'Kering Eyewear' },
-        averageRating: 4.8,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Gucci Optical' }]
-    },
-    {
-        id: '4',
-        name: 'Contact Lens Solution',
-        description: 'Multipurpose solution for all types of contact lenses',
-        slug: 'contact-lens-solution',
-        price: 12.99,
-        stock: 42,
-        category: { _id: 'cat3', name: 'Accessories' },
-        brand: { _id: 'brand4', name: 'Biotrue' },
-        supplier: { _id: 'sup4', name: 'Bausch & Lomb' },
-        averageRating: 4.2,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Contact Lens Solution' }]
-    },
-    {
-        id: '5',
-        name: 'Anti-fog Cloth',
-        description: 'Microfiber cloth that prevents fogging on lenses',
-        slug: 'anti-fog-cloth',
-        price: 7.99,
-        stock: 56,
-        category: { _id: 'cat3', name: 'Accessories' },
-        brand: { _id: 'brand5', name: 'ClearView' },
-        supplier: { _id: 'sup5', name: 'EyeCare Supplies' },
-        averageRating: 4.0,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Anti-fog Cloth' }]
-    },
-    {
-        id: '6',
-        name: 'Prada PR 17WS',
-        description: 'Designer sunglasses with UV protection',
-        slug: 'prada-pr-17ws',
-        price: 280.00,
-        stock: 12,
-        category: { _id: 'cat1', name: 'Sunglasses' },
-        brand: { _id: 'brand6', name: 'Prada' },
-        supplier: { _id: 'sup1', name: 'Luxottica' },
-        averageRating: 4.6,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Prada PR 17WS' }]
-    },
-    {
-        id: '7',
-        name: 'Burberry BE2325',
-        description: 'Elegant optical frames with check pattern',
-        slug: 'burberry-be2325',
-        price: 220.00,
-        stock: 18,
-        category: { _id: 'cat2', name: 'Eyeglasses' },
-        brand: { _id: 'brand7', name: 'Burberry' },
-        supplier: { _id: 'sup1', name: 'Luxottica' },
-        averageRating: 4.4,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Burberry BE2325' }]
-    },
-    {
-        id: '8',
-        name: 'Lens Cleaning Kit',
-        description: 'Complete kit for cleaning eyeglasses and sunglasses',
-        slug: 'lens-cleaning-kit',
-        price: 15.99,
-        stock: 35,
-        category: { _id: 'cat3', name: 'Accessories' },
-        brand: { _id: 'brand8', name: 'OptiClean' },
-        supplier: { _id: 'sup5', name: 'EyeCare Supplies' },
-        averageRating: 4.3,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Lens Cleaning Kit' }]
-    },
-    {
-        id: '9',
-        name: 'Eyeglass Case',
-        description: 'Hard-shell protective case for eyeglasses',
-        slug: 'eyeglass-case',
-        price: 24.99,
-        stock: 47,
-        category: { _id: 'cat3', name: 'Accessories' },
-        brand: { _id: 'brand9', name: 'SafeKeep' },
-        supplier: { _id: 'sup5', name: 'EyeCare Supplies' },
-        averageRating: 4.1,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Eyeglass Case' }]
-    },
-    {
-        id: '10',
-        name: 'Tom Ford FT5634-B',
-        description: 'Luxury optical frames with T-detail temples',
-        slug: 'tom-ford-ft5634b',
-        price: 395.00,
-        stock: 9,
-        category: { _id: 'cat2', name: 'Eyeglasses' },
-        brand: { _id: 'brand10', name: 'Tom Ford' },
-        supplier: { _id: 'sup1', name: 'Luxottica' },
-        averageRating: 4.9,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Tom Ford FT5634-B' }]
-    },
-    {
-        id: '11',
-        name: 'Maui Jim Honi',
-        description: 'Polarized sunglasses for water activities',
-        slug: 'maui-jim-honi',
-        price: 329.99,
-        stock: 11,
-        category: { _id: 'cat1', name: 'Sunglasses' },
-        brand: { _id: 'brand11', name: 'Maui Jim' },
-        supplier: { _id: 'sup6', name: 'Maui Jim Inc.' },
-        averageRating: 4.7,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Maui Jim Honi' }]
-    },
-    {
-        id: '12',
-        name: 'Vision Test Chart',
-        description: 'Professional Snellen chart for vision testing',
-        slug: 'vision-test-chart',
-        price: 49.99,
-        stock: 7,
-        category: { _id: 'cat4', name: 'Equipment' },
-        brand: { _id: 'brand12', name: 'OptiView' },
-        supplier: { _id: 'sup7', name: 'Medical Supplies Co.' },
-        averageRating: 4.2,
-        reviews: [],
-        images: [{ url: 'https://via.placeholder.com/50', alt: 'Vision Test Chart' }]
-    },
-];
+import api from "~/screens/Home/api";
+
+// Initial empty array for products
+export const productsData = [];
+
+// Function to fetch products from the backend
+export const fetchProducts = async () => {
+  try {
+    const response = await api.get('/api/v1/products');
+    
+    // Check if the response has the expected structure with resource field
+    if (response.data && Array.isArray(response.data.resource)) {
+      // Format the response to match expected structure
+      return response.data.resource.map(product => ({
+        ...product,
+        // Convert price from string to number
+        price: product.price ? parseFloat(product.price) : 0,
+        // Convert string values to object format for compatibility with existing code
+        category: typeof product.category === 'string' 
+          ? { _id: product.id, name: product.category } 
+          : product.category,
+        brand: typeof product.brand === 'string'
+          ? { _id: product.id, name: product.brand }
+          : product.brand,
+        supplier: product.supplier 
+          ? (typeof product.supplier === 'string' 
+              ? { _id: product.id, name: product.supplier } 
+              : product.supplier)
+          : { _id: null, name: 'Unknown' }
+      }));
+    } else if (response.data && Array.isArray(response.data)) {
+      return response.data.map(product => ({
+        ...product,
+        price: product.price ? parseFloat(product.price) : 0,
+      }));
+    } else {
+      console.warn('Unexpected API response format:', response.data);
+      return []; // Return empty array as fallback
+    }
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+};

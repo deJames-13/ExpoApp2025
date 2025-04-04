@@ -1,14 +1,14 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { productsData } from './data'
+import { productsData, fetchProducts } from './data'
 import { productColumns, productActions } from './table-data'
 import { ProductModal } from './modal'
 import { ResourceTable, processTableData } from '~/components/ResourceTable'
 
 export function Products() {
     const [products, setProducts] = useState(productsData);
-    const [loading, _setLoading] = useState(false); // Prefix with underscore to indicate intentionally unused
+    const [loading, setLoading] = useState(true); // Changed to be used for actual loading state
     const [refreshing, setRefreshing] = useState(false);
     const [currentSort, setCurrentSort] = useState({ field: 'name', direction: 'asc' });
     const [searchText, setSearchText] = useState('');
@@ -20,8 +20,38 @@ export function Products() {
         'brand.name'
     ];
 
-    // Use useMemo for filteredProducts to prevent recalculation on every render
+    // Fetch products on component mount
+    useEffect(() => {
+        const loadProducts = async () => {
+            setLoading(true);
+            try {
+                const data = await fetchProducts();
+                console.log('Fetched products:', data); // Add logging to debug
+                
+                // Ensure we have valid data before setting state
+                if (Array.isArray(data)) {
+                    setProducts(data);
+                } else {
+                    console.error('Received invalid products data:', data);
+                    setProducts([]);
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                setProducts([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        loadProducts();
+    }, []);
+
+    // Use useMemo with null check for filteredProducts
     const filteredProducts = useMemo(() => {
+        if (!Array.isArray(products)) {
+            console.warn('Products is not an array:', products);
+            return [];
+        }
         return processTableData(products, searchText, currentSort, searchFields);
     }, [products, currentSort, searchText, searchFields]);
 
@@ -98,20 +128,24 @@ export function Products() {
         });
     }, [handleView, handleEdit, handleDelete]);
 
-    // Refresh handler
+    // Refresh handler updated to use the API with better error handling
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
-
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log('Refreshed products');
-
-        // In a real app, you'd fetch fresh data here
-        // const response = await fetch('/api/products');
-        // const data = await response.json();
-        // setProducts(data);
-
-        setRefreshing(false);
+        try {
+            const data = await fetchProducts();
+            
+            // Ensure we have valid data before setting state
+            if (Array.isArray(data)) {
+                setProducts(data);
+            } else {
+                console.error('Received invalid products data:', data);
+                // Keep existing products if we get invalid data
+            }
+        } catch (error) {
+            console.error('Error refreshing products:', error);
+        } finally {
+            setRefreshing(false);
+        }
     }, []);
 
     // Search handler (client-side)
@@ -163,7 +197,7 @@ export function Products() {
                         actions={actions}
                         title="Products"
                         emptyText="No products found"
-                        imageField="images[0].url"
+                        imageField="images[0]?.url || 'https://via.placeholder.com/50'"
                         subtitleField="brand.name"
                         onRefresh={handleRefresh}
                         refreshing={refreshing}
