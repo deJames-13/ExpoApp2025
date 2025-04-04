@@ -85,9 +85,6 @@ const authApi = apiSlice.injectEndpoints({
                     url: 'users/profile',
                     method: 'PATCH',
                     body: userData,
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    },
                     formData: true
                 };
             },
