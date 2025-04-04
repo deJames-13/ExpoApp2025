@@ -226,7 +226,7 @@ class UserService extends Service {
     await sendEmail({ email, message });
   }
 
-  authenticateWithGoogle = async (email, googleIdToken, displayName, photoURL, createIfNotExists = false) => {
+  authenticateWithGoogle = async (email, googleIdToken, displayName, photoURL, fcmToken, createIfNotExists = false) => {
     // In a production app, verify the Google ID token here
     // This would typically use Google's auth library
     // For this implementation, we'll trust the token from the frontend
@@ -242,34 +242,24 @@ class UserService extends Service {
 
       // Create new user with Google info
       const username = email.split('@')[0] + Math.floor(Math.random() * 1000);
-
       user = await this.model.create({
         email,
         username,
         password: Math.random().toString(36).slice(-12), // Random password (user will login with Google)
         provider: 'google',
-        emailVerifiedAt: new Date(), // Auto-verify Google emails
       });
 
-      // Create user info with Google profile data
-      if (displayName) {
-        const names = displayName.split(' ');
-        const firstName = names[0] || '';
-        const lastName = names.slice(1).join(' ') || '';
-
-        await this.createUserInfo(user, {
-          first_name: firstName,
-          last_name: lastName,
-          avatar: photoURL || null
-        });
-      }
 
       isNewUser = true;
     }
 
-    // Generate auth token
-    const token = this.generateToken(user._id);
+    if (!user?.emailVerifiedAt) {
+      user.emailVerifiedAt = new Date();
+      user.provider = 'google';
+    }
 
+    const token = generateToken(user._id);
+    console.log("User: ", { user, token, isNewUser })
     return { user, token, isNewUser };
   };
 }

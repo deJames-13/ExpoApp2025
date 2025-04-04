@@ -51,6 +51,10 @@ const User = new Schema({
       fcmToken: {
         type: String,
         default: null,
+      },
+      provider: {
+        type: String,
+        default: null,
       }
     },
     { timestamps: true },
