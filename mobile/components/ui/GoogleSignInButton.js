@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { TouchableOpacity, Text, View, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { auth } from '../../firebase';
+import { auth } from '~/firebase';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectFcmToken } from '../../states/slices/auth';
-import { useLoginWithGoogleMutation, useRegisterWithGoogleMutation } from '../../states/api/auth';
-import { setBasicInfoFromGoogle } from '../../states/slices/onboarding';
+import { selectFcmToken } from '~/states/slices/auth';
+import { useLoginWithGoogleMutation, useRegisterWithGoogleMutation } from '~/states/api/auth';
+import { setBasicInfoFromGoogle } from '~/states/slices/onboarding';
 import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
-    webClientId: 'YOUR_WEB_CLIENT_ID', // Get this from your Firebase console
+    offlineAccess: true,
+    webClientId: '30159689923-289e9bi2fvvbl9cgq2v046gj1a9ornl4.apps.googleusercontent.com',
+    iosClientId: '30159689923-smgoi9h65q5q63jqh5ju7rbf1c51erdk.apps.googleusercontent.com',
+    scopes: ['profile', 'email']
 });
 
 const GoogleSignInButton = ({ mode = 'login', onStart, onSuccess, onError }) => {
@@ -31,22 +34,34 @@ const GoogleSignInButton = ({ mode = 'login', onStart, onSuccess, onError }) => 
             if (onStart) onStart();
 
             // Google Sign-In
-            await GoogleSignin.hasPlayServices();
-            const userInfo = await GoogleSignin.signIn();
+            await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-            // Get the ID token
-            const googleCredential = GoogleAuthProvider.credential(userInfo.idToken);
+            // Clear any previous sign-in first
+            await GoogleSignin.signOut();
+
+            // Perform the sign-in
+            const userInfoResponse = await GoogleSignin.signIn();
+            console.log("Google Sign-in successful with user info:", userInfoResponse);
+
+            // Correctly extract information from the nested response structure
+            const { idToken } = userInfoResponse.data;
+            const googleUser = userInfoResponse.data.user;
+
+            // Create the Firebase credential with the Google ID token
+            const googleCredential = GoogleAuthProvider.credential(idToken);
+            console.log("Created Google credential for Firebase");
 
             // Sign in to Firebase 
             const userCredential = await signInWithCredential(auth, googleCredential);
             const firebaseUser = userCredential.user;
+            console.log("Firebase sign-in successful with user:", firebaseUser.email);
 
             // Prepare data for API
             const googleData = {
-                email: firebaseUser.email,
-                googleIdToken: userInfo.idToken,
-                displayName: firebaseUser.displayName,
-                photoURL: firebaseUser.photoURL,
+                email: googleUser.email,
+                googleIdToken: idToken,
+                displayName: googleUser.name,
+                photoURL: googleUser.photo,
                 fcmToken
             };
 
@@ -61,11 +76,10 @@ const GoogleSignInButton = ({ mode = 'login', onStart, onSuccess, onError }) => 
             // Handle successful authentication
             if (result.isNewUser) {
                 // Pre-populate form with Google data
-                const names = firebaseUser.displayName ? firebaseUser.displayName.split(' ') : ['', ''];
                 dispatch(setBasicInfoFromGoogle({
-                    first_name: names[0] || '',
-                    last_name: names.slice(1).join(' ') || '',
-                    avatar: firebaseUser.photoURL || null
+                    first_name: googleUser.givenName || '',
+                    last_name: googleUser.familyName || '',
+                    avatar: googleUser.photo || null
                 }));
 
                 // Redirect to onboarding for new users
@@ -86,13 +100,44 @@ const GoogleSignInButton = ({ mode = 'login', onStart, onSuccess, onError }) => 
             if (onSuccess) onSuccess();
         } catch (error) {
             console.error('Google sign-in error:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
 
             // Handle specific errors
             let errorMessage = 'Google sign-in failed';
-            if (error.code === 'SIGN_IN_CANCELLED') {
+
+            // Check for the "No account exists" error specifically
+            if (error.data?.message?.includes('No account exists with this Google email')) {
+                if (mode === 'login') {
+                    // First show toast informing the user
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Account Not Found',
+                        text2: 'You need to register with Google first. Redirecting you to registration...',
+                        visibilityTime: 4000,
+                    });
+
+                    // Wait briefly to allow the toast to be visible
+                    setTimeout(() => {
+                        // Navigate to the registration screen
+                        navigation.replace("GuestNav", {
+                            screen: 'Register',
+                        });
+                    }, 2000);
+
+                    if (onError) onError(error);
+                    setIsLoading(false);
+                    return; // Exit early to prevent the default error toast
+                } else {
+                    errorMessage = 'Please complete registration to continue';
+                }
+            } else if (error.code === 'SIGN_IN_CANCELLED') {
                 errorMessage = 'Sign in cancelled';
             } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
                 errorMessage = 'Google Play Services not available';
+            } else if (error.code === 'auth/argument-error') {
+                errorMessage = 'Authentication error - Invalid credentials format';
+            } else if (error.code === 'auth/invalid-credential') {
+                errorMessage = 'Invalid credentials provided';
             } else if (error.data?.message) {
                 errorMessage = error.data.message;
             }

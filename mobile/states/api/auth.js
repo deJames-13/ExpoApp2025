@@ -174,7 +174,7 @@ const authApi = apiSlice.injectEndpoints({
         // Update these endpoints for Google auth
         loginWithGoogle: builder.mutation({
             query: (googleData) => ({
-                url: '/auth/google/login',
+                url: '/users/auth/google/login',
                 method: 'POST',
                 body: googleData
             }),
@@ -224,7 +224,7 @@ const authApi = apiSlice.injectEndpoints({
 
         registerWithGoogle: builder.mutation({
             query: (googleData) => ({
-                url: '/auth/google/register',
+                url: '/users/auth/google/register',
                 method: 'POST',
                 body: googleData
             }),

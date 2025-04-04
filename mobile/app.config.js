@@ -18,7 +18,8 @@ module.exports = {
             bundleIdentifier: "com.eyezone.app",
             infoPlist: {
                 NSCameraUsageDescription: "Allow $(PRODUCT_NAME) to access your camera."
-            }
+            },
+            googleServicesFile: "./GoogleService-Info.plist"
         },
         android: {
             package: "com.eyezone.app",
