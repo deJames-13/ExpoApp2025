@@ -158,7 +158,6 @@ export default function useResource({ resourceName, silent = true }) {
   } = {}) => {
     setLoading(true);
     try {
-      console.log(`[${resourceName}] Fetching data...`);
       const response = await getAll(qStr).unwrap();
       const results = Array.isArray(response)
         ? response
@@ -181,6 +180,7 @@ export default function useResource({ resourceName, silent = true }) {
         messages.fetch.success(capitalizeName)
       );
 
+      console.log(`[${resourceName}] Fetched data: ${results?.length}`);
       return response;
     } catch (error) {
       setLoading(false);

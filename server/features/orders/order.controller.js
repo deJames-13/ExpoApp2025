@@ -15,13 +15,48 @@ class OrderController extends Controller {
 
     if (!req.query.limit) req.query.limit = 10;
     if (!req.query.page) req.query.page = 1;
+
+    // Reset the query before building it
+    this.service.query = null;
+
+    // Apply the base filter
+    this.service.applyForceFilter();
+
+    // Add search functionality
+    if (req.query.q && req.query.q.trim() !== '') {
+      const searchQuery = req.query.q.trim();
+      const searchRegex = new RegExp(searchQuery, 'i'); // Case insensitive search
+
+      // First, we need to populate the user field to search within it
+      this.service.query = this.service.query.populate({
+        path: 'user',
+        select: 'username email info.first_name info.last_name info.contact'
+      });
+
+      // Now add the search conditions using $or operator
+      this.service.query = this.service.query.find({
+        $or: [
+          { status: searchRegex },
+          // We'll use aggregation style matching for the populated fields
+          { 'user.username': searchRegex },
+          { 'user.email': searchRegex },
+          { 'user.info.first_name': searchRegex },
+          { 'user.info.last_name': searchRegex },
+          { 'user.info.contact': searchRegex }
+        ]
+      });
+    }
+
     const meta = await this.service._getMeta(req.query);
 
-    this.service.query = this.service.model.find(this.service.forceFilter)
-      .sort({ createdAt: -1 });
+    // Apply sort after all other conditions
+    this.service.query = this.service.query.sort({ createdAt: -1 });
 
     const data = await this.service.paginate(meta).exec();
     const message = data.length ? 'Data collection fetched!' : 'No data found!';
+
+    console.log('Search results count:', data?.length);
+    console.log('Query params:', req.query);
 
     const resource = (await this.resource?.collection(data)) || data;
     this.success({ res, message, resource, meta: { ...meta, count: data.length } });
