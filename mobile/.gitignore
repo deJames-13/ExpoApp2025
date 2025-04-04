@@ -3,7 +3,7 @@ ios
 .env*.local
 .env*.production
 env.ts
-
+google-services.json
 
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 GoogleService-Info.plist
