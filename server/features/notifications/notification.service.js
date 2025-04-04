@@ -40,7 +40,7 @@ class NotificationService extends Service {
       apns: {
         headers: {
           'apns-priority': priority === 'high' ? '10' : '5',
-          'apns-expiration': Math.floor(Date.now() / 1000) + timeToLive
+          'apns-expiration': (Math.floor(Date.now() / 1000) + timeToLive).toString()
         }
       },
       ...options // Merge custom options
