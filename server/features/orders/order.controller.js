@@ -13,53 +13,80 @@ class OrderController extends Controller {
     if (user.role !== ROLES.ADMIN)
       this.service.setUserId(user._id);
 
-    if (!req.query.limit) req.query.limit = 10;
-    if (!req.query.page) req.query.page = 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const skip = (page - 1) * limit;
 
-    // Reset the query before building it
-    this.service.query = null;
+    try {
+      const searchQuery = req.query.q?.trim();
+      const searchRegex = searchQuery ? new RegExp(searchQuery, 'i') : null;
 
-    // Apply the base filter
-    this.service.applyForceFilter();
+      const pipeline = [];
 
-    // Add search functionality
-    if (req.query.q && req.query.q.trim() !== '') {
-      const searchQuery = req.query.q.trim();
-      const searchRegex = new RegExp(searchQuery, 'i'); // Case insensitive search
+      // Apply filter (example: only own user's orders)
+      if (user.role !== ROLES.ADMIN) {
+        pipeline.push({ $match: { user: user._id } });
+      }
 
-      // First, we need to populate the user field to search within it
-      this.service.query = this.service.query.populate({
-        path: 'user',
-        select: 'username email info.first_name info.last_name info.contact'
+      // Join user data
+      pipeline.push({
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'user'
+        }
       });
 
-      // Now add the search conditions using $or operator
-      this.service.query = this.service.query.find({
-        $or: [
-          { status: searchRegex },
-          // We'll use aggregation style matching for the populated fields
-          { 'user.username': searchRegex },
-          { 'user.email': searchRegex },
-          { 'user.info.first_name': searchRegex },
-          { 'user.info.last_name': searchRegex },
-          { 'user.info.contact': searchRegex }
-        ]
+      pipeline.push({ $unwind: '$user' });
+
+      // Search conditions
+      if (searchRegex) {
+        pipeline.push({
+          $match: {
+            $or: [
+              { status: searchRegex },
+              { 'user.username': searchRegex },
+              { 'user.email': searchRegex },
+            ]
+          }
+        });
+      }
+
+      // Sort by creation date
+      pipeline.push({ $sort: { createdAt: -1 } });
+
+      // Pagination
+      pipeline.push({ $skip: skip }, { $limit: limit });
+
+      // Execute aggregation
+      const data = await this.service.model.aggregate(pipeline);
+      const total = await this.service.model.aggregate([...pipeline.slice(0, -2), { $count: 'count' }]);
+      const count = total[0]?.count || 0;
+
+      const message = data.length ? 'Data collection fetched!' : 'No data found!';
+      const resource = (await this.resource?.collection(data)) || data;
+
+      this.success({
+        res,
+        message,
+        resource,
+        meta: {
+          limit,
+          page,
+          total: count,
+          count: data.length
+        }
+      });
+    } catch (error) {
+      console.error('Error in getAll:', error);
+      return this.error({
+        res,
+        message: 'Error retrieving orders',
+        statusCode: 500,
+        error
       });
     }
-
-    const meta = await this.service._getMeta(req.query);
-
-    // Apply sort after all other conditions
-    this.service.query = this.service.query.sort({ createdAt: -1 });
-
-    const data = await this.service.paginate(meta).exec();
-    const message = data.length ? 'Data collection fetched!' : 'No data found!';
-
-    console.log('Search results count:', data?.length);
-    console.log('Query params:', req.query);
-
-    const resource = (await this.resource?.collection(data)) || data;
-    this.success({ res, message, resource, meta: { ...meta, count: data.length } });
   };
 
   getById = async (req, res) => {

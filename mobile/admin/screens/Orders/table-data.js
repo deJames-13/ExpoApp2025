@@ -51,6 +51,7 @@ export const orderTableColumns = [
         render: (order) => (
             <View>
                 <Text>{order.user?.info?.first_name || ''} {order.user?.info?.last_name || ''}</Text>
+                <Text style={{ fontSize: 12, color: '#666', fontStyle: 'italic' }}>@{order.user?.username}</Text>
                 <Text style={{ fontSize: 12, color: '#666' }}>{order.user?.email || order.user?.username}</Text>
             </View>
         ),

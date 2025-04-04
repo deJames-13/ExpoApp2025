@@ -16,6 +16,21 @@ let notesPhrases = {
   cancelled: 'Your order has been cancelled',
 }
 export default class OrderResource extends Resource {
+  // Override the toArray method to safely handle data without toJSON method
+  async toArray() {
+    if (Array.isArray(this.data)) {
+      return await Promise.all(
+        this.data.map(async (item) => {
+          // Safely handle items that may not have toJSON
+          const itemData = item?.toJSON ? item.toJSON() : item;
+          return await this.transform(itemData);
+        })
+      );
+    }
+    // Handle single item case
+    const itemData = this.data?.toJSON ? this.data.toJSON() : this.data;
+    return await this.transform(itemData);
+  }
 
   async transform(order) {
     const { _id, user, products, review = null, ...rest } = order;
