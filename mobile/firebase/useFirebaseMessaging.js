@@ -1,7 +1,7 @@
-import React from 'react'
-import { getApp } from '@react-native-firebase/app'
-import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission as requestMessagingPermission, getInitialNotification, onNotificationOpenedApp, registerDeviceForRemoteMessages } from '@react-native-firebase/messaging'
-import Toast from 'react-native-toast-message'
+import React, { useEffect } from 'react';
+import { getApp } from '@react-native-firebase/app';
+import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission as requestMessagingPermission, getInitialNotification, onNotificationOpenedApp, registerDeviceForRemoteMessages } from '@react-native-firebase/messaging';
+import Toast from 'react-native-toast-message';
 import { setIsChanging, storeFcmToken as reduxStoreFcmToken, setNotification } from "~/states/slices/firebase";
 import { setFcmToken } from "~/states/slices/auth";
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,102 +18,146 @@ export default function useFirebaseMessaging() {
 
     const requestPermission = async () => {
         try {
-            const messaging = getMessaging(getApp())
-            const authStatus = await requestMessagingPermission(messaging)
+            const messaging = getMessaging(getApp());
+            const authStatus = await requestMessagingPermission(messaging);
             const enabled =
                 authStatus === 1 || // AUTHORIZED
-                authStatus === 2    // PROVISIONAL
+                authStatus === 2;   // PROVISIONAL
 
             if (enabled) {
-                console.log('Authorization status:', authStatus)
+                console.log('Authorization status:', authStatus);
             }
 
-            return enabled
-
+            return enabled;
         } catch (error) {
-            console.log('Error requesting permission:', error)
-            return false
+            console.log('Error requesting permission:', error);
+            return false;
         }
-    }
+    };
 
     // Handle notification based on its content
     const handleNotification = (remoteMessage) => {
+        if (!remoteMessage) return;
+
         const title = remoteMessage.notification?.title || 'New Notification';
         const body = remoteMessage.notification?.body || '';
+        const data = remoteMessage.data || {};
 
         // Store the notification in Redux state
         dispatch(setNotification({ notification: remoteMessage }));
 
-        // Check if notification is a JSON message
+        // First check if we have relevant data in the data payload
+        if (data.type === 'order' && data.id) {
+            // Create a data object merging notification data and data payload
+            const notificationData = {
+                type: data.type,
+                id: data.id,
+                status: data.status,
+                screen: data.screen || 'OrderDetailView',
+                tab: data.tab || 'Orders',
+                isAdmin: isAdmin
+            };
+
+            // Show actionable toast for order notifications
+            let statusText = data.status
+                ? data.status.charAt(0).toUpperCase() + data.status.slice(1)
+                : 'updated';
+
+            const orderText = `Order #${data.id.substring(0, 8)}`;
+
+            Toast.show({
+                type: 'actionable',
+                text1: `${orderText} ${statusText}`,
+                text2: 'Tap to view details',
+                onPress: () => navigateFromNotification(navigation, notificationData, isAdmin),
+                visibilityTime: 5000,
+            });
+
+            // If app was opened from a notification, navigate directly
+            const isNotifOpen = remoteMessage._notificationOpened || remoteMessage.data?._notificationOpened;
+            if (isNotifOpen) {
+                // Small delay to make sure navigation is ready
+                setTimeout(() => {
+                    navigateFromNotification(navigation, notificationData, isAdmin);
+                }, 300);
+            }
+
+            return;
+        }
+
+        // Check if notification body is a JSON message (fallback)
         if (isJsonMessage(body)) {
             const jsonData = parseJsonMessage(body);
-
             if (jsonData) {
                 // Add isAdmin flag to help with navigation routing
                 jsonData.isAdmin = isAdmin;
 
-                // For order notifications, show an actionable toast
-                if (jsonData.type === 'order') {
-                    let statusText = 'updated';
-                    if (jsonData.status) {
-                        statusText = jsonData.status.charAt(0).toUpperCase() + jsonData.status.slice(1);
-                    }
-
-                    const orderText = `Order #${jsonData.id.substring(0, 8)}`;
-
-                    Toast.show({
-                        type: 'actionable',
-                        text1: `${orderText} ${statusText}`,
-                        text2: 'Tap to view details',
-                        type: 'info',
-                        onPress: () =>
-                            navigation.navigate('Orders', {
-                                screen: 'OrderDetailView',
-                                params: { orderId: jsonData.id }
-                            }),
-                        visibilityTime: 5000,
-                    });
-                } else {
-                    // For other types, just show regular toast but still make it clickable
-                    Toast.show({
-                        type: 'actionable',
-                        text1: title,
-                        text2: 'Tap to view',
-                        onPress: () =>
-                            navigation.navigate('Orders', {
-                                screen: 'OrderDetailView',
-                                params: { orderId: jsonData.id }
-                            }),
-                        visibilityTime: 4000,
-                    });
-                }
-            } else {
-                // Fallback for failed JSON parsing
+                // Show actionable toast
                 Toast.show({
-                    type: 'info',
+                    type: 'actionable',
                     text1: title,
-                    text2: 'New notification received',
+                    text2: 'Tap to view details',
+                    onPress: () => navigateFromNotification(navigation, jsonData, isAdmin),
                     visibilityTime: 4000,
                 });
+
+                // Navigate automatically if opened from notification
+                const isNotifOpen = remoteMessage._notificationOpened || remoteMessage.data?._notificationOpened;
+                if (isNotifOpen) {
+                    setTimeout(() => {
+                        navigateFromNotification(navigation, jsonData, isAdmin);
+                    }, 300);
+                }
+
+                return;
             }
-        } else {
-            // Regular notification toast
-            Toast.show({
-                type: 'info',
-                text1: title,
-                text2: body,
-                visibilityTime: 4000,
-            });
         }
+
+        // Regular notification toast for anything else
+        Toast.show({
+            type: 'info',
+            text1: title,
+            text2: body,
+            visibilityTime: 4000,
+        });
     };
 
-    React.useEffect(() => {
+    // Process initial notification on app cold start
+    useEffect(() => {
+        const processInitialNotification = async () => {
+            try {
+                const messaging = getMessaging(getApp());
+                const initialMsg = await getInitialNotification(messaging);
+
+                if (initialMsg) {
+                    console.log('App opened from quit state:', initialMsg);
+
+                    // Mark this message as opened from notification
+                    if (initialMsg.data) {
+                        initialMsg.data._notificationOpened = true;
+                    }
+
+                    // Handle with a small delay to ensure navigation is ready
+                    setTimeout(() => {
+                        handleNotification(initialMsg);
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('Error processing initial notification:', error);
+            }
+        };
+
+        processInitialNotification();
+    }, [navigation, isAdmin]);
+
+    // Main effect for setting up messaging
+    useEffect(() => {
         const setupMessaging = async () => {
             dispatch(setIsChanging({ isChanging: true }));
 
             if (await requestPermission()) {
-                console.log('Permission granted. Getting token...')
-                const messaging = getMessaging(getApp())
+                console.log('Permission granted. Getting token...');
+                const messaging = getMessaging(getApp());
 
                 // Existing token
                 const existingToken = await getToken(messaging);
@@ -157,15 +201,15 @@ export default function useFirebaseMessaging() {
                 // Register the device for remote messages
                 await registerDeviceForRemoteMessages(messaging);
 
-                // Handle initial notification (app opened from terminated state)
-                const initialMsg = await getInitialNotification(messaging);
-                if (initialMsg) {
-                    handleNotification(initialMsg);
-                }
-
                 // Handle notification opened app (from background state)
                 const notificationOpenedUnsubscribe = onNotificationOpenedApp(messaging, (remoteMessage) => {
-                    console.log('Notification caused app to open from background state:', remoteMessage.notification);
+                    console.log('Notification caused app to open from background state:', remoteMessage);
+
+                    // Mark this message as opened from notification
+                    if (remoteMessage.data) {
+                        remoteMessage.data._notificationOpened = true;
+                    }
+
                     handleNotification(remoteMessage);
                 });
 

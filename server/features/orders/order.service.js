@@ -118,12 +118,14 @@ class OrderService extends Service {
     if (user) {
       const title = 'Order Status';
 
-      // Create notification data
+      // Create notification data with navigation information
       const notificationData = {
         type: 'order',
         id: id,
         status: status,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        screen: 'OrderDetailView',
+        tab: 'Orders'
       };
 
       // Plain text message as fallback for email
@@ -136,7 +138,7 @@ class OrderService extends Service {
         body: plainTextMessage,
         data: notificationData,
         status: 'active',
-        type: 'info'
+        type: 'order'
       });
 
       // Send push notification if FCM token exists

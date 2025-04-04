@@ -7,7 +7,8 @@
  * @returns {boolean} - Whether the message is a JSON string
  */
 export const isJsonMessage = (message) => {
-    return typeof message === 'string' && message.startsWith('JSON:');
+    if (!message || typeof message !== 'string') return false;
+    return message.startsWith('JSON:');
 };
 
 /**
@@ -29,72 +30,37 @@ export const parseJsonMessage = (message) => {
 };
 
 /**
- * Determine navigation parameters based on notification type
- * @param {object} data - Notification data with type and id
- * @returns {object|null} - Navigation parameters or null if invalid
- */
-export const getNavigationParams = (data) => {
-    if (!data || !data.type) return null;
-
-    switch (data.type) {
-        case 'order':
-            // Determine if user is admin or regular user
-            const isAdmin = data.isAdmin === true;
-
-            if (isAdmin) {
-                return {
-                    rootNav: 'AdminNav',
-                    params: {
-                        screen: 'AdminRoutesStack',
-                        params: {
-                            screen: 'AdminOrderDetail',
-                            params: { order: { id: data.id } }
-                        }
-                    }
-                };
-            } else {
-                return {
-                    rootNav: 'DefaultNav',
-                    params: {
-                        screen: 'DefaultRoutes',
-                        params: {
-                            screen: 'OrderDetailView',
-                            params: { orderId: data.id }
-                        }
-                    }
-                };
-            }
-
-        // Add more notification types as needed
-        case 'product':
-            return {
-                rootNav: data.isAdmin ? 'AdminNav' : 'DefaultNav',
-                params: {
-                    screen: 'ProductDetailView',
-                    params: { productId: data.id }
-                }
-            };
-
-        default:
-            return null;
-    }
-};
-
-/**
  * Navigate to the appropriate screen based on notification data
  * @param {object} data - Notification data object
  * @param {function} navigation - React Navigation navigate function
+ * @param {boolean} isAdmin - Whether the user is an admin
  * @returns {boolean} - Whether navigation was attempted
  */
-export const navigateFromNotification = (data, navigation) => {
-    if (!data || !navigation) return false;
-
-    const navParams = getNavigationParams(data);
-    if (!navParams) return false;
+export const navigateFromNotification = (navigation, data, isAdmin = false) => {
+    if (!navigation || !data) return;
 
     try {
-        navigation.navigate(navParams.rootNav, navParams.params);
-        return true;
+        // Handle order notifications
+        if (data.type === 'order' && data.id) {
+            if (isAdmin) {
+                navigation.navigate('AdminRoutesStack', {
+                    screen: 'AdminOrderDetail',
+                    params: { orderId: data.id }
+                });
+            } else {
+                navigation.navigate('DefaultRoutes', {
+                    screen: 'Orders',
+                    param: {
+                        screen: 'OrderDetailView',
+                        params: { orderId: data.id }
+                    }
+                });
+            }
+            return true;
+        }
+
+        // Handle other notification types as needed
+        return false;
     } catch (error) {
         console.error('Navigation error:', error);
         return false;
