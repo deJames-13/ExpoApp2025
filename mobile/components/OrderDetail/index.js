@@ -62,9 +62,12 @@ const OrderDetail = ({
                 <View style={styles.reviewButtonContainer}>
                     <TouchableOpacity
                         style={styles.reviewButton}
-                        onPress={() => navigation.navigate('ReviewScreen', {
-                            screen: 'ReviewForm',
-                            params: { order }
+                        onPress={() => navigation.navigate('DefaultRoutes', {
+                            screen: 'Reviews',
+                            params: {
+                                screen: 'ReviewForm',
+                                params: { order }
+                            }
                         })}
                     >
                         <Ionicons name="star-outline" size={18} color="#fff" />
