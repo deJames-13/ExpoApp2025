@@ -10,8 +10,14 @@ class NotificationService extends Service {
     // Store the user's FCM token for future reference
     if (!user || !fcmToken) return null;
 
-    // Check if user model has fcmToken field directly or needs separate storage
     try {
+      // Update user's FCM token in UserModel
+      await UserModel.findByIdAndUpdate(
+        user._id || user,
+        { fcmToken },
+        { new: true }
+      );
+
       return await this.model.create({
         user: user._id || user,
         data: { fcmToken },
@@ -27,20 +33,38 @@ class NotificationService extends Service {
   }
 
   async sendNotification({ deviceToken, title = '', body = '', data = {}, priority = 'high', timeToLive = 3600, options = {} }) {
+    // Convert any non-string values in data to strings (FCM requirement)
+    const processedData = Object.keys(data).reduce((result, key) => {
+      result[key] = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
+      return result;
+    }, {});
+
     const message = {
       notification: {
-        title, body
+        title,
+        body
       },
       token: deviceToken,
-      data,
+      data: processedData,
       android: {
         priority,
-        ttl: timeToLive * 1000 // timeToLive is in seconds
+        ttl: timeToLive * 1000, // timeToLive is in seconds
+        notification: {
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK', // Standard for React Native
+          channelId: 'high_importance_channel',
+        }
       },
       apns: {
         headers: {
           'apns-priority': priority === 'high' ? '10' : '5',
           'apns-expiration': (Math.floor(Date.now() / 1000) + timeToLive).toString()
+        },
+        payload: {
+          aps: {
+            // Include content-available for background delivery
+            'content-available': 1,
+            sound: 'default'
+          }
         }
       },
       ...options // Merge custom options
@@ -50,7 +74,8 @@ class NotificationService extends Service {
       console.log('Successfully sent message:', response);
       return response;
     }).catch((e) => {
-      console.log('Error sending message:', e);
+      console.error('Error sending message:', e);
+      throw e;
     });
   }
 
@@ -100,19 +125,25 @@ class NotificationService extends Service {
 
       // If sendPush is true, get users with FCM tokens and send push notifications
       if (sendPush) {
-        // This could be optimized by using a single query to get all users with their FCM tokens
-        // For now, we'll assume we have a way to get FCM tokens for users
-        const pushPromises = userIds.map(async (userId) => {
-          // This is a placeholder. In a real app, you would query the user model or a device token table
-          // to get the FCM token for this user
-          const user = await this.getUserWithFcmToken(userId);
+        const users = await UserModel.find({
+          _id: { $in: userIds },
+          fcmToken: { $exists: true, $ne: '' }
+        }).select('_id fcmToken').lean();
 
-          if (user && user.fcmToken) {
+        const pushPromises = users.map(user => {
+          if (user.fcmToken) {
             return this.sendNotification({
               deviceToken: user.fcmToken,
               title,
-              body,
-              data,
+              // Prefix body with JSON: for special handling
+              body: type === 'order' ? `JSON:${JSON.stringify(data)}` : body,
+              data: {
+                ...data,
+                type,
+                notificationType: type,
+                screen: data.screen || 'OrderDetailView',
+                tab: data.tab || 'Orders'
+              },
               priority,
               timeToLive,
               options
