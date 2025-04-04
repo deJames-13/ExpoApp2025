@@ -128,6 +128,7 @@ class UserController extends Controller {
         googleIdToken,
         displayName,
         photoURL,
+        fcmToken,
         true // create new user if doesn't exist
       );
 
