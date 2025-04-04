@@ -32,10 +32,10 @@ export function Home({ navigation }) {
 
     const renderHeader = () => (
         <>
-            <SearchFilter
+            {/* <SearchFilter
                 onSearch={handleSearch}
                 onFilterChange={handleFilterChange}
-            />
+            /> */}
 
             <BannerCarousel banners={banners} />
 

@@ -7,6 +7,7 @@ import {
   productCreateRules,
   productUpdateRules,
 } from './product.validation.js';
+import mongoose from 'mongoose';
 
 class ProductController extends Controller {
   service = ProductService;
@@ -16,6 +17,197 @@ class ProductController extends Controller {
     update: productUpdateRules,
   };
 
+  getAll = async (req, res) => {
+    try {
+      // Use aggregation pipeline instead of simple queries
+      if (req.query.all) {
+        const data = await this.service?.getAll();
+        const message = data.length ? 'Data collection fetched!' : 'No data found!';
+        const resource = (await this.resource?.collection(data)) || data;
+        return this.success({ res, message, resource, meta: { count: data.length } });
+      }
+
+      // Process the query parameters
+      const processedQuery = this._processQueryParams(req.query);
+      console.log(processedQuery);
+
+      // Parse pagination parameters
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
+
+      // Build aggregation pipeline
+      const pipeline = this._buildAggregationPipeline(processedQuery, skip, limit);
+
+      // Execute the pipeline
+      const data = await this.service.model.aggregate(pipeline);
+
+      // Get total count for pagination
+      const countPipeline = this._buildAggregationPipeline(processedQuery);
+      countPipeline.push({ $count: 'total' });
+      const countResult = await this.service.model.aggregate(countPipeline);
+
+      const total = countResult.length > 0 ? countResult[0].total : 0;
+      const meta = {
+        page,
+        limit,
+        total,
+        count: data.length,
+        pages: Math.ceil(total / limit)
+      };
+
+      const message = data.length ? 'Data collection fetched!' : 'No data found!';
+      const resource = (await this.resource?.collection(data)) || data;
+
+      this.success({ res, message, resource, meta });
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      return this.error({
+        res,
+        message: 'An error occurred while fetching products',
+        error
+      });
+    }
+  };
+
+  _buildAggregationPipeline(query, skip = null, limit = null) {
+    const pipeline = [];
+
+    // Match stage for filtering
+    const matchStage = {};
+
+    // Handle name search
+    if (query.name && query.name.$regex) {
+      matchStage.name = {
+        $regex: query.name.$regex,
+        $options: query.name.$options || 'i'
+      };
+    }
+
+    // Handle category filtering
+    if (query.category) {
+      try {
+        matchStage.category = new mongoose.Types.ObjectId(query.category);
+      } catch (error) {
+        console.error('Invalid category ID:', error);
+        // If the ID is invalid, use it as is (will likely match nothing)
+        matchStage.category = query.category;
+      }
+    }
+
+    // Handle price range
+    if (query.price) {
+      matchStage.price = {};
+      if (query.price.$gte !== undefined) {
+        matchStage.price.$gte = parseFloat(query.price.$gte);
+      }
+      if (query.price.$lte !== undefined) {
+        matchStage.price.$lte = parseFloat(query.price.$lte);
+      }
+    }
+
+    // Add match stage if not empty
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    // Handle population/lookup of related entities
+    pipeline.push(
+      // Lookup category
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'categoryDetails'
+        }
+      },
+      // Unwind category (converts array to object)
+      {
+        $unwind: {
+          path: '$categoryDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      // Lookup brand
+      {
+        $lookup: {
+          from: 'brands',
+          localField: 'brand',
+          foreignField: '_id',
+          as: 'brandDetails'
+        }
+      },
+      // Unwind brand
+      {
+        $unwind: {
+          path: '$brandDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    );
+
+    // Handle sorting
+    if (query.sort) {
+      const sortStage = {};
+      const sortField = query.sort.startsWith('-')
+        ? query.sort.substring(1)
+        : query.sort;
+      const sortDirection = query.sort.startsWith('-') ? -1 : 1;
+      sortStage[sortField] = sortDirection;
+      pipeline.push({ $sort: sortStage });
+    } else {
+      // Default sort by creation date (newest first)
+      pipeline.push({ $sort: { createdAt: -1 } });
+    }
+
+    // Add pagination if specified
+    if (skip !== null) {
+      pipeline.push({ $skip: skip });
+    }
+
+    if (limit !== null) {
+      pipeline.push({ $limit: limit });
+    }
+
+    return pipeline;
+  }
+
+  // Helper method to process query parameters for MongoDB compatibility
+  _processQueryParams(query) {
+    const processedQuery = { ...query };
+
+    // Handle numeric operators for price ranges
+    Object.keys(processedQuery).forEach(key => {
+      // Check if the key contains MongoDB operator syntax like price[$gte]
+      if (key.includes('[$')) {
+        const matches = key.match(/^(\w+)\[(.*)\]$/);
+        if (matches) {
+          const [, field, operator] = matches;
+
+          // Create the field in the query if it doesn't exist
+          if (!processedQuery[field]) {
+            processedQuery[field] = {};
+          }
+
+          // Convert value to number if it's a numeric field
+          const value = ['price', 'quantity', 'averageRating'].includes(field)
+            ? processedQuery[key]  // Keep as string for now, convert in aggregation
+            : processedQuery[key];
+
+          // Set the operator with its value
+          processedQuery[field][operator] = value;
+
+          // Remove the original key with the operator syntax
+          delete processedQuery[key];
+        }
+      }
+    });
+
+    return processedQuery;
+  }
+
+  // ... rest of the controller methods remain unchanged
   getReviewDetails = async (req, res) => {
     const data = await this.service.getReviewDetails(req.params.id);
     if (!data) return this.error({ res, message: 'Data not found!' });

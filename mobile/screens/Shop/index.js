@@ -86,10 +86,10 @@ export default function ShopScreen({ navigation }) {
 
     const renderHeader = () => (
         <>
-            <SearchFilter
+            {/* <SearchFilter
                 onSearch={handleSearch}
                 onFilterChange={handleFilterChange}
-            />
+            /> */}
 
             <CategoryList
                 categories={categories}

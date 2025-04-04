@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 export default function SearchFilter({ onSearch, onFilterChange }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
-    const filters = ['All', 'Newest', 'Popular', 'Sale'];
+    // const filters = ['All', 'Newest', 'Popular', 'Sale'];
     const navigation = useNavigation();
 
     const handleSearch = (text) => {
