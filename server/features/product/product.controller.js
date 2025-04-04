@@ -55,27 +55,35 @@ class ProductController extends Controller {
     if (!this.rules.create.length)
       validData = await this.validator(req, res, this.rules.create);
 
-    if (!validData.brand || !validData.supplier || !validData.category) {
-      return this.error({ res, message: 'Brand, Supplier, and Category are required!' });
-    }
-    if (validData.category) {
-      validData.category = await this.service.getCategoryId(validData.category);
-    }
-    validData.brand = await this.service.getBrandId(validData.brand);
-    validData.supplier = await this.service.getSupplierId(validData.supplier);
+    try {
+      // Handle brand, category, and supplier - create if they don't exist
+      if (validData.category) {
+        validData.category = await this.service.getCategoryId(validData.category);
+      }
 
-    let data = await this.service?.create(validData);
-    if (!data._id) return this.error({ res, message: 'Invalid data!' });
+      if (validData.brand) {
+        validData.brand = await this.service.getBrandId(validData.brand);
+      }
 
-    // Enhanced image handling for multiple sources (multer files or base64)
-    if (req.file || req.files || req.base64File || req.base64Files || this.service.hasField('images')) {
-      const images = this.addImage(req);
-      data.images = [...(data.images || []), ...images];
-      await data.save();
+      if (validData.supplier) {
+        validData.supplier = await this.service.getSupplierId(validData.supplier);
+      }
+
+      let data = await this.service?.create(validData);
+      if (!data._id) return this.error({ res, message: 'Invalid data!' });
+
+      // Enhanced image handling for multiple sources (multer files or base64)
+      if (req.file || req.files || req.base64File || req.base64Files || this.service.hasField('images')) {
+        const images = this.addImage(req);
+        data.images = [...(data.images || []), ...images];
+        await data.save();
+      }
+
+      const resource = (await this.resource?.make(data)) || data;
+      this.success({ res, message: 'Data created!', resource });
+    } catch (error) {
+      return this.error({ res, message: error.message });
     }
-
-    const resource = (await this.resource?.make(data)) || data;
-    this.success({ res, message: 'Data created!', resource });
   };
 
   // Method to update an existing product
@@ -84,35 +92,41 @@ class ProductController extends Controller {
     if (!this.rules.update.length)
       validData = await this.validator(req, res, this.rules.update);
 
-    if (!validData.brand || !validData.supplier || !validData.category) {
-      return this.error({ res, message: 'Brand, Supplier, and Category are required!' });
+    try {
+      // Handle brand, category, and supplier - create if they don't exist
+      if (validData.brand) {
+        validData.brand = await this.service.getBrandId(validData.brand);
+      }
+
+      if (validData.supplier) {
+        validData.supplier = await this.service.getSupplierId(validData.supplier);
+      }
+
+      if (validData.category) {
+        validData.category = await this.service.getCategoryId(validData.category);
+      }
+
+      let data = await this.service?.update(req.params.id, validData);
+      if (!data._id) return this.error({ res, message: 'Invalid data!' });
+
+      // Enhanced image handling for multiple sources (multer files or base64)
+      if (req.file || req.files || req.base64File || req.base64Files || this.service.hasField('images')) {
+        const images = this.addImage(req);
+        const oldImages = new Set(
+          (data.images || []).map((image) => image.public_id)
+        );
+        const newImages = images.filter(
+          (image) => !oldImages.has(image.public_id)
+        );
+        data.images = [...(data.images || []), ...newImages];
+        data = await data.save();
+      }
+
+      const resource = (await this.resource?.make(data)) || data;
+      this.success({ res, message: 'Data updated!', resource });
+    } catch (error) {
+      return this.error({ res, message: error.message });
     }
-
-    const brandId = await this.service.getBrandId(validData.brand);
-    const supplierId = await this.service.getSupplierId(validData.supplier);
-    const categoryId = await this.service.getCategoryId(validData.category)
-    validData.brand = brandId;
-    validData.supplier = supplierId;
-    validData.category = categoryId;
-
-    let data = await this.service?.update(req.params.id, validData);
-    if (!data._id) return this.error({ res, message: 'Invalid data!' });
-
-    // Enhanced image handling for multiple sources (multer files or base64)
-    if (req.file || req.files || req.base64File || req.base64Files || this.service.hasField('images')) {
-      const images = this.addImage(req);
-      const oldImages = new Set(
-        (data.images || []).map((image) => image.public_id)
-      );
-      const newImages = images.filter(
-        (image) => !oldImages.has(image.public_id)
-      );
-      data.images = [...(data.images || []), ...newImages];
-      data = await data.save();
-    }
-
-    const resource = (await this.resource?.make(data)) || data;
-    this.success({ res, message: 'Data updated!', resource });
   };
 
   productSales = async (req, res) => {

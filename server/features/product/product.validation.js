@@ -14,18 +14,9 @@ const commonRules = () => {
     check('price').notEmpty().withMessage('Price is required!').isNumeric().withMessage('Price must be a number!'),
     check('stock').notEmpty().withMessage('Stock is required!').isNumeric().withMessage('Stock must be a number!'),
     check('description').optional({ checkFalsy: true }).isString(),
-    check('category')
-      .notEmpty()
-      .withMessage('Category is required!'),
-    check('brand')
-      .notEmpty()
-      .withMessage('Brand is required!'),
-    check('category')
-      .notEmpty()
-      .withMessage('Category is required!'),
-    check('supplier')
-      .notEmpty()
-      .withMessage('Supplier is required!'),
+    check('category').optional({ checkFalsy: true }).isString().withMessage('Category must be a string!'),
+    check('brand').optional({ checkFalsy: true }).isString().withMessage('Brand must be a string!'),
+    check('supplier').optional({ checkFalsy: true }).isString().withMessage('Supplier must be a string!')
   ];
 };
 
