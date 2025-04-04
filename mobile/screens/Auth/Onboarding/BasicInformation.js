@@ -152,10 +152,24 @@ export default function BasicInformation() {
 
     // Update formValues whenever form fields change
     const handleFieldChange = (field, value) => {
-        setFormValues(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        // Special handling for avatar field to ensure consistent format
+        if (field === 'avatar' && value) {
+            // If it's already a string (URL or base64), use it directly
+            // Otherwise, extract URI from the image object that might be returned
+            const imageValue = typeof value === 'string'
+                ? value
+                : (value.uri || value.assets?.[0]?.uri || null);
+
+            setFormValues(prev => ({
+                ...prev,
+                [field]: imageValue
+            }));
+        } else {
+            setFormValues(prev => ({
+                ...prev,
+                [field]: value
+            }));
+        }
     };
 
     const getFormSubmitRef = (submitFn) => {

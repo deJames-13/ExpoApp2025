@@ -148,10 +148,14 @@ export default function AddressInformation() {
                 zip_code: values.zip_code,
             };
 
-            // Create hybrid FormData with both 'info' field and individual fields
-            const formData = createHybridFormData(
+            console.log('Preparing profile update with avatar:', basicInfo.avatar ? 'Present' : 'Not present');
+
+            // Create hybrid FormData with both 'info' field and file
+            // Using base64 encoding to avoid issues with remote servers - this is crucial for fixing boundary issues
+            const formData = await createHybridFormData(
                 userInfo,
-                { avatar: basicInfo.avatar }
+                basicInfo.avatar ? { avatar: basicInfo.avatar } : {},
+                true // Explicitly use base64 encoding for local files
             );
 
             console.log('User ID:', currentUser.id);
@@ -175,38 +179,28 @@ export default function AddressInformation() {
         } catch (error) {
             // Enhanced error handling
             let errorMessage = 'Failed to update your information.';
+            console.error('Profile update error details:', error);
 
-            // Handle specific error status codes
-            if (error.status === 400) {
-                // Bad Request - usually validation errors or duplicate data
+            // Specific error for multipart boundary issues
+            if (error?.data?.message?.includes('Boundary not found')) {
+                errorMessage = 'There was an issue uploading your profile image. Please try again.';
+            }
+            // Handle other specific error status codes
+            else if (error.status === 400) {
                 errorMessage = error.data?.message || 'Invalid data provided.';
-
-                // Handle specific bad request messages
-                if (error.data?.message?.includes('Contact already exists')) {
-                    errorMessage = 'This contact number is already registered with another account.';
-                }
             } else if (error.status === 422) {
-                // Unprocessable Entity - validation errors
                 errorMessage = error.data?.message || 'Please check the provided information.';
-
-                // If we have detailed validation errors, show the first one
                 if (error.data?.errors?.details && error.data.errors.details.length > 0) {
                     const firstError = error.data.errors.details[0];
                     errorMessage = `${firstError.path}: ${firstError.msg}`;
                 }
             } else if (error.status === 401 || error.status === 403) {
-                // Authentication or authorization error
                 errorMessage = 'Please log in again to continue.';
             } else if (error.status === 500) {
-                // Server error
                 errorMessage = 'A server error occurred. Please try again later.';
             } else if (error.status === 'FETCH_ERROR') {
-                // Network error
                 errorMessage = 'Network connection error. Please check your internet connection.';
             }
-
-            // Log the error for debugging (consider removing in production)
-            console.error('Error updating profile:', error);
 
             // Show error message to the user
             Toast.show({
