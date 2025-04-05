@@ -8,6 +8,7 @@ import { productStatusOptions } from './validation';
  * @param {boolean} options.includeCamera - Whether to include camera field
  * @param {boolean} options.includeAdvancedFields - Whether to include advanced fields like ratings
  * @param {boolean} options.allowMultipleImages - Whether to allow multiple image selection
+ * @param {boolean} options.showImagesAsCarousel - Whether to display images as a carousel
  * @param {Object} options.customFields - Custom fields to include
  * @param {Array} options.exclude - Field names to exclude
  * @param {Array} options.brandOptions - Options for brand dropdown
@@ -21,6 +22,7 @@ export const getProductFields = (options = {}) => {
         includeCamera = true,
         includeAdvancedFields = true,
         allowMultipleImages = false,
+        showImagesAsCarousel = false,
         customFields = {},
         exclude = [],
         brandOptions = [],
@@ -103,7 +105,18 @@ export const getProductFields = (options = {}) => {
             mode: includeCamera ? 'both' : 'upload',
             aspectRatio: 4 / 3,
             quality: 0.8,
-            multiple: allowMultipleImages
+            multiple: allowMultipleImages,
+            displayAsCarousel: showImagesAsCarousel,
+            carouselHeight: 250,
+            carouselWidth: '100%',
+            carouselAutoplay: true,
+            carouselIndicatorStyle: { backgroundColor: '#2089dc' },
+            carouselActiveIndicatorStyle: { backgroundColor: '#0056b3' },
+            deleteIconColor: '#ff6b6b',
+            previewMaxHeight: 300,
+            resizeMode: 'cover',
+            renderImagePreview: true, // Ensures image previews are rendered
+            debug: true // Add this temporarily to help diagnose image issues
         }
     ] : [];
 
