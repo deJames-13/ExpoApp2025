@@ -2,28 +2,6 @@ import * as AdminScreens from '~/admin/screens';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export const tabRoutes = () => [
-    {
-        name: 'Dashboard',
-        component: AdminScreens.Dashboard,
-        icon: 'dashboard',
-        options: {
-            tabBarIcon: ({ color, size }) => (
-                <Icon name="dashboard" color={color} size={size} />
-            ),
-        },
-        isTab: true,
-    },
-    {
-        name: 'Account',
-        component: AdminScreens.AdminAccount,
-        icon: 'account-circle',
-        options: {
-            tabBarIcon: ({ color, size }) => (
-                <Icon name="account-circle" color={color} size={size} />
-            ),
-        },
-        isTab: true,
-    },
 ];
 
 export const adminRoutes = () => [
@@ -97,7 +75,7 @@ export const adminRoutes = () => [
         icon: 'edit',
         options: {
             title: 'Edit Profile',
-            headerShown: true,
+            headerShown: false,
         },
         hidden: true,
     },
@@ -107,7 +85,7 @@ export const adminRoutes = () => [
         icon: 'settings',
         options: {
             title: 'Settings',
-            headerShown: true,
+            headerShown: false,
         },
         hidden: true,
     },
@@ -117,7 +95,7 @@ export const adminRoutes = () => [
         icon: 'help',
         options: {
             title: 'Help & Support',
-            headerShown: true,
+            headerShown: false,
         },
         hidden: true,
     },

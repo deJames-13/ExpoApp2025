@@ -61,50 +61,54 @@ export function AdminDrawerContent() {
                     {adminEmail && <Text style={styles.userEmail}>{adminEmail}</Text>}
                 </View>
             </View>
-
             <Divider style={globalStyles.divider} />
-
             {/* Admin Navigation Menu */}
             <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
                 <View style={navigationStyles.drawerItemsContainer}>
-                    {/* Tabbed Navigations */}
-                    {tabbedRoutes.map((route) => (
-                        <TouchableOpacity
-                            key={route.name}
-                            style={[
-                                navigationStyles.drawerItem,
-                                curr === route.name && styles.activeItem,
-                                globalStyles.row
-                            ]}
-                            onPress={() => {
-                                setCurr(route.name);
-                                // Navigate to tab route structure with clear intent
-                                navigation.navigate("AdminNav", {
-                                    screen: "AdminTabsRoute",
-                                    params: { screen: route.name },
-                                });
-                                // Close the drawer after navigation
-                                navigation.closeDrawer();
-                            }}
-                        >
-                            <MaterialIcon
-                                name={route.icon}
-                                size={22}
-                                color={curr === route.name ? "#007aff" : "#555"}
-                                style={{ marginRight: 12 }}
-                            />
-                            <Text style={[
-                                styles.itemText,
-                                curr === route.name && styles.activeItemText
-                            ]}>
-                                {route.name}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
+                    {
+                        tabbedRoutes.length ? <>
+                            {/* Tabbed Navigations */}
+                            {tabbedRoutes.map((route) => (
+                                <TouchableOpacity
+                                    key={route.name}
+                                    style={[
+                                        navigationStyles.drawerItem,
+                                        curr === route.name && styles.activeItem,
+                                        globalStyles.row
+                                    ]}
+                                    onPress={() => {
+                                        setCurr(route.name);
+                                        // Navigate to tab route structure with clear intent
+                                        navigation.navigate("AdminNav", {
+                                            screen: "AdminTabsRoute",
+                                            params: { screen: route.name },
+                                        });
+                                        // Close the drawer after navigation
+                                        navigation.closeDrawer();
+                                    }}
+                                >
+                                    <MaterialIcon
+                                        name={route.icon}
+                                        size={22}
+                                        color={curr === route.name ? "#007aff" : "#555"}
+                                        style={{ marginRight: 12 }}
+                                    />
+                                    <Text style={[
+                                        styles.itemText,
+                                        curr === route.name && styles.activeItemText
+                                    ]}>
+                                        {route.name}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                            <Divider style={[globalStyles.divider, styles.sectionDivider]} />
+
+                        </> : <></>
+                    }
+                
 
                     {drawerRoutes.length > 0 && (
                         <>
-                            <Divider style={[globalStyles.divider, styles.sectionDivider]} />
                             <Text style={styles.sectionTitle}>Management</Text>
 
                             {/* Drawer Navigations */}

@@ -49,11 +49,11 @@ export function AdminAccount() {
             icon: 'bell-outline', 
             onPress: () => navigation.navigate('AdminRoutesStack', { screen: 'Notifications' })
         },
-        { 
-            title: 'System Settings', 
-            icon: 'cog-outline', 
-            onPress: () => navigation.navigate('AdminRoutesStack', { screen: 'AdminSettings' })
-        },
+        // { 
+        //     title: 'System Settings', 
+        //     icon: 'cog-outline', 
+        //     onPress: () => navigation.navigate('AdminRoutesStack', { screen: 'AdminSettings' })
+        // },
         { 
             title: 'Help & Support', 
             icon: 'help-circle-outline', 
