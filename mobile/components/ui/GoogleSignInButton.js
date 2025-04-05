@@ -99,16 +99,12 @@ const GoogleSignInButton = ({ mode = 'login', onStart, onSuccess, onError }) => 
 
             if (onSuccess) onSuccess();
         } catch (error) {
-            console.error('Google sign-in error:', error);
-            console.error('Error details:', JSON.stringify(error, null, 2));
 
-            // Handle specific errors
             let errorMessage = 'Google sign-in failed';
 
             // Check for the "No account exists" error specifically
             if (error.data?.message?.includes('No account exists with this Google email')) {
                 if (mode === 'login') {
-                    // First show toast informing the user
                     Toast.show({
                         type: 'info',
                         text1: 'Account Not Found',
@@ -116,9 +112,7 @@ const GoogleSignInButton = ({ mode = 'login', onStart, onSuccess, onError }) => 
                         visibilityTime: 4000,
                     });
 
-                    // Wait briefly to allow the toast to be visible
                     setTimeout(() => {
-                        // Navigate to the registration screen
                         navigation.replace("GuestNav", {
                             screen: 'Register',
                         });
@@ -126,7 +120,7 @@ const GoogleSignInButton = ({ mode = 'login', onStart, onSuccess, onError }) => 
 
                     if (onError) onError(error);
                     setIsLoading(false);
-                    return; // Exit early to prevent the default error toast
+                    return;
                 } else {
                     errorMessage = 'Please complete registration to continue';
                 }
@@ -141,6 +135,9 @@ const GoogleSignInButton = ({ mode = 'login', onStart, onSuccess, onError }) => 
             } else if (error.data?.message) {
                 errorMessage = error.data.message;
             }
+
+            console.error('Google sign-in error:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
 
             Toast.show({
                 type: 'error',

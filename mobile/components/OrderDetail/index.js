@@ -62,7 +62,7 @@ const OrderDetail = ({
                 <View style={styles.reviewButtonContainer}>
                     <TouchableOpacity
                         style={styles.reviewButton}
-                        onPress={() => navigation.navigate('ReviewScreen', {
+                        onPress={() => navigation.navigate('Reviews', {
                             screen: 'ReviewForm',
                             params: { order }
                         })}
