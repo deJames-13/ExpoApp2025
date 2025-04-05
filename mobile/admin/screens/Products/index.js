@@ -5,6 +5,8 @@ import { productsData, fetchProducts } from './data'
 import { productColumns, productActions } from './table-data'
 import { ProductModal } from './modal'
 import { ResourceTable, processTableData } from '~/components/ResourceTable'
+import api from '~/axios.config'
+import { useSelector } from 'react-redux'
 
 export function Products() {
     const [products, setProducts] = useState(productsData);
@@ -81,6 +83,68 @@ export function Products() {
         setModalVisible(true);
     }, []);
 
+    // Get auth token for API requests
+    const authToken = useSelector(state => state.auth?.token);
+
+    // Add delete product function that calls the API
+    const deleteProduct = async (productId) => {
+        try {
+            // Set up auth headers for the request
+            const config = {
+                headers: {
+                    'Authorization': authToken ? `Bearer ${authToken}` : ''
+                }
+            };
+            
+            console.log(`Attempting to delete product: ${productId}`);
+            
+            // Make API call to delete the product
+            const response = await api.delete(`/api/v1/products/delete/${productId}`, config);
+            
+            console.log('Delete response:', response.data);
+            
+            // Fix: Check for success correctly based on your API response format
+            // Your API returns { message: "Data deleted!", status: 200, success: true }
+            if (response.data && (response.data.success === true || response.data.status === 200 || response.data.status === 'success')) {
+                // If successful, remove from state
+                setProducts(prevProducts => prevProducts.filter(p => {
+                    // Check both id and _id to ensure we remove the correct product
+                    const pId = p.id || p._id;
+                    return pId !== productId;
+                }));
+                return true;
+            } else {
+                console.error('Unexpected response format:', response.data);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            
+            // Provide more detailed error message
+            let errorMessage = 'Failed to delete product. Please try again.';
+            
+            if (error.response) {
+                // The server responded with an error status
+                console.error('Server error:', error.response.data);
+                
+                if (error.response.status === 404) {
+                    errorMessage = 'Product not found. It may have been already deleted.';
+                } else if (error.response.status === 401) {
+                    errorMessage = 'You are not authorized to delete this product.';
+                } else if (error.response.data && error.response.data.message) {
+                    errorMessage = error.response.data.message;
+                }
+            } else if (error.request) {
+                // The request was made but no response was received
+                errorMessage = 'No response from server. Please check your connection.';
+            }
+            
+            Alert.alert('Error', errorMessage);
+            return false;
+        }
+    };
+
+    // Update the handleDelete function to use the API
     const handleDelete = useCallback((product) => {
         Alert.alert(
             "Delete Product",
@@ -90,13 +154,31 @@ export function Products() {
                 {
                     text: "Delete",
                     style: "destructive",
-                    onPress: () => {
-                        setProducts(products.filter(p => p.id !== product.id));
+                    onPress: async () => {
+                        const productId = product.id || product._id;
+                        if (!productId) {
+                            Alert.alert('Error', 'Invalid product ID');
+                            return;
+                        }
+                        
+                        // Show loading indicator
+                        setLoading(true);
+                        
+                        // Call the delete API
+                        const success = await deleteProduct(productId);
+                        
+                        // Hide loading indicator
+                        setLoading(false);
+                        
+                        // Show success message if operation was successful
+                        if (success) {
+                            Alert.alert('Success', `${product.name} has been deleted successfully`);
+                        }
                     }
                 }
             ]
         );
-    }, [products]);
+    }, [authToken]); // Add authToken to dependencies
 
     // Handle saving product from modal
     const handleSaveProduct = useCallback((productData) => {
