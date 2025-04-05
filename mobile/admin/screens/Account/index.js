@@ -12,6 +12,11 @@ import { ProfileStats } from './components/ProfileStats';
 import { accountStyles } from '~/admin/styles/accountStyles';
 import { adminColors } from '~/styles/adminTheme';
 
+
+export { AdminEditProfile } from './EditProfile'
+export { AdminSettings } from './AdminSettings'
+export { AdminSupport } from './AdminSupport'
+
 export function AdminAccount() {
     const navigation = useNavigation();
     const currentUser = useSelector(selectCurrentUser);

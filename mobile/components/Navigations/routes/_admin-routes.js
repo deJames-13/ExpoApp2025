@@ -68,23 +68,34 @@ export const adminRoutes = () => [
             headerShown: true,
         },
     },
-    // Account related routes
+    {
+        name: 'Users',
+        component: AdminScreens.UsersScreen,
+        icon: 'people',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="people" color={color} size={size} />
+            ),
+        },
+        isTab: false,
+    },
+    {
+        name: 'Reviews',
+        component: AdminScreens.Reviews,
+        icon: 'rate-review',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="rate-review" color={color} size={size} />
+            ),
+        },
+        isTab: false,
+    },
     {
         name: 'AdminEditProfile',
         component: AdminScreens.AdminEditProfile,
         icon: 'edit',
         options: {
             title: 'Edit Profile',
-            headerShown: false,
-        },
-        hidden: true,
-    },
-    {
-        name: 'AdminSettings',
-        component: AdminScreens.AdminSettings,
-        icon: 'settings',
-        options: {
-            title: 'Settings',
             headerShown: false,
         },
         hidden: true,
