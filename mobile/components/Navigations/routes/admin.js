@@ -18,7 +18,7 @@ const CustomAdminHeader = ({ navigation }) => {
     const { currentAdminUser } = useAdminRoute();
 
     // Get admin avatar from user info
-    const adminAvatar = currentAdminUser?.avatar;
+    const adminAvatar = currentAdminUser?.info?.avatar;
     const adminPhotoUrl = currentAdminUser?.photoUrl;
 
     // Determine which image source to use
@@ -199,17 +199,17 @@ export function AdminNav() {
             }}
         >
             <Drawer.Screen
-                name="AdminTabsRoute"
-                component={AdminTabStack}
-                options={{
-                    title: 'Admin Dashboard'
-                }}
-            />
-            <Drawer.Screen
                 name="AdminRoutesStack"
                 component={AdminRoutesStack}
                 options={{
                     title: 'Admin Management'
+                }}
+            />
+            <Drawer.Screen
+                name="AdminTabsRoute"
+                component={AdminTabStack}
+                options={{
+                    title: 'Admin Dashboard'
                 }}
             />
         </Drawer.Navigator>

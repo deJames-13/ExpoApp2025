@@ -33,10 +33,10 @@ export function AdminDrawerContent() {
 
     // Extract admin-specific user info for display
     const adminName = currentUser?.username || 'Admin User';
+    const adminAvatar = currentUser?.info?.avatar || require('~/assets/icon.png');
     const adminRole = currentUser?.role || 'Administrator';
     const adminEmail = currentUser?.email || '';
     const adminInitials = (currentUser?.username?.substring(0, 2) || 'AU').toUpperCase();
-
     return (
         <SafeAreaView style={[navigationStyles.drawerContainer, styles.container]}>
             {/* Admin Header with User Info */}
@@ -51,14 +51,22 @@ export function AdminDrawerContent() {
                     </Text>
                 </View>
                 <View style={styles.userInfo}>
+                    {adminAvatar?.url ? (
+                        <Avatar.Image
+                            source={{ uri: adminAvatar?.url }}
+                            style={styles.avatar}
+                            onError={() => console.log('Failed to load admin avatar')}
+                        />
+                    ) : (
                     <Avatar.Text
                         size={50}
                         label={adminInitials}
                         style={styles.avatar}
                     />
-                    <Text style={styles.userName}>{adminName}</Text>
-                    <Text style={styles.userRole}>{adminRole}</Text>
+                    )}
+                    <Text style={styles.userName}>@{adminName}</Text>
                     {adminEmail && <Text style={styles.userEmail}>{adminEmail}</Text>}
+                    <Text style={[styles.userRole, { fontStyle: 'italic' }]}>-{adminRole}-</Text>
                 </View>
             </View>
             <Divider style={globalStyles.divider} />

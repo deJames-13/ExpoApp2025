@@ -93,7 +93,7 @@ export function AdminAccount() {
                     onPress={handleLogout}
                     textColor={adminColors.background}
                     style={{ 
-                        marginTop: 20,
+                        marginTop: 'auto',
                         backgroundColor: adminColors.status.error,
                     }}
                 >
