@@ -83,6 +83,8 @@ export function AdminDrawerContent() {
                                     screen: "AdminTabsRoute",
                                     params: { screen: route.name },
                                 });
+                                // Close the drawer after navigation
+                                navigation.closeDrawer();
                             }}
                         >
                             <MaterialIcon

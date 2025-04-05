@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet, SafeAreaView, Alert, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { Button, Appbar } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '~/states/slices/auth';
@@ -27,8 +26,7 @@ const ProfileSchema = Yup.object().shape({
     zip_code: Yup.string(),
 });
 
-export function AdminEditProfile() {
-    const navigation = useNavigation();
+export function AdminEditProfile({ navigation }) {
     const currentUser = useSelector(selectCurrentUser);
     const [updateProfile, { isLoading }] = useUpdateProfileMutation();
     const { toast } = useResource({ resourceName: 'users', silent: false });

@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, Text, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView } from 'react-native';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '~/states/slices/auth';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import LoadingScreen from '~/screens/LoadingScreen';
 import { Button } from 'react-native-paper';
 import useLogout from '~/hooks/useLogout';
@@ -12,8 +11,8 @@ import { ProfileMenuItem } from './components/ProfileMenuItem';
 import { ProfileStats } from './components/ProfileStats';
 import { accountStyles } from '~/admin/styles/accountStyles';
 import { adminColors } from '~/styles/adminTheme';
-export { AdminEditProfile } from './EditProfile'
-export const AdminAccount = () => {
+
+export function AdminAccount() {
     const navigation = useNavigation();
     const currentUser = useSelector(selectCurrentUser);
     const { logout, isLoading } = useLogout();
@@ -40,25 +39,25 @@ export const AdminAccount = () => {
 
     // Menu items for admin
     const menuItems = [
-        {
-            title: 'Edit Profile',
-            icon: 'account-edit-outline',
-            onPress: () => navigation.navigate('AdminEditProfile')
+        { 
+            title: 'Edit Profile', 
+            icon: 'account-edit-outline', 
+            onPress: () => navigation.navigate('AdminRoutesStack', { screen: 'AdminEditProfile' })
         },
-        {
-            title: 'Notifications Settings',
-            icon: 'bell-outline',
-            onPress: () => navigation.navigate('AdminNotifications')
+        { 
+            title: 'Notifications Settings', 
+            icon: 'bell-outline', 
+            onPress: () => navigation.navigate('AdminRoutesStack', { screen: 'Notifications' })
         },
-        {
-            title: 'System Settings',
-            icon: 'cog-outline',
-            onPress: () => navigation.navigate('AdminSettings')
+        { 
+            title: 'System Settings', 
+            icon: 'cog-outline', 
+            onPress: () => navigation.navigate('AdminRoutesStack', { screen: 'AdminSettings' })
         },
-        {
-            title: 'Help & Support',
-            icon: 'help-circle-outline',
-            onPress: () => navigation.navigate('AdminSupport')
+        { 
+            title: 'Help & Support', 
+            icon: 'help-circle-outline', 
+            onPress: () => navigation.navigate('AdminRoutesStack', { screen: 'AdminSupport' })
         },
     ];
 
@@ -67,19 +66,16 @@ export const AdminAccount = () => {
     };
 
     return (
-        <SafeAreaView style={accountStyles.container}>
-            <ScrollView
+        <SafeAreaView style={[accountStyles.container, { flex: 1 }]}>
+            <ScrollView 
                 style={{ flex: 1 }}
                 contentContainerStyle={accountStyles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Profile Header with Avatar and Basic Info */}
                 <ProfileHeader user={userData} />
 
-                {/* Admin Stats */}
                 <ProfileStats stats={statsData} />
 
-                {/* Account Management Options */}
                 <View style={accountStyles.infoContainer}>
                     {menuItems.map((item, index) => (
                         <ProfileMenuItem
@@ -91,12 +87,12 @@ export const AdminAccount = () => {
                     ))}
                 </View>
 
-                {/* Logout Button */}
                 <Button
                     mode="contained"
                     icon="logout"
                     onPress={handleLogout}
-                    style={{
+                    textColor={adminColors.background}
+                    style={{ 
                         marginTop: 20,
                         backgroundColor: adminColors.status.error,
                     }}
@@ -107,3 +103,6 @@ export const AdminAccount = () => {
         </SafeAreaView>
     );
 }
+
+// This explicit default export is important for navigation
+export default AdminAccount;

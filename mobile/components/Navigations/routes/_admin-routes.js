@@ -28,6 +28,28 @@ export const tabRoutes = () => [
 
 export const adminRoutes = () => [
     {
+        name: 'Dashboard',
+        component: AdminScreens.Dashboard,
+        icon: 'dashboard',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="dashboard" color={color} size={size} />
+            ),
+        },
+        isTab: false,
+    },
+    {
+        name: 'Account',
+        component: AdminScreens.AdminAccount,
+        icon: 'account-circle',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="account-circle" color={color} size={size} />
+            ),
+        },
+        isTab: false,
+    },
+    {
         name: 'Products',
         component: AdminScreens.Products,
         icon: 'shopping-bag',
@@ -67,6 +89,37 @@ export const adminRoutes = () => [
             title: 'Send Notifications',
             headerShown: true,
         },
+    },
+    // Account related routes
+    {
+        name: 'AdminEditProfile',
+        component: AdminScreens.AdminEditProfile,
+        icon: 'edit',
+        options: {
+            title: 'Edit Profile',
+            headerShown: true,
+        },
+        hidden: true,
+    },
+    {
+        name: 'AdminSettings',
+        component: AdminScreens.AdminSettings,
+        icon: 'settings',
+        options: {
+            title: 'Settings',
+            headerShown: true,
+        },
+        hidden: true,
+    },
+    {
+        name: 'AdminSupport',
+        component: AdminScreens.AdminSupport,
+        icon: 'help',
+        options: {
+            title: 'Help & Support',
+            headerShown: true,
+        },
+        hidden: true,
     },
 ];
 

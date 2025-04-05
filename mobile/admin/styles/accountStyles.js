@@ -2,6 +2,10 @@ import { StyleSheet } from 'react-native';
 import { adminColors } from '~/styles/adminTheme';
 
 export const accountStyles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: adminColors.background,
+    },
     scrollContent: {
         padding: 16,
         paddingBottom: 24,
