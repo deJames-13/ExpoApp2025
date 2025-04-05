@@ -99,7 +99,60 @@ export const deleteUser = async (userId) => {
 // Function to get a single user by ID
 export const getUserById = async (userId) => {
     try {
-        const response = await api.get(`/api/v1/users/${userId}`);
+        // Add populate parameter to ensure the info reference is populated
+        const response = await api.get(`/api/v1/users/${userId}?populate=info`);
+        
+        if (response.data && response.data.resource) {
+            const user = response.data.resource;
+            
+            // If it's an array, take the first item (should be only one)
+            const userData = Array.isArray(user) ? user[0] : user;
+            
+            console.log("Raw user data from API:", JSON.stringify(userData, null, 2));
+            
+            // Make sure we have the user ID
+            const formattedUser = {
+                ...userData,
+                id: userData.id || userData._id,
+            };
+            
+            // Special handling for the info object based on the API response
+            // Check if info is an ObjectID reference or a populated object
+            if (userData.info) {
+                // If info is already a populated object with the properties we need
+                if (typeof userData.info === 'object' && userData.info.first_name) {
+                    formattedUser.info = { ...userData.info };
+                    console.log("Info is already populated with fields:", Object.keys(userData.info));
+                } 
+                // If info is just a string ID, we need to make an additional request
+                else if (typeof userData.info === 'string' || (typeof userData.info === 'object' && userData.info._id)) {
+                    const infoId = typeof userData.info === 'string' ? userData.info : userData.info._id;
+                    console.log(`Info is not populated, fetching info with ID: ${infoId}`);
+                    
+                    try {
+                        // Make an additional request to get the user info
+                        const infoResponse = await api.get(`/api/v1/user-info/${infoId}`);
+                        if (infoResponse.data && infoResponse.data.resource) {
+                            const infoData = infoResponse.data.resource;
+                            formattedUser.info = typeof infoData === 'object' ? 
+                                infoData : 
+                                (Array.isArray(infoData) && infoData.length > 0 ? infoData[0] : {});
+                            console.log("Successfully fetched user info:", Object.keys(formattedUser.info));
+                        }
+                    } catch (error) {
+                        console.error("Failed to fetch user info:", error);
+                        formattedUser.info = { _id: infoId };
+                    }
+                }
+            } else {
+                // If info is missing, initialize an empty object
+                formattedUser.info = {};
+            }
+            
+            console.log("Formatted user for form:", JSON.stringify(formattedUser, null, 2));
+            return formattedUser;
+        }
+        
         return response.data;
     } catch (error) {
         console.error('Error fetching user:', error);

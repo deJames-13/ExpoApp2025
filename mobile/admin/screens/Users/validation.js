@@ -1,9 +1,9 @@
 import * as Yup from 'yup';
 
-// Roles options that can be selected for a user
-export const userRolesOptions = ['customer', 'admin', 'manager'];
+// Export roles if they're defined here
+export const userRolesOptions = ['admin', 'manager', 'employee', 'customer'];
 
-// Base initial values for user form
+// Make sure initialUserValues has the correct structure for info
 export const initialUserValues = {
     username: '',
     email: '',
@@ -22,7 +22,6 @@ export const initialUserValues = {
         photoUrl: null
     },
     emailVerifiedAt: null,
-    fcmToken: null,
     provider: null
 };
 
@@ -41,6 +40,7 @@ export const initialUserValues = {
  * @returns {Object} Yup validation schema
  */
 export const getUserValidationSchema = (options = {}) => {
+    console.log("Getting validation schema with options:", options);
     const {
         requireUsername = true,
         requireEmail = true,

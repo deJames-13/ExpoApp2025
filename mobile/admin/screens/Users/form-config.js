@@ -20,6 +20,8 @@ export const getUserFields = (options = {}) => {
         exclude = []
     } = options;
 
+    console.log(`getUserFields called with options:`, options);
+
     // Base account fields
     const accountFields = [
         {
@@ -52,7 +54,7 @@ export const getUserFields = (options = {}) => {
         }
     ].filter(Boolean);
 
-    // Personal information fields
+    // Personal information fields - using dot notation for now, will be flattened later
     const personalInfoFields = [
         {
             row: true,
@@ -133,7 +135,7 @@ export const getUserFields = (options = {}) => {
     const advancedFields = includeAdvancedFields ? [
         {
             type: 'checkbox', // Changed from 'switch' to 'checkbox' since there's no switch field
-            field: 'emailVerified',
+            field: 'emailVerifiedAt',
             label: 'Email Verified',
             description: 'Is this user\'s email verified?'
         },
@@ -176,5 +178,6 @@ export const getUserFields = (options = {}) => {
         });
     }
 
+    console.log(`Field configuration generated: ${allFields.length} fields`);
     return allFields;
 };

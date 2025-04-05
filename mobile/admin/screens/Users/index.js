@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { usersData, fetchUsers, deleteUser, createUser, updateUser } from './data'
+import { usersData, fetchUsers, deleteUser, createUser, updateUser, getUserById } from './data'
 import { userColumns, userActions } from './table-data'
 import { UserModal } from './modal'
 import { ResourceTable } from '~/components/ResourceTable'
@@ -122,10 +122,42 @@ export function UsersScreen() {
     setModalVisible(true);
   }, []);
 
-  const handleEdit = useCallback((user) => {
-    setModalMode('edit');
-    setSelectedUser(user);
-    setModalVisible(true);
+  const handleEdit = useCallback(async (user) => {
+    try {
+      setLoading(true);
+      console.log("User selected for edit:", JSON.stringify(user, null, 2));
+      
+      // First clear any previous user data
+      setModalVisible(false); // Close modal first if open
+      setSelectedUser(null); // Clear previous user
+      
+      // Fetch complete user data with all info details
+      const userData = await getUserById(user.id || user._id);
+      console.log("User data fetched for edit:", JSON.stringify(userData, null, 2));
+      
+      // Check if we have all the required fields
+      if (userData.info) {
+        console.log("Edit modal - Info object fields:", Object.keys(userData.info));
+        console.log("First name:", userData.info.first_name);
+        console.log("Last name:", userData.info.last_name);
+        console.log("City:", userData.info.city);
+        console.log("Region:", userData.info.region);
+      }
+      
+      // Set modal mode and user data in the correct order
+      setModalMode('edit');
+      setSelectedUser(userData);
+      
+      // Then show the modal after a small delay to ensure state is updated
+      setTimeout(() => {
+        setModalVisible(true);
+      }, 100);
+    } catch (error) {
+      console.error("Error loading user details:", error);
+      Alert.alert("Error", "Failed to load user details");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const handleDelete = useCallback((user) => {
@@ -287,11 +319,13 @@ export function UsersScreen() {
 
         {/* User Modal for create/edit/view */}
         <UserModal
+          key={`modal-${selectedUser?._id || 'new'}-${modalMode}`} // Add key prop to force re-render
           visible={modalVisible}
           onDismiss={() => setModalVisible(false)}
           user={selectedUser}
           onSave={handleSaveUser}
           mode={modalMode}
+          debug={true}
         />
       </View>
     </SafeAreaView>
