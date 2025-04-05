@@ -10,6 +10,9 @@ import { productStatusOptions } from './validation';
  * @param {boolean} options.allowMultipleImages - Whether to allow multiple image selection
  * @param {Object} options.customFields - Custom fields to include
  * @param {Array} options.exclude - Field names to exclude
+ * @param {Array} options.brandOptions - Options for brand dropdown
+ * @param {Array} options.categoryOptions - Options for category dropdown
+ * @param {Array} options.supplierOptions - Options for supplier dropdown
  * @returns {Array} Field configuration array
  */
 export const getProductFields = (options = {}) => {
@@ -19,7 +22,10 @@ export const getProductFields = (options = {}) => {
         includeAdvancedFields = true,
         allowMultipleImages = false,
         customFields = {},
-        exclude = []
+        exclude = [],
+        brandOptions = [],
+        categoryOptions = [],
+        supplierOptions = []
     } = options;
 
     // Base required fields
@@ -50,16 +56,24 @@ export const getProductFields = (options = {}) => {
             row: true,
             fields: [
                 {
-                    type: 'object',
+                    type: 'select',
                     field: 'brand',
-                    label: 'Brand'
+                    label: 'Brand',
+                    options: brandOptions
                 },
                 {
-                    type: 'object',
+                    type: 'select',
                     field: 'category',
-                    label: 'Category'
+                    label: 'Category',
+                    options: categoryOptions
                 }
             ]
+        },
+        {
+            type: 'select',
+            field: 'supplier',
+            label: 'Supplier',
+            options: supplierOptions
         },
         {
             type: 'radio',

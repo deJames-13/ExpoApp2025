@@ -6,6 +6,7 @@ import {
     initialProductValues,
 } from './validation';
 import { getProductFields } from './form-config';
+import { fetchBrands, fetchCategories, fetchSuppliers } from './data';
 
 /**
  * Helper function to ensure each URI is a valid string
@@ -21,22 +22,59 @@ const validateUri = (uri) => {
 export function ProductForm({ product, mode = 'create', onSubmit, formRef }) {
     const [validationSchema, setValidationSchema] = useState(getProductValidationSchema());
     const [fieldConfig, setFieldConfig] = useState([]);
+    const [brandOptions, setBrandOptions] = useState([]);
+    const [categoryOptions, setCategoryOptions] = useState([]);
+    const [supplierOptions, setSupplierOptions] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Fetch dropdown data
+    useEffect(() => {
+        const loadDropdownData = async () => {
+            setIsLoading(true);
+            try {
+                const [brands, categories, suppliers] = await Promise.all([
+                    fetchBrands(),
+                    fetchCategories(),
+                    fetchSuppliers()
+                ]);
+                
+                setBrandOptions(brands);
+                setCategoryOptions(categories);
+                setSupplierOptions(suppliers);
+            } catch (error) {
+                console.error('Error loading form dropdown data:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadDropdownData();
+    }, []);
 
     const handleSubmit = (values) => {
         const processedData = {
             ...values,
             price: parseFloat(values.price) || 0,
             stock: parseInt(values.stock) || 0,
+            // Convert string IDs back to object format if needed by the API
+            brand: values.brand ? { _id: values.brand } : null,
+            category: values.category ? { _id: values.category } : null,
+            supplier: values.supplier ? { _id: values.supplier } : null
         };
         onSubmit(processedData);
     };
 
     useEffect(() => {
+        if (isLoading) return;
+
         const fieldsOptions = {
             includeAdvancedFields: mode !== 'create',
             includeImages: true,
             includeCamera: true,
-            allowMultipleImages: true
+            allowMultipleImages: true,
+            brandOptions: brandOptions,
+            categoryOptions: categoryOptions,
+            supplierOptions: supplierOptions
         };
 
         // Configure validation based on mode
@@ -46,13 +84,14 @@ export function ProductForm({ product, mode = 'create', onSubmit, formRef }) {
             requireStock: mode !== 'view',
             requireBrand: true,
             requireCategory: true,
+            requireSupplier: true,
             requireStatus: true
         };
 
         // Set dynamic configuration
         setFieldConfig(getProductFields(fieldsOptions));
         setValidationSchema(getProductValidationSchema(validationOptions));
-    }, [mode, product]);
+    }, [mode, product, isLoading, brandOptions, categoryOptions, supplierOptions]);
 
     // Process images from product
     const getInitialImages = () => {
@@ -88,15 +127,62 @@ export function ProductForm({ product, mode = 'create', onSubmit, formRef }) {
         return null;
     };
 
+    // Prepare initial values with correct ID formats for dropdowns
+    const getInitialValues = () => {
+        if (!product) return initialProductValues;
+        
+        // Extract the correct ID values for dropdowns
+        let brandId = '';
+        let categoryId = '';
+        let supplierId = '';
+        
+        // Handle different formats of brand data
+        if (product.brand) {
+            if (typeof product.brand === 'string') {
+                brandId = product.brand;
+            } else if (typeof product.brand === 'object' && product.brand._id) {
+                brandId = product.brand._id;
+            }
+        }
+        
+        // Handle different formats of category data
+        if (product.category) {
+            if (typeof product.category === 'string') {
+                categoryId = product.category;
+            } else if (typeof product.category === 'object' && product.category._id) {
+                categoryId = product.category._id;
+            }
+        }
+        
+        // Handle different formats of supplier data
+        if (product.supplier) {
+            if (typeof product.supplier === 'string') {
+                supplierId = product.supplier;
+            } else if (typeof product.supplier === 'object' && product.supplier._id) {
+                supplierId = product.supplier._id;
+            }
+        }
+        
+        return {
+            ...initialProductValues,
+            ...product,
+            // Use extracted ID values for dropdowns
+            brand: brandId,
+            category: categoryId,
+            supplier: supplierId,
+            productImages: getInitialImages(),
+            featured: product?.featured || false,
+            rating: product?.rating || 0
+        };
+    };
+
+    if (isLoading) {
+        return null; // or a loading indicator
+    }
+
     return (
         <ResourceForm
-            initialValues={{
-                ...initialProductValues,
-                ...(product || {}),
-                productImages: getInitialImages(),
-                featured: product?.featured || false,
-                rating: product?.rating || 0
-            }}
+            initialValues={getInitialValues()}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
             mode={mode}

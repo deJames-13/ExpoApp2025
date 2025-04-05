@@ -42,3 +42,60 @@ export const fetchProducts = async () => {
     return [];
   }
 };
+
+// Function to fetch brands from the backend
+export const fetchBrands = async () => {
+  try {
+    const response = await api.get('/api/v1/brands');
+    if (response.data && (Array.isArray(response.data.resource) || Array.isArray(response.data))) {
+      const brands = Array.isArray(response.data.resource) ? response.data.resource : response.data;
+      // Make sure we're returning in the format expected by the dropdown
+      return brands.map(brand => ({
+        label: brand.name || 'Unnamed Brand',
+        value: brand._id || brand.id || ''
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching brands:', error);
+    return [];
+  }
+};
+
+// Function to fetch categories from the backend
+export const fetchCategories = async () => {
+  try {
+    const response = await api.get('/api/v1/categories');
+    if (response.data && (Array.isArray(response.data.resource) || Array.isArray(response.data))) {
+      const categories = Array.isArray(response.data.resource) ? response.data.resource : response.data;
+      // Make sure we're returning in the format expected by the dropdown
+      return categories.map(category => ({
+        label: category.name || 'Unnamed Category',
+        value: category._id || category.id || ''
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
+};
+
+// Function to fetch suppliers from the backend
+export const fetchSuppliers = async () => {
+  try {
+    const response = await api.get('/api/v1/suppliers');
+    if (response.data && (Array.isArray(response.data.resource) || Array.isArray(response.data))) {
+      const suppliers = Array.isArray(response.data.resource) ? response.data.resource : response.data;
+      // Make sure we're returning in the format expected by the dropdown
+      return suppliers.map(supplier => ({
+        label: supplier.name || 'Unnamed Supplier',
+        value: supplier._id || supplier.id || ''
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching suppliers:', error);
+    return [];
+  }
+};
