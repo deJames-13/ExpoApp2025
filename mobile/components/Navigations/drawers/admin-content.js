@@ -33,10 +33,10 @@ export function AdminDrawerContent() {
 
     // Extract admin-specific user info for display
     const adminName = currentUser?.username || 'Admin User';
+    const adminAvatar = currentUser?.info?.avatar || require('~/assets/icon.png');
     const adminRole = currentUser?.role || 'Administrator';
     const adminEmail = currentUser?.email || '';
     const adminInitials = (currentUser?.username?.substring(0, 2) || 'AU').toUpperCase();
-
     return (
         <SafeAreaView style={[navigationStyles.drawerContainer, styles.container]}>
             {/* Admin Header with User Info */}
@@ -51,58 +51,72 @@ export function AdminDrawerContent() {
                     </Text>
                 </View>
                 <View style={styles.userInfo}>
+                    {adminAvatar?.url ? (
+                        <Avatar.Image
+                            source={{ uri: adminAvatar?.url }}
+                            style={styles.avatar}
+                            onError={() => console.log('Failed to load admin avatar')}
+                        />
+                    ) : (
                     <Avatar.Text
                         size={50}
                         label={adminInitials}
                         style={styles.avatar}
                     />
-                    <Text style={styles.userName}>{adminName}</Text>
-                    <Text style={styles.userRole}>{adminRole}</Text>
+                    )}
+                    <Text style={styles.userName}>@{adminName}</Text>
                     {adminEmail && <Text style={styles.userEmail}>{adminEmail}</Text>}
+                    <Text style={[styles.userRole, { fontStyle: 'italic' }]}>-{adminRole}-</Text>
                 </View>
             </View>
-
             <Divider style={globalStyles.divider} />
-
             {/* Admin Navigation Menu */}
             <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
                 <View style={navigationStyles.drawerItemsContainer}>
-                    {/* Tabbed Navigations */}
-                    {tabbedRoutes.map((route) => (
-                        <TouchableOpacity
-                            key={route.name}
-                            style={[
-                                navigationStyles.drawerItem,
-                                curr === route.name && styles.activeItem,
-                                globalStyles.row
-                            ]}
-                            onPress={() => {
-                                setCurr(route.name);
-                                // Navigate to tab route structure with clear intent
-                                navigation.navigate("AdminNav", {
-                                    screen: "AdminTabsRoute",
-                                    params: { screen: route.name },
-                                });
-                            }}
-                        >
-                            <MaterialIcon
-                                name={route.icon}
-                                size={22}
-                                color={curr === route.name ? "#007aff" : "#555"}
-                                style={{ marginRight: 12 }}
-                            />
-                            <Text style={[
-                                styles.itemText,
-                                curr === route.name && styles.activeItemText
-                            ]}>
-                                {route.name}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
+                    {
+                        tabbedRoutes.length ? <>
+                            {/* Tabbed Navigations */}
+                            {tabbedRoutes.map((route) => (
+                                <TouchableOpacity
+                                    key={route.name}
+                                    style={[
+                                        navigationStyles.drawerItem,
+                                        curr === route.name && styles.activeItem,
+                                        globalStyles.row
+                                    ]}
+                                    onPress={() => {
+                                        setCurr(route.name);
+                                        // Navigate to tab route structure with clear intent
+                                        navigation.navigate("AdminNav", {
+                                            screen: "AdminTabsRoute",
+                                            params: { screen: route.name },
+                                        });
+                                        // Close the drawer after navigation
+                                        navigation.closeDrawer();
+                                    }}
+                                >
+                                    <MaterialIcon
+                                        name={route.icon}
+                                        size={22}
+                                        color={curr === route.name ? "#007aff" : "#555"}
+                                        style={{ marginRight: 12 }}
+                                    />
+                                    <Text style={[
+                                        styles.itemText,
+                                        curr === route.name && styles.activeItemText
+                                    ]}>
+                                        {route.name}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                            <Divider style={[globalStyles.divider, styles.sectionDivider]} />
+
+                        </> : <></>
+                    }
+                
 
                     {drawerRoutes.length > 0 && (
                         <>
-                            <Divider style={[globalStyles.divider, styles.sectionDivider]} />
                             <Text style={styles.sectionTitle}>Management</Text>
 
                             {/* Drawer Navigations */}

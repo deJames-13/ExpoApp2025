@@ -2,6 +2,9 @@ import * as AdminScreens from '~/admin/screens';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export const tabRoutes = () => [
+];
+
+export const adminRoutes = () => [
     {
         name: 'Dashboard',
         component: AdminScreens.Dashboard,
@@ -11,7 +14,7 @@ export const tabRoutes = () => [
                 <Icon name="dashboard" color={color} size={size} />
             ),
         },
-        isTab: true,
+        isTab: false,
     },
     {
         name: 'Account',
@@ -22,11 +25,8 @@ export const tabRoutes = () => [
                 <Icon name="account-circle" color={color} size={size} />
             ),
         },
-        isTab: true,
+        isTab: false,
     },
-];
-
-export const adminRoutes = () => [
     {
         name: 'Products',
         component: AdminScreens.Products,
@@ -67,6 +67,48 @@ export const adminRoutes = () => [
             title: 'Send Notifications',
             headerShown: true,
         },
+    },
+    {
+        name: 'Users',
+        component: AdminScreens.UsersScreen,
+        icon: 'people',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="people" color={color} size={size} />
+            ),
+        },
+        isTab: false,
+    },
+    {
+        name: 'Reviews',
+        component: AdminScreens.Reviews,
+        icon: 'rate-review',
+        options: {
+            tabBarIcon: ({ color, size }) => (
+                <Icon name="rate-review" color={color} size={size} />
+            ),
+        },
+        isTab: false,
+    },
+    {
+        name: 'AdminEditProfile',
+        component: AdminScreens.AdminEditProfile,
+        icon: 'edit',
+        options: {
+            title: 'Edit Profile',
+            headerShown: false,
+        },
+        hidden: true,
+    },
+    {
+        name: 'AdminSupport',
+        component: AdminScreens.AdminSupport,
+        icon: 'help',
+        options: {
+            title: 'Help & Support',
+            headerShown: false,
+        },
+        hidden: true,
     },
 ];
 

@@ -18,7 +18,7 @@ const CustomAdminHeader = ({ navigation }) => {
     const { currentAdminUser } = useAdminRoute();
 
     // Get admin avatar from user info
-    const adminAvatar = currentAdminUser?.avatar;
+    const adminAvatar = currentAdminUser?.info?.avatar;
     const adminPhotoUrl = currentAdminUser?.photoUrl;
 
     // Determine which image source to use
@@ -46,21 +46,14 @@ const CustomAdminHeader = ({ navigation }) => {
             <View style={styles.rightIcons}>
                 <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={() => navigation.navigate('AdminRoutesStack', { screen: 'AdminNotifications' })}
+                    onPress={() => navigation.navigate('AdminRoutesStack', { screen: 'Notifications' })}
                 >
                     <Icon name="notifications" size={24} color="#333" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={() => navigation.navigate('AdminRoutesStack', { screen: 'AdminSettings' })}
-                >
-                    <Icon name="settings" size={24} color="#333" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={() => navigation.navigate('AdminRoutesStack', { screen: 'AdminProfile' })}
+                    onPress={() => navigation.navigate('AdminTabsRoute', { screen: 'Account' })}
                 >
                     {adminProfileImage ? (
                         <Image
@@ -125,12 +118,12 @@ const ADMIN_DEFAULT = 'Dashboard';
 
 function AdminTabStack() {
     const routes = tabRoutes();
-    return (
+    return routes.length ? (
         <Tab.Navigator
             initialRouteName={ADMIN_DEFAULT}
             screenOptions={defaultOptions}
         >
-            {routes.map((route) => route?.isTab && (
+            {routes.map((route) => (
                 <Tab.Screen
                     key={route.name}
                     name={route.name}
@@ -139,7 +132,7 @@ function AdminTabStack() {
                 />
             ))}
         </Tab.Navigator>
-    );
+    ) : <></>;
 }
 
 // Stack for admin management routes
@@ -160,6 +153,7 @@ function AdminRoutesStack() {
                 component={ProductDetailView}
                 options={{ headerShown: false }}
             />
+        
         </Stack.Navigator>
     );
 }
@@ -205,17 +199,17 @@ export function AdminNav() {
             }}
         >
             <Drawer.Screen
-                name="AdminTabsRoute"
-                component={AdminTabStack}
-                options={{
-                    title: 'Admin Dashboard'
-                }}
-            />
-            <Drawer.Screen
                 name="AdminRoutesStack"
                 component={AdminRoutesStack}
                 options={{
                     title: 'Admin Management'
+                }}
+            />
+            <Drawer.Screen
+                name="AdminTabsRoute"
+                component={AdminTabStack}
+                options={{
+                    title: 'Admin Dashboard'
                 }}
             />
         </Drawer.Navigator>

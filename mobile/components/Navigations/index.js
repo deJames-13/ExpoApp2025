@@ -40,6 +40,7 @@ export default function MainNav() {
 
     const initialRoute = determineInitialRoute(isAuthenticated, isAdmin);
 
+    // Make sure routes are properly ordered for the navigation stack
     return (
         <Stack.Navigator
             initialRouteName={initialRoute}
