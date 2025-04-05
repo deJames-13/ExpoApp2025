@@ -9,8 +9,9 @@ export const initialProductValues = {
     price: '',
     description: '',
     stock: '',
-    category: { id: '', name: '' },
-    brand: { id: '', name: '' },
+    category: '',
+    brand: '',
+    supplier: '',
     status: 'active',
     image: null,
     featured: false,
@@ -26,6 +27,7 @@ export const initialProductValues = {
  * @param {boolean} options.requireStock - Whether stock is required
  * @param {boolean} options.requireBrand - Whether brand is required
  * @param {boolean} options.requireCategory - Whether category is required
+ * @param {boolean} options.requireSupplier - Whether supplier is required
  * @param {boolean} options.requireStatus - Whether status is required
  * @param {Object} options.customValidations - Custom validation rules
  * @returns {Object} Yup validation schema
@@ -37,6 +39,7 @@ export const getProductValidationSchema = (options = {}) => {
         requireStock = true,
         requireBrand = true,
         requireCategory = true,
+        requireSupplier = true,
         requireStatus = true,
         customValidations = {}
     } = options;
@@ -64,17 +67,23 @@ export const getProductValidationSchema = (options = {}) => {
         stockValidation = stockValidation.required('Stock is required');
     }
 
-    // Build brand validation
-    let brandValidation = Yup.object().shape({
-        id: Yup.string(),
-        name: requireBrand ? Yup.string().required('Brand name is required') : Yup.string()
-    });
+    // Build brand validation - now using string instead of object
+    let brandValidation = Yup.string();
+    if (requireBrand) {
+        brandValidation = brandValidation.required('Brand is required');
+    }
 
-    // Build category validation
-    let categoryValidation = Yup.object().shape({
-        id: Yup.string(),
-        name: requireCategory ? Yup.string().required('Category name is required') : Yup.string()
-    });
+    // Build category validation - now using string instead of object
+    let categoryValidation = Yup.string();
+    if (requireCategory) {
+        categoryValidation = categoryValidation.required('Category is required');
+    }
+    
+    // Build supplier validation
+    let supplierValidation = Yup.string();
+    if (requireSupplier) {
+        supplierValidation = supplierValidation.required('Supplier is required');
+    }
 
     // Build status validation
     let statusValidation = Yup.string();
@@ -93,6 +102,7 @@ export const getProductValidationSchema = (options = {}) => {
         status: statusValidation,
         brand: brandValidation,
         category: categoryValidation,
+        supplier: supplierValidation,
         image: Yup.string().nullable(),
         featured: Yup.boolean().default(false),
         rating: Yup.number()

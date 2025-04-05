@@ -1,12 +1,30 @@
 import api from "~/screens/Home/api";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Initial empty array for products
 export const productsData = [];
 
+// Helper function to get auth config
+const getAuthConfig = async () => {
+  try {
+    const token = await AsyncStorage.getItem('auth_token');
+    return {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json'
+      }
+    };
+  } catch (error) {
+    console.error('Error getting auth config:', error);
+    return { headers: { 'Content-Type': 'application/json' } };
+  }
+};
+
 // Function to fetch products from the backend
 export const fetchProducts = async () => {
   try {
-    const response = await api.get('/api/v1/products');
+    const config = await getAuthConfig();
+    const response = await api.get('/api/v1/products', config);
     
     // Check if the response has the expected structure with resource field
     if (response.data && Array.isArray(response.data.resource)) {
@@ -46,13 +64,16 @@ export const fetchProducts = async () => {
 // Function to fetch brands from the backend
 export const fetchBrands = async () => {
   try {
-    const response = await api.get('/api/v1/brands');
+    const config = await getAuthConfig();
+    const response = await api.get('/api/v1/brands', config);
     if (response.data && (Array.isArray(response.data.resource) || Array.isArray(response.data))) {
       const brands = Array.isArray(response.data.resource) ? response.data.resource : response.data;
-      // Make sure we're returning in the format expected by the dropdown
+      // Format the data for dropdowns - using name for both label and ID for value
       return brands.map(brand => ({
         label: brand.name || 'Unnamed Brand',
-        value: brand._id || brand.id || ''
+        value: brand._id || brand.id || '',
+        // Include the original object for reference if needed
+        data: brand
       }));
     }
     return [];
@@ -65,13 +86,16 @@ export const fetchBrands = async () => {
 // Function to fetch categories from the backend
 export const fetchCategories = async () => {
   try {
-    const response = await api.get('/api/v1/categories');
+    const config = await getAuthConfig();
+    const response = await api.get('/api/v1/categories', config);
     if (response.data && (Array.isArray(response.data.resource) || Array.isArray(response.data))) {
       const categories = Array.isArray(response.data.resource) ? response.data.resource : response.data;
-      // Make sure we're returning in the format expected by the dropdown
+      // Format the data for dropdowns - using name for both label and ID for value
       return categories.map(category => ({
         label: category.name || 'Unnamed Category',
-        value: category._id || category.id || ''
+        value: category._id || category.id || '',
+        // Include the original object for reference if needed
+        data: category
       }));
     }
     return [];
@@ -84,13 +108,16 @@ export const fetchCategories = async () => {
 // Function to fetch suppliers from the backend
 export const fetchSuppliers = async () => {
   try {
-    const response = await api.get('/api/v1/suppliers');
+    const config = await getAuthConfig();
+    const response = await api.get('/api/v1/suppliers', config);
     if (response.data && (Array.isArray(response.data.resource) || Array.isArray(response.data))) {
       const suppliers = Array.isArray(response.data.resource) ? response.data.resource : response.data;
-      // Make sure we're returning in the format expected by the dropdown
+      // Format the data for dropdowns - using name for both label and ID for value
       return suppliers.map(supplier => ({
         label: supplier.name || 'Unnamed Supplier',
-        value: supplier._id || supplier.id || ''
+        value: supplier._id || supplier.id || '',
+        // Include the original object for reference if needed
+        data: supplier
       }));
     }
     return [];
