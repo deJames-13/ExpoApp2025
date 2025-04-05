@@ -1,4 +1,4 @@
-import { View, StyleSheet, SafeAreaView, StatusBar, Modal } from 'react-native'
+import { View, StyleSheet, SafeAreaView, StatusBar, Modal, Alert } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import NotificationHeader from './NotiicationHeader'
@@ -7,7 +7,10 @@ import NotificationViewModal from './NotificationViewModal'
 import LoadingScreen from '../LoadingScreen'
 import {
     useGetUserNotificationsQuery,
-    useMarkNotificationAsReadMutation
+    useMarkNotificationAsReadMutation,
+    useMarkAllNotificationsAsReadMutation,
+    useClearAllNotificationsMutation,
+    useDeleteSelectedNotificationsMutation
 } from '~/states/api/notification'
 import {
     markAsRead,
@@ -30,12 +33,9 @@ export function NotificationScreen() {
     // API queries and mutations
     const { refetch, isFetching, data } = useGetUserNotificationsQuery();
     const [markNotificationAsRead] = useMarkNotificationAsReadMutation();
-
-    // Log notification data for debugging
-    // useEffect(() => {
-    //     console.log('Notification data from API:', data);
-    //     console.log('Current notifications in state:', notifications);
-    // }, [data, notifications]);
+    const [markAllNotificationsAsRead] = useMarkAllNotificationsAsReadMutation();
+    const [clearAllNotificationsMutation] = useClearAllNotificationsMutation();
+    const [deleteSelectedNotificationsMutation] = useDeleteSelectedNotificationsMutation();
 
     // Handle refresh state
     useEffect(() => {
@@ -52,17 +52,48 @@ export function NotificationScreen() {
 
     // Function to clear all notifications
     const clearAllNotifications = () => {
-        // In a real app, you'd make an API call to clear all notifications
-        // For now, we'll just refetch to get the latest state
-        refetch();
-        setSelectionMode(false);
-        setSelectedNotifications([]);
+        Alert.alert(
+            "Clear All Notifications",
+            "Are you sure you want to clear all notifications? This cannot be undone.",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Clear All",
+                    style: "destructive",
+                    onPress: () => {
+                        clearAllNotificationsMutation()
+                            .unwrap()
+                            .then(() => {
+                                // Refetch to update the UI
+                                refetch();
+                                setSelectionMode(false);
+                                setSelectedNotifications([]);
+                            })
+                            .catch(error => {
+                                console.error('Failed to clear notifications:', error);
+                                Alert.alert("Error", "Failed to clear notifications. Please try again.");
+                            });
+                    }
+                }
+            ]
+        );
     };
 
     // Function to mark all notifications as read
     const handleMarkAllAsRead = () => {
-        dispatch(markAllAsRead());
-        // In a real app, you'd make an API call to mark all as read
+        markAllNotificationsAsRead()
+            .unwrap()
+            .then(() => {
+        // Local state is updated via the optimistic update in the mutation
+                dispatch(markAllAsRead());
+            })
+            .catch(error => {
+                console.error('Failed to mark all as read:', error);
+                Alert.alert("Error", "Failed to mark all notifications as read. Please try again.");
+            });
     };
 
     // Function to toggle selection mode
@@ -82,10 +113,39 @@ export function NotificationScreen() {
 
     // Function to handle deleting selected notifications
     const deleteSelected = () => {
-        // In a real app, you'd make an API call to delete selected notifications
-        // For now, we'll just refetch to get the latest state
-        refetch();
-        setSelectedNotifications([]);
+        if (selectedNotifications.length === 0) return;
+
+        Alert.alert(
+            "Delete Selected Notifications",
+            `Are you sure you want to delete ${selectedNotifications.length} selected notification(s)?`,
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        deleteSelectedNotificationsMutation(selectedNotifications)
+                            .unwrap()
+                            .then(() => {
+                                // Refetch to update the UI
+                                refetch();
+                                setSelectedNotifications([]);
+                                // If all selected items are deleted, exit selection mode
+                                if (selectedNotifications.length === notifications.length) {
+                                    setSelectionMode(false);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Failed to delete notifications:', error);
+                                Alert.alert("Error", "Failed to delete selected notifications. Please try again.");
+                            });
+                    }
+                }
+            ]
+        );
     };
 
     // Function to view notification details

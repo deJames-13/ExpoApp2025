@@ -9,31 +9,53 @@ import RecentUsers from './components/RecentUsers'
 import RecentFeedback from './components/RecentFeedback'
 
 // Import data
-import { fetchDashboardData } from './data'
+import { fetchStatsData, fetchRecentOrders, fetchRecentUsers } from './data'
 import { adminStyles, adminColors } from '~/styles/adminTheme'
 
 export function Dashboard() {
-    const [dashboardData, setDashboardData] = useState({
-        stats: {
-            totalUsers: 0,
-            totalOrders: 0,
-            pendingOrders: 0,
-            totalRevenue: 0,
-            newFeedbacks: 0
-        },
-        recentOrders: [],
-        recentUsers: []
+    // Separate loading states for each component
+    const [statsLoading, setStatsLoading] = useState(true)
+    const [ordersLoading, setOrdersLoading] = useState(true)
+    const [usersLoading, setUsersLoading] = useState(true)
+
+    // Separate data states for each component
+    const [statsData, setStatsData] = useState({
+        totalUsers: 0,
+        totalOrders: 0,
+        pendingOrders: 0,
+        totalRevenue: 0,
+        newFeedbacks: 0
     })
-    const [loading, setLoading] = useState(true)
+    const [recentOrders, setRecentOrders] = useState([])
+    const [recentUsers, setRecentUsers] = useState([])
 
     const navigation = useNavigation()
 
-    // Fetch dashboard data
+    // Fetch each component's data independently
     useEffect(() => {
-        fetchDashboardData().then(data => {
-            setDashboardData(data)
-            setLoading(false)
-        })
+        // Fetch stats data
+        fetchStatsData()
+            .then(data => {
+                setStatsData(data)
+                setStatsLoading(false)
+            })
+            .catch(() => setStatsLoading(false))
+
+        // Fetch recent orders
+        fetchRecentOrders()
+            .then(data => {
+                setRecentOrders(data)
+                setOrdersLoading(false)
+            })
+            .catch(() => setOrdersLoading(false))
+
+        // Fetch recent users
+        fetchRecentUsers()
+            .then(data => {
+                setRecentUsers(data)
+                setUsersLoading(false)
+            })
+            .catch(() => setUsersLoading(false))
     }, [])
 
     // Navigation handlers
@@ -41,41 +63,35 @@ export function Dashboard() {
     const navigateToUsers = () => navigation.navigate('Users')
     const navigateToFeedbacks = () => navigation.navigate('Feedbacks')
 
-    // Render loading state
-    if (loading) {
-        return (
-            <SafeAreaView style={adminStyles.loadingContainer}>
-                <ActivityIndicator size="large" color={adminColors.primary} />
-                <Text style={{ marginTop: 12, color: adminColors.text.primary, fontSize: 16 }}>
-                    Loading dashboard data...
-                </Text>
-            </SafeAreaView>
-        )
-    }
-
     return (
         <SafeAreaView style={adminStyles.safeArea}>
             <ScrollView style={adminStyles.scrollView} contentContainerStyle={{ padding: 16 }}>
                 <Text style={adminStyles.pageTitle}>Admin Dashboard</Text>
 
-                {/* Stats Cards */}
-                <StatsCards stats={dashboardData.stats} />
+                {/* Stats Cards with loading state */}
+                <StatsCards
+                    stats={statsData}
+                    loading={statsLoading}
+                />
 
-                {/* Recent Orders */}
+                {/* Recent Orders with loading state */}
                 <RecentOrders
-                    orders={dashboardData.recentOrders}
+                    orders={recentOrders}
+                    loading={ordersLoading}
                     onViewAllPress={navigateToOrders}
                 />
 
-                {/* Recent Users */}
+                {/* Recent Users with loading state */}
                 <RecentUsers
-                    users={dashboardData.recentUsers}
+                    users={recentUsers}
+                    loading={usersLoading}
                     onViewAllPress={navigateToUsers}
                 />
 
-                {/* Recent Feedback */}
+                {/* Recent Feedback with loading state */}
                 <RecentFeedback
-                    newFeedbackCount={dashboardData.stats.newFeedbacks}
+                    newFeedbackCount={statsData.newFeedbacks}
+                    loading={statsLoading}
                     onReviewPress={navigateToFeedbacks}
                 />
             </ScrollView>

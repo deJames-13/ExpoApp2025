@@ -281,6 +281,78 @@ class NotificationController extends Controller {
       });
     }
   }
+
+  // New method to clear all notifications for a user
+  clearAllNotifications = async (req, res) => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return this.error({
+          res,
+          message: "User not authenticated",
+          statusCode: 401
+        });
+      }
+
+      // Delete all notifications for this user
+      const result = await this.service.model.deleteMany({ user: userId });
+
+      return this.success({
+        res,
+        data: { count: result.deletedCount },
+        message: `${result.deletedCount} notifications cleared successfully`
+      });
+    } catch (error) {
+      return this.error({
+        res,
+        message: error.message,
+        error
+      });
+    }
+  }
+
+  // New method to delete selected notifications
+  deleteSelectedNotifications = async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const { ids } = req.body;
+
+      if (!userId) {
+        return this.error({
+          res,
+          message: "User not authenticated",
+          statusCode: 401
+        });
+      }
+
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return this.error({
+          res,
+          message: "Notification IDs are required and must be an array",
+          statusCode: 400
+        });
+      }
+
+      // Delete only the notifications that belong to this user and are in the provided list
+      const result = await this.service.model.deleteMany({
+        _id: { $in: ids },
+        user: userId
+      });
+
+      return this.success({
+        res,
+        data: { count: result.deletedCount },
+        message: `${result.deletedCount} notifications deleted successfully`
+      });
+    } catch (error) {
+      return this.error({
+        res,
+        message: error.message,
+        error
+      });
+    }
+  }
 }
 
 export default new NotificationController();
