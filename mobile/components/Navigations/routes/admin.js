@@ -160,6 +160,7 @@ function AdminRoutesStack() {
                 component={ProductDetailView}
                 options={{ headerShown: false }}
             />
+        
         </Stack.Navigator>
     );
 }

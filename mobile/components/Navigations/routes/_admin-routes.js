@@ -68,5 +68,36 @@ export const adminRoutes = () => [
             headerShown: true,
         },
     },
+    // Account related routes
+    {
+        name: 'AdminEditProfile',
+        component: AdminScreens.AdminEditProfile,
+        icon: 'edit',
+        options: {
+            title: 'Edit Profile',
+            headerShown: true,
+        },
+        hidden: true,
+    },
+    {
+        name: 'AdminSettings',
+        component: AdminScreens.AdminSettings || (() => null),
+        icon: 'settings',
+        options: {
+            title: 'Settings',
+            headerShown: true,
+        },
+        hidden: true,
+    },
+    {
+        name: 'AdminSupport',
+        component: AdminScreens.AdminSupport || (() => null),
+        icon: 'help',
+        options: {
+            title: 'Help & Support',
+            headerShown: true,
+        },
+        hidden: true,
+    },
 ];
 
