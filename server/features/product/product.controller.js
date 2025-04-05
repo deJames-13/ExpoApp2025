@@ -298,25 +298,139 @@ class ProductController extends Controller {
         validData.category = await this.service.getCategoryId(validData.category);
       }
 
+      // Log product before update
+      let productBeforeUpdate = await this.service.getById(req.params.id);
+      console.log(`Product before update - ID: ${req.params.id}`);
+      console.log(`Images before update: ${productBeforeUpdate.images?.length || 0}`);
+      
       let data = await this.service?.update(req.params.id, validData);
       if (!data._id) return this.error({ res, message: 'Invalid data!' });
 
-      // Enhanced image handling for multiple sources (multer files or base64)
-      if (req.file || req.files || req.base64File || req.base64Files || this.service.hasField('images')) {
-        const images = this.addImage(req);
-        const oldImages = new Set(
-          (data.images || []).map((image) => image.public_id)
-        );
-        const newImages = images.filter(
-          (image) => !oldImages.has(image.public_id)
-        );
-        data.images = [...(data.images || []), ...newImages];
-        data = await data.save();
+      // Log the MongoDB _id directly from the update response
+      console.log(`Product _id from update response: ${data._id}`);
+      
+      // Enhanced image handling with better debugging
+      console.log('=== IMAGE HANDLING ===');
+      console.log('REQUEST DATA FIELDS:');
+      console.log('- Has files:', !!req.files);
+      console.log('- Files count:', req.files?.length || 0);
+      console.log('- Has base64Files:', !!req.body.base64Files);
+      console.log('- Has existingImages:', !!req.body.existingImages); 
+      console.log('- Has removedImages:', !!req.body.removedImages);
+      console.log('- Is test removal:', !!req.body.testRemoval);
+      
+      // For debug purposes, check both raw Body and form parsed values
+      if (req.body) {
+        console.log('Request body keys:', Object.keys(req.body));
       }
+      
+      // Log original images from the product
+      console.log('CURRENT PRODUCT IMAGES:');
+      if (data.images && data.images.length > 0) {
+        data.images.forEach((img, idx) => {
+          const url = img.secure_url || img.url;
+          console.log(`- Image ${idx+1}: ${url}`);
+        });
+      } else {
+        console.log('No images in product');
+      }
+      
+      // Check if we need to handle images
+      const hasImageChanges = req.file || req.files?.length > 0 || req.body.base64Files || 
+                             req.body.existingImages !== undefined || 
+                             req.body.removedImages !== undefined;
+      
+      if (hasImageChanges) {
+        console.log('Image changes detected, processing...');
+        
+        let imagesBefore = Array.isArray(data.images) ? [...data.images] : [];
+        let imagesAfter = [];
+        let imagesToKeep = [];
+        let imagesToRemove = [];
+        
+        // DIRECT APPROACH: If existingImages is specified, use it explicitly
+        if (req.body.existingImages !== undefined) {
+          try {
+            console.log('Processing existingImages parameter');
+            
+            // Parse the JSON string of existing image URLs to keep
+            const existingImages = JSON.parse(req.body.existingImages);
+            console.log(`Parsed existingImages: ${JSON.stringify(existingImages)}`);
+            
+            if (Array.isArray(existingImages)) {
+              console.log(`existingImages specifies ${existingImages.length} images to keep`);
+              
+              // If empty array, remove all images
+              if (existingImages.length === 0) {
+                console.log('Empty existingImages array - REMOVING ALL IMAGES');
+                data.images = []; // Explicitly set to empty array
+                imagesAfter = [];
+              } else {
+                // Otherwise, keep only specified images
+                imagesToKeep = existingImages;
+                
+                // Create a new filtered array of images to keep
+                const filteredImages = [];
+                
+                // Check each image in the current array
+                if (Array.isArray(data.images)) {
+                  for (const img of data.images) {
+                    const imgUrl = img.secure_url || img.url;
+                    const shouldKeep = existingImages.includes(imgUrl);
+                    
+                    if (shouldKeep) {
+                      console.log(`Keeping image: ${imgUrl}`);
+                      filteredImages.push(img);
+                    } else {
+                      console.log(`Removing image: ${imgUrl}`);
+                      imagesToRemove.push(imgUrl);
+                    }
+                  }
+                }
+                
+                // Set the filtered images array directly
+                data.images = filteredImages;
+                imagesAfter = filteredImages;
+              }
+            } else {
+              console.error('existingImages is not an array:', existingImages);
+            }
+          } catch (e) {
+            console.error('Error processing existingImages:', e);
+          }
+        }
+        
+        // Add new images if any
+        const newImages = this.addImage(req);
+        if (newImages && newImages.length) {
+          console.log(`Adding ${newImages.length} new images`);
+          data.images = [...(data.images || []), ...newImages];
+        }
+        
+        // CRITICAL: Force save with new images array
+        console.log(`Product will have ${data.images ? data.images.length : 0} images after update`);
+        
+        // Try using save with markModified to ensure changes are saved
+        data.markModified('images');
+        await data.save();
+        
+        // Log final image state after update
+        if (data.images && data.images.length) {
+          console.log('Final product images after update:');
+          data.images.forEach((img, idx) => {
+            const url = img.secure_url || img.url;
+            console.log(`- Image ${idx+1}: ${url}`);
+          });
+        } else {
+          console.log('Product has no images after update');
+        }
+      }
+      console.log('=== END IMAGE HANDLING ===');
 
       const resource = (await this.resource?.make(data)) || data;
       this.success({ res, message: 'Data updated!', resource });
     } catch (error) {
+      console.error('Error updating product:', error.message);
       return this.error({ res, message: error.message });
     }
   };
