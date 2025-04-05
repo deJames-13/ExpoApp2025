@@ -16,7 +16,7 @@ const NotificationHeader = ({
         <View style={styles.container}>
             <View style={styles.titleContainer}>
                 <Text style={styles.title}>Notifications</Text>
-                {/* {!selectionMode && (
+                {!selectionMode && (
                     <TouchableOpacity
                         style={styles.refreshButton}
                         onPress={onRefresh}
@@ -29,7 +29,7 @@ const NotificationHeader = ({
                             style={isRefreshing ? styles.rotating : null}
                         />
                     </TouchableOpacity>
-                )} */}
+                )}
             </View>
 
             <View style={styles.actionsContainer}>

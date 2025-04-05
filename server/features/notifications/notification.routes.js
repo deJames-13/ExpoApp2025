@@ -31,6 +31,17 @@ export default [
         method: METHODS.PATCH,
         controller: [protectAndPermit(READ_WRITE), controller.markAllAsRead],
       },
+      // New endpoints for clearing and deleting notifications
+      {
+        path: '/clear-all',
+        method: METHODS.DELETE,
+        controller: [protectAndPermit(READ_WRITE), controller.clearAllNotifications],
+      },
+      {
+        path: '/delete-selected',
+        method: METHODS.DELETE,
+        controller: [protectAndPermit(READ_WRITE), controller.deleteSelectedNotifications],
+      },
       // Admin endpoints with appropriate protection
       {
         path: '/admin/batch',

@@ -19,9 +19,9 @@ const RecentUsers = ({ users, loading, onViewAllPress }) => {
                     </Text>
                 ) : (
                             <List.Section>
-                                {users.map(user => (
+                                {users.map((user, index) => (
                                     <List.Item
-                                        key={user.id}
+                                        key={user.id ? `user-${user.id}` : `user-index-${index}`}
                                         title={user.name}
                                         titleStyle={{ color: adminColors.text.primary, fontWeight: '500' }}
                                         description={user.email}
