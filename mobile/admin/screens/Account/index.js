@@ -12,7 +12,7 @@ import { ProfileMenuItem } from './components/ProfileMenuItem';
 import { ProfileStats } from './components/ProfileStats';
 import { accountStyles } from '~/admin/styles/accountStyles';
 import { adminColors } from '~/styles/adminTheme';
-
+export { AdminEditProfile } from './EditProfile'
 export const AdminAccount = () => {
     const navigation = useNavigation();
     const currentUser = useSelector(selectCurrentUser);
@@ -40,25 +40,25 @@ export const AdminAccount = () => {
 
     // Menu items for admin
     const menuItems = [
-        { 
-            title: 'Edit Profile', 
-            icon: 'account-edit-outline', 
-            onPress: () => navigation.navigate('AdminEditProfile') 
+        {
+            title: 'Edit Profile',
+            icon: 'account-edit-outline',
+            onPress: () => navigation.navigate('AdminEditProfile')
         },
-        { 
-            title: 'Notifications Settings', 
-            icon: 'bell-outline', 
-            onPress: () => navigation.navigate('AdminNotifications') 
+        {
+            title: 'Notifications Settings',
+            icon: 'bell-outline',
+            onPress: () => navigation.navigate('AdminNotifications')
         },
-        { 
-            title: 'System Settings', 
-            icon: 'cog-outline', 
-            onPress: () => navigation.navigate('AdminSettings') 
+        {
+            title: 'System Settings',
+            icon: 'cog-outline',
+            onPress: () => navigation.navigate('AdminSettings')
         },
-        { 
-            title: 'Help & Support', 
-            icon: 'help-circle-outline', 
-            onPress: () => navigation.navigate('AdminSupport') 
+        {
+            title: 'Help & Support',
+            icon: 'help-circle-outline',
+            onPress: () => navigation.navigate('AdminSupport')
         },
     ];
 
@@ -68,7 +68,7 @@ export const AdminAccount = () => {
 
     return (
         <SafeAreaView style={accountStyles.container}>
-            <ScrollView 
+            <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={accountStyles.scrollContent}
                 showsVerticalScrollIndicator={false}
@@ -96,7 +96,7 @@ export const AdminAccount = () => {
                     mode="contained"
                     icon="logout"
                     onPress={handleLogout}
-                    style={{ 
+                    style={{
                         marginTop: 20,
                         backgroundColor: adminColors.status.error,
                     }}
