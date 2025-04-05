@@ -101,6 +101,7 @@ class ChartService extends Service {
 
     return {
       totalOrders,
+
       totalRevenue,
       totalUsers,
       ordersByStatus: {
