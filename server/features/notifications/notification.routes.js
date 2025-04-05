@@ -26,6 +26,11 @@ export default [
         method: METHODS.PATCH,
         controller: [protectAndPermit(READ_WRITE), controller.markAsRead],
       },
+      {
+        path: '/read-all',
+        method: METHODS.PATCH,
+        controller: [protectAndPermit(READ_WRITE), controller.markAllAsRead],
+      },
       // Admin endpoints with appropriate protection
       {
         path: '/admin/batch',

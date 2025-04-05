@@ -249,6 +249,38 @@ class NotificationController extends Controller {
       });
     }
   }
+
+  markAllAsRead = async (req, res) => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return this.error({
+          res,
+          message: "User not authenticated",
+          statusCode: 401
+        });
+      }
+
+      // Update all unread notifications for this user
+      const result = await this.service.model.updateMany(
+        { user: userId, isRead: false },
+        { $set: { isRead: true } }
+      );
+
+      return this.success({
+        res,
+        data: { count: result.modifiedCount },
+        message: `${result.modifiedCount} notifications marked as read`
+      });
+    } catch (error) {
+      return this.error({
+        res,
+        message: error.message,
+        error
+      });
+    }
+  }
 }
 
 export default new NotificationController();
