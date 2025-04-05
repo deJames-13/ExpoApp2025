@@ -1,5 +1,5 @@
 import apiSlice from './index';
-import { setNotifications, addNotification, setLoading, setError, markAsRead } from '../slices/notification';
+import { setNotifications, addNotification, setLoading, setError, markAsRead, markAllAsRead as markAllAsReadAction } from '../slices/notification';
 
 const notificationApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -76,6 +76,44 @@ const notificationApi = apiSlice.injectEndpoints({
                     dispatch(apiSlice.endpoints.getUserNotifications.initiate());
                 }
             }
+        }),
+
+        // Mark all notifications as read
+        markAllNotificationsAsRead: builder.mutation({
+            query: () => ({
+                url: 'notifications/read-all',
+                method: 'PATCH'
+            }),
+            async onQueryStarted(_, { dispatch, queryFulfilled }) {
+                // Optimistic update
+                dispatch(markAllAsReadAction());
+                try {
+                    await queryFulfilled;
+                } catch (error) {
+                    // Revert on error by refetching
+                    dispatch(apiSlice.endpoints.getUserNotifications.initiate());
+                }
+            },
+            invalidatesTags: ['NOTIFICATIONS'],
+        }),
+
+        // Delete all notifications
+        clearAllNotifications: builder.mutation({
+            query: () => ({
+                url: 'notifications/clear-all',
+                method: 'DELETE'
+            }),
+            invalidatesTags: ['NOTIFICATIONS'],
+        }),
+
+        // Delete selected notifications
+        deleteSelectedNotifications: builder.mutation({
+            query: (notificationIds) => ({
+                url: 'notifications/delete-selected',
+                method: 'DELETE',
+                body: { ids: notificationIds }
+            }),
+            invalidatesTags: ['NOTIFICATIONS'],
         })
     }),
     overrideExisting: process.env.NODE_ENV !== 'production', // Allow endpoint overrides in development
@@ -86,7 +124,10 @@ export const {
     useRegisterDeviceMutation,
     useSendBatchNotificationsMutation,
     useBroadcastNotificationMutation,
-    useMarkNotificationAsReadMutation
+    useMarkNotificationAsReadMutation,
+    useMarkAllNotificationsAsReadMutation,
+    useClearAllNotificationsMutation,
+    useDeleteSelectedNotificationsMutation
 } = notificationApi;
 
 export { notificationApi };

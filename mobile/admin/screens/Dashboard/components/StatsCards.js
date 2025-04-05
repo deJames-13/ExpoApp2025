@@ -1,10 +1,34 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Card } from 'react-native-paper';
+import { Card, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { adminStyles, adminColors } from '~/styles/adminTheme';
 
-const StatsCards = ({ stats }) => {
+const StatsCards = ({ stats, loading }) => {
+    // Loading skeleton component for stats card
+    const renderLoadingCard = (style) => (
+        <Card style={[adminStyles.statsCard, style]}>
+            <Card.Content style={[styles.cardContent, { justifyContent: 'center' }]}>
+                <ActivityIndicator size="small" color={adminColors.primary} />
+            </Card.Content>
+        </Card>
+    );
+
+    if (loading) {
+        return (
+            <View style={styles.statsContainer}>
+                {/* Top row loading state */}
+                <View style={styles.topRow}>
+                    {renderLoadingCard(styles.topRowCard)}
+                    {renderLoadingCard(styles.topRowCard)}
+                </View>
+
+                {/* Bottom row loading state */}
+                {renderLoadingCard(styles.revenueCard)}
+            </View>
+        );
+    }
+
     return (
         <View style={styles.statsContainer}>
             {/* Top row: Users - Orders - Pending */}

@@ -209,6 +209,39 @@ class NotificationService extends Service {
       throw error;
     }
   }
+
+  // Helper method to clear all notifications for a user
+  async clearAllNotifications(userId) {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const result = await this.model.deleteMany({ user: userId });
+      return result;
+    } catch (error) {
+      console.error('Error clearing all notifications:', error);
+      throw error;
+    }
+  }
+
+  // Helper method to delete selected notifications
+  async deleteSelectedNotifications(userId, notificationIds) {
+    try {
+      if (!userId || !notificationIds || !notificationIds.length) {
+        throw new Error('User ID and notification IDs are required');
+      }
+
+      const result = await this.model.deleteMany({
+        _id: { $in: notificationIds },
+        user: userId
+      });
+      return result;
+    } catch (error) {
+      console.error('Error deleting selected notifications:', error);
+      throw error;
+    }
+  }
 }
 
 export default new NotificationService();
