@@ -20,6 +20,38 @@ export default [
           ...protectAndPermit(READ_WRITE),
           controller.dailyRevenue,
         ],
+      },
+      {
+        path: '/recent-orders',
+        method: METHODS.GET,
+        controller: [
+          ...protectAndPermit(READ_WRITE),
+          controller.recentOrders,
+        ],
+      },
+      {
+        path: '/recent-users',
+        method: METHODS.GET,
+        controller: [
+          ...protectAndPermit(READ_WRITE),
+          controller.recentUsers,
+        ],
+      },
+      {
+        path: '/stats-data',
+        method: METHODS.GET,
+        controller: [
+          ...protectAndPermit(READ_WRITE),
+          controller.statsData,
+        ],
+      },
+      {
+        path: '/dashboard-data',
+        method: METHODS.GET,
+        controller: [
+          ...protectAndPermit(READ_WRITE),
+          controller.dashboardData,
+        ],
       }
     ],
   },

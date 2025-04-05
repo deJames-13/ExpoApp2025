@@ -22,7 +22,7 @@ const RecentOrders = ({ orders, onViewAllPress }) => {
                         borderBottomWidth: 2,
                         borderBottomColor: '#E0E0E0'
                     }}>
-                        <DataTable.Title style={{ flex: 2 }}><Text style={headerTextStyle}>Order #</Text></DataTable.Title>
+                        <DataTable.Title style={{ flex: 2 }}><Text style={headerTextStyle}>Order</Text></DataTable.Title>
                         <DataTable.Title numeric style={{ flex: 1.5 }}><Text style={headerTextStyle}>Amount</Text></DataTable.Title>
                         <DataTable.Title style={{ flex: 2, paddingLeft: 16 }}><Text style={headerTextStyle}>Status</Text></DataTable.Title>
                     </DataTable.Header>
@@ -30,10 +30,10 @@ const RecentOrders = ({ orders, onViewAllPress }) => {
                     {orders.map(order => (
                         <DataTable.Row key={order.id} style={adminStyles.tableRow}>
                             <DataTable.Cell style={{ flex: 2 }}>
-                                <Text style={{ color: adminColors.text.primary, fontWeight: '500' }}>{order.number}</Text>
+                                <Text style={{ color: adminColors.text.primary, fontWeight: '500' }}>{order.user.username}</Text>
                             </DataTable.Cell>
                             <DataTable.Cell numeric style={{ flex: 1.5 }}>
-                                <Text style={{ color: adminColors.text.primary }}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {order.amount.toFixed(2)}</Text>
+                                <Text style={{ color: adminColors.text.primary }}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {order.total?.toFixed(2)}</Text>
                             </DataTable.Cell>
                             <DataTable.Cell style={{ flex: 2, paddingLeft: 16 }}>
                                 <Text style={{ color: getStatusColor(order.status).text, fontSize: 13, fontWeight: '600' }}>

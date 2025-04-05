@@ -21,7 +21,7 @@ const RecentUsers = ({ users, onViewAllPress }) => {
                                     size={40}
                                     color="#FFFFFF"
                                     backgroundColor={adminColors.primary}
-                                    label={user.name.split(' ').map(n => n[0]).join('')}
+                                    label={user?.name?.split(' ').map(n => n[0]).join('')}
                                 />
                             )}
                             right={props => (

@@ -1,4 +1,4 @@
-import { OrderModel, OrderResource } from '#features';
+import { OrderModel, OrderResource, UserModel } from '#features';
 import { Service } from '#lib';
 
 class ChartService extends Service {
@@ -67,11 +67,50 @@ class ChartService extends Service {
   
     return data.filter(Boolean);
   }
-  
 
+  async getRecentOrders(limit = 5) {
+    const orders = await OrderModel.find({})
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .exec();
+    return OrderResource.collection(orders);
+  }
 
-  
+  async getRecentUsers(limit = 5) {
+    const users = await UserModel.find({ role: 'customer' })
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .exec();
 
+    return users;
+  }
+
+  async getDashboardStats() {
+    const totalOrders = await OrderModel.countDocuments();
+
+    const orders = await OrderModel.find({}).exec();
+    const orderResource = await OrderResource.collection(orders);
+    const totalRevenue = orderResource.reduce((acc, order) => acc + order.total, 0);
+
+    const delivered = await OrderModel.countDocuments({ status: 'delivered' });
+    const cancelled = await OrderModel.countDocuments({ status: 'cancelled' });
+    const pending = await OrderModel.countDocuments({ status: 'pending' });
+    const processing = await OrderModel.countDocuments({ status: 'processing' });
+
+    const totalUsers = await UserModel.countDocuments({ role: 'customer' });
+
+    return {
+      totalOrders,
+      totalRevenue,
+      totalUsers,
+      ordersByStatus: {
+        delivered,
+        cancelled,
+        pending,
+        processing
+      }
+    };
+  }
 }
 
 export default new ChartService();
