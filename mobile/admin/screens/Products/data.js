@@ -21,10 +21,11 @@ const getAuthConfig = async () => {
 };
 
 // Function to fetch products from the backend
-export const fetchProducts = async () => {
+export const fetchProducts = async (limit = 100) => {
   try {
     const config = await getAuthConfig();
-    const response = await api.get('/api/v1/products', config);
+    // Add pagination parameters to request a larger number of products
+    const response = await api.get(`/api/v1/products?limit=${limit}&page=1`, config);
     
     // Check if the response has the expected structure with resource field
     if (response.data && Array.isArray(response.data.resource)) {

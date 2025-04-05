@@ -25,8 +25,9 @@ export function Products() {
         const loadProducts = async () => {
             setLoading(true);
             try {
-                const data = await fetchProducts();
-                console.log('Fetched products:', data); // Add logging to debug
+                // Request up to 100 products instead of using the default limit
+                const data = await fetchProducts(100);
+                console.log('Fetched products count:', data?.length); // Log the count for debugging
                 
                 // Ensure we have valid data before setting state
                 if (Array.isArray(data)) {
@@ -132,7 +133,7 @@ export function Products() {
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
         try {
-            const data = await fetchProducts();
+            const data = await fetchProducts(100);
             
             // Ensure we have valid data before setting state
             if (Array.isArray(data)) {

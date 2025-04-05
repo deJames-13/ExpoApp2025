@@ -18,7 +18,13 @@ export const productColumns = [
         textAlign: 'right',
         priority: 1,
         sortable: true,
-        render: (item) => `$${item.price.toFixed(2)}`
+        render: (item) => {
+            // Check if price exists and is a number before using toFixed
+            const price = item.price !== undefined && !isNaN(item.price) 
+                ? `$${Number(item.price).toFixed(2)}` 
+                : '$0.00';
+            return price;
+        }
     },
     {
         id: 'stock',
