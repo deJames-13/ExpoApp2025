@@ -2,6 +2,7 @@ android
 ios
 .env*.local
 .env*.production
+.env.*
 env.ts
 google-services.json
 
