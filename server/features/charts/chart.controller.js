@@ -50,7 +50,7 @@ class ChartController extends Controller {
 
   dashboardData = async (req, res) => {
     try {
-      // Get all dashboard data in a single API call to optimize frontend requests
+      // Get all dashboard data in a single API call but without revenue calculation
       const stats = await this.service.getDashboardStats();
       const recentOrders = await this.service.getRecentOrders(5);
       const recentUsers = await this.service.getRecentUsers(5);

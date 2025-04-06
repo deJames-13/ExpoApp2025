@@ -21,7 +21,6 @@ const fallbackStatsData = {
     totalUsers: 0,
     totalOrders: 0,
     pendingOrders: 0,
-    totalRevenue: 0,
     newFeedbacks: 0
 };
 
@@ -102,7 +101,6 @@ const fetchDashboardDataFallback = async () => {
                 totalUsers: 1250,
                 totalOrders: 843,
                 pendingOrders: 47,
-                totalRevenue: 152689.50,
                 newFeedbacks: 12
             },
             recentOrders: [
