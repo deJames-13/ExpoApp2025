@@ -22,17 +22,8 @@ export const AdminNotifications = () => {
                 </Card.Content>
             </Card>
 
-            <Card style={[styles.card, { marginBottom: 20 }]}>
-                <Card.Title
-                    title="Notification History"
-                    subtitle="Recently sent notifications"
-                    titleStyle={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}
-                    subtitleStyle={{ fontSize: 14, color: '#666', marginTop: 2 }}
-                />
-                <Card.Content>
-                    {/* <NotificationHistory /> */}
-                </Card.Content>
-            </Card>
+
+
             <Divider style={{
                 padding: 10
             }} />
@@ -42,3 +33,14 @@ export const AdminNotifications = () => {
 
 export default AdminNotifications;
 
+// <Card style={[styles.card, { marginBottom: 20 }]}>
+//             <Card.Title
+//                 title="Notification History"
+//                 subtitle="Recently sent notifications"
+//                 titleStyle={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}
+//                 subtitleStyle={{ fontSize: 14, color: '#666', marginTop: 2 }}
+//             />
+//             <Card.Content>
+//                 {/* <NotificationHistory /> */}
+//             </Card.Content>
+//         </Card>
