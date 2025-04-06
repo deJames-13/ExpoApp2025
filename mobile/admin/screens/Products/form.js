@@ -722,7 +722,7 @@ const handleSubmit = async (values) => {
             requireBrand: true,
             requireCategory: true,
             requireSupplier: true,
-            requireStatus: true
+            requireStatus: false, // Status is no longer required in the form
         };
 
         // Set dynamic configuration
@@ -894,9 +894,24 @@ const handleSubmit = async (values) => {
             onSubmit={handleSubmit}
             mode={mode}
             formRef={formRef}
-            layoutProps={{ style: styles.customFormLayout }}
+            layoutProps={{ 
+                style: { 
+                    ...styles.customFormLayout,
+                    position: 'relative', // Ensure proper positioning context for dropdowns
+                    zIndex: 1, // Base z-index for the form
+                    overflow: 'visible' // Allow dropdowns to extend outside the container
+                } 
+            }}
             fieldConfig={fieldConfig}
-            scrollViewProps={{ showsVerticalScrollIndicator: false }}
+            scrollViewProps={{ 
+                showsVerticalScrollIndicator: false,
+                keyboardShouldPersistTaps: 'handled', // Helps with dropdown interaction
+                contentContainerStyle: {
+                    position: 'relative', // Additional positioning context
+                    zIndex: 1, // Base z-index for content
+                    overflow: 'visible' // Allow dropdowns to extend outside the container
+                }
+            }}
             enableReinitialize={true}
             isSubmitting={isSubmitting}
         />
@@ -925,5 +940,7 @@ const styles = StyleSheet.create({
     customFormLayout: {
         width: '100%',
         paddingBottom: 20,
+        position: 'relative', // Ensure proper stacking context
+        overflow: 'visible' // Allow dropdowns to extend outside the container
     }
 });

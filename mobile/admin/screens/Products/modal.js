@@ -63,6 +63,8 @@ export function ProductModal({ visible, onDismiss, product, onSave, mode = 'crea
             containerStyle={styles.modalContainer}
             headerStyle={styles.modalHeader}
             bodyStyle={styles.modalBody}
+            scrollEnabled={true} // Enable scrolling in the modal
+            style={{ overflow: 'visible' }} // Allow content to overflow the modal boundaries
         >
             <ProductForm
                 product={product}
@@ -77,6 +79,7 @@ export function ProductModal({ visible, onDismiss, product, onSave, mode = 'crea
 const styles = StyleSheet.create({
     modalContainer: {
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        overflow: 'visible', // Allow content to extend beyond container
     },
     modalHeader: {
         backgroundColor: adminColors.cardBackground,
@@ -85,6 +88,9 @@ const styles = StyleSheet.create({
     modalBody: {
         backgroundColor: adminColors.cardBackground,
         paddingVertical: 12,
+        overflow: 'visible', // Allow dropdowns to extend outside the modal body
+        position: 'relative', // Ensure proper stacking context
+        zIndex: 1, // Base z-index for positioning
     },
     primaryButton: {
         backgroundColor: adminColors.primary,

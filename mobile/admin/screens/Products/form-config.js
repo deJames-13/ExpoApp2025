@@ -61,13 +61,73 @@ export const getProductFields = (options = {}) => {
                     type: 'select',
                     field: 'brand',
                     label: 'Brand',
-                    options: brandOptions
+                    options: brandOptions,
+                    containerStyle: { zIndex: 3000 }, // Ensure dropdown appears above other elements
+                    dropdownStyle: { 
+                        maxHeight: 300, // Further increased height to show more items
+                        backgroundColor: '#ffffff', // White background
+                        borderColor: '#e0e0e0', // Light gray border
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        // Use auto instead of scroll for React Native
+                        overflow: 'auto',
+                        // Add shadow for better visibility
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
+                        elevation: 4,
+                    },
+                    itemTextStyle: { color: '#000000' }, // Black text for dropdown items
+                    itemContainerStyle: { 
+                        backgroundColor: '#ffffff', // White background for items
+                        paddingVertical: 10, // Add more padding for better tap targets
+                    },
+                    activeItemContainerStyle: { backgroundColor: '#f5f5f5' }, // Light gray for selected item
+                    activeItemTextStyle: { color: '#000000', fontWeight: '500' }, // Black text for selected item
+                    style: { minHeight: 50 },
+                    scrollViewProps: {
+                        nestedScrollEnabled: true, // Enable nested scrolling
+                        showsVerticalScrollIndicator: true, // Show scroll indicator
+                        contentContainerStyle: { flexGrow: 1 },
+                        keyboardShouldPersistTaps: 'handled',
+                    }
                 },
                 {
                     type: 'select',
                     field: 'category',
                     label: 'Category',
-                    options: categoryOptions
+                    options: categoryOptions,
+                    containerStyle: { zIndex: 2900 }, // Ensure dropdown appears above other elements
+                    dropdownStyle: { 
+                        maxHeight: 300, // Further increased height to show more items
+                        backgroundColor: '#ffffff', // White background
+                        borderColor: '#e0e0e0', // Light gray border
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        // Use auto instead of scroll for React Native
+                        overflow: 'auto',
+                        // Add shadow for better visibility
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
+                        elevation: 4,
+                    },
+                    itemTextStyle: { color: '#000000' }, // Black text for dropdown items
+                    itemContainerStyle: { 
+                        backgroundColor: '#ffffff', // White background for items
+                        paddingVertical: 10, // Add more padding for better tap targets
+                    },
+                    activeItemContainerStyle: { backgroundColor: '#f5f5f5' }, // Light gray for selected item
+                    activeItemTextStyle: { color: '#000000', fontWeight: '500' }, // Black text for selected item
+                    style: { minHeight: 50 },
+                    scrollViewProps: {
+                        nestedScrollEnabled: true, // Enable nested scrolling
+                        showsVerticalScrollIndicator: true, // Show scroll indicator
+                        contentContainerStyle: { flexGrow: 1 },
+                        keyboardShouldPersistTaps: 'handled',
+                    }
                 }
             ]
         },
@@ -75,17 +135,37 @@ export const getProductFields = (options = {}) => {
             type: 'select',
             field: 'supplier',
             label: 'Supplier',
-            options: supplierOptions
-        },
-        {
-            type: 'radio',
-            field: 'status',
-            label: 'Product Status',
-            options: productStatusOptions.map(status => ({
-                value: status,
-                label: status.charAt(0).toUpperCase() + status.slice(1)
-            })),
-            direction: 'horizontal'
+            options: supplierOptions,
+            containerStyle: { zIndex: 2800 }, // Ensure dropdown appears above other elements
+            dropdownStyle: { 
+                maxHeight: 300, // Further increased height to show more items
+                backgroundColor: '#ffffff', // White background
+                borderColor: '#e0e0e0', // Light gray border
+                borderWidth: 1,
+                borderRadius: 5,
+                // Use auto instead of scroll for React Native
+                overflow: 'auto',
+                // Add shadow for better visibility
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 4,
+            },
+            itemTextStyle: { color: '#000000' }, // Black text for dropdown items
+            itemContainerStyle: { 
+                backgroundColor: '#ffffff', // White background for items
+                paddingVertical: 10, // Add more padding for better tap targets
+            },
+            activeItemContainerStyle: { backgroundColor: '#f5f5f5' }, // Light gray for selected item
+            activeItemTextStyle: { color: '#000000', fontWeight: '500' }, // Black text for selected item
+            style: { minHeight: 50 },
+            scrollViewProps: {
+                nestedScrollEnabled: true, // Enable nested scrolling
+                showsVerticalScrollIndicator: true, // Show scroll indicator
+                contentContainerStyle: { flexGrow: 1 },
+                keyboardShouldPersistTaps: 'handled',
+            }
         },
         {
             type: 'textarea',

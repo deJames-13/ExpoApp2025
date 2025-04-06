@@ -12,7 +12,7 @@ export const initialProductValues = {
     category: '',
     brand: '',
     supplier: '',
-    status: 'active',
+    status: 'active', // Default status since we removed the field from the form
     image: null,
     featured: false,
     rating: 0
