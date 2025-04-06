@@ -1,7 +1,7 @@
 import * as Yup from 'yup';
 
-// Export roles if they're defined here
-export const userRolesOptions = ['admin', 'manager', 'employee', 'customer'];
+// Update this to match the server's ROLES constant - removing manager and employee
+export const userRolesOptions = ['admin', 'customer'];
 
 // Make sure initialUserValues has the correct structure for info
 export const initialUserValues = {

@@ -1,5 +1,4 @@
-import api from "~/screens/Home/api";
-
+import api from "~/axios.config";
 // Initial empty array for users
 export const usersData = [];
 
@@ -82,6 +81,53 @@ export const updateUser = async (userId, userData) => {
     } catch (error) {
         console.error('Error updating user:', error);
         throw error;
+    }
+};
+
+// Function to update just a user's role
+export const updateUserRole = async (userId, role, token) => {
+    try {
+        console.log(`Starting role update: userId=${userId}, role=${role}`);
+        
+        // Map client-side role names to server-side ROLES keys
+        const roleMap = {
+            'admin': 'ADMIN',
+            'customer': 'CUSTOMER'
+        };
+        
+        // Get the server-side role key
+        const serverRole = roleMap[role.toLowerCase()];
+        
+        if (!serverRole) {
+            throw new Error(`Invalid role: ${role}. Must be one of: ${Object.keys(roleMap).join(', ')}`);
+        }
+        
+        console.log(`Mapped client role "${role}" to server role key "${serverRole}"`);
+        
+        // Use the standard PATCH endpoint that was working before
+        const response = await api.patch(`/api/v1/users/${userId}`, 
+            { role: serverRole },
+            token ? {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            } : undefined
+        );
+        
+        console.log("Role update successful with status:", response.status);
+        return response.data;
+    } catch (error) {
+        // Log detailed error information for debugging
+        console.error(`Role update failed for user ${userId}:`, error.message);
+        
+        if (error.response) {
+            console.error(`Error status: ${error.response.status}`);
+            console.error(`Error details:`, error.response.data);
+        }
+        
+        // Rethrow with clear message
+        throw new Error(`Unable to update role: ${error.message}`);
     }
 };
 
