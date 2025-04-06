@@ -40,6 +40,7 @@ module.exports = {
             tsconfigPaths: true
         },
         plugins: [
+            "expo-asset",
             "expo-dev-client",
             [
                 "expo-build-properties",

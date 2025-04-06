@@ -1,8 +1,11 @@
+import 'expo-assets'
+
 import { registerRootComponent } from 'expo';
-import App from './App';
 import notifee, { EventType } from '@notifee/react-native';
 import { setupNotificationChannels } from '~/firebase/notificationChannels';
 import { processRemoteMessage } from '~/firebase/useFirebaseMessaging';
+
+import App from './App';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
