@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { getApp } from '@react-native-firebase/app';
+import messaging from '@react-native-firebase/messaging';
 import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission as requestMessagingPermission, getInitialNotification, onNotificationOpenedApp, registerDeviceForRemoteMessages } from '@react-native-firebase/messaging';
 import notifee from '@notifee/react-native';
 import Toast from 'react-native-toast-message';
