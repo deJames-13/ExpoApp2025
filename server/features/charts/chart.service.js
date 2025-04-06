@@ -88,10 +88,6 @@ class ChartService extends Service {
   async getDashboardStats() {
     const totalOrders = await OrderModel.countDocuments();
 
-    const orders = await OrderModel.find({}).exec();
-    const orderResource = await OrderResource.collection(orders);
-    const totalRevenue = orderResource.reduce((acc, order) => acc + order.total, 0);
-
     const delivered = await OrderModel.countDocuments({ status: 'delivered' });
     const cancelled = await OrderModel.countDocuments({ status: 'cancelled' });
     const pending = await OrderModel.countDocuments({ status: 'pending' });
@@ -101,8 +97,6 @@ class ChartService extends Service {
 
     return {
       totalOrders,
-
-      totalRevenue,
       totalUsers,
       ordersByStatus: {
         delivered,
@@ -111,6 +105,13 @@ class ChartService extends Service {
         processing
       }
     };
+  }
+
+  // We'll keep this separate method for future use if needed
+  async getTotalRevenue() {
+    const orders = await OrderModel.find({}).exec();
+    const orderResource = await OrderResource.collection(orders);
+    return orderResource.reduce((acc, order) => acc + order.total, 0);
   }
 }
 
