@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, Image, FlatList } from 'react-native';
 export default function ItemListsView({ items }) {
     const renderItem = ({ item }) => {
         // Get product image URL with fallback
-        const imageUrl = item.product?.images[0]?.url || process.env.EXPO_PUBLIC_APP_LOGO;
+        const imageUrl = item.product?.images?.length && item.product?.images[0]?.url || process.env.EXPO_PUBLIC_APP_LOGO;
 
         // Get product name from either item.name or item.product.name
         const productName = item.name || item.product?.name || 'Unknown Product';

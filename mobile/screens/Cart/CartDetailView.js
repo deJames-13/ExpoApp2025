@@ -208,7 +208,7 @@ const CartDetailView = ({ route, navigation }) => {
 
             <View style={styles.imageContainer}>
                 <Image
-                    source={{ uri: productDetails.images[0]?.url || process.env.EXPO_PUBLIC_APP_LOGO }}
+                    source={{ uri: productDetails?.images?.length && productDetails.images[0]?.url || process.env.EXPO_PUBLIC_APP_LOGO }}
                     style={styles.image}
                     resizeMode="contain"
                 />

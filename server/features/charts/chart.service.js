@@ -1,4 +1,4 @@
-import { OrderModel, OrderResource, UserModel } from '#features';
+import { OrderModel, OrderResource, UserModel, ProductModel } from '#features';
 import { Service } from '#lib';
 
 class ChartService extends Service {
@@ -95,9 +95,13 @@ class ChartService extends Service {
 
     const totalUsers = await UserModel.countDocuments({ role: 'customer' });
 
+    // Add product count
+    const totalProducts = await ProductModel.countDocuments();
+
     return {
       totalOrders,
       totalUsers,
+      totalProducts,
       ordersByStatus: {
         delivered,
         cancelled,

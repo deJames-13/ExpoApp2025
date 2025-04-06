@@ -39,6 +39,9 @@ class NotificationService extends Service {
       return result;
     }, {});
 
+    // Always add click_action for Android
+    processedData.click_action = 'FLUTTER_NOTIFICATION_CLICK';
+
     const message = {
       notification: {
         title,
@@ -52,6 +55,10 @@ class NotificationService extends Service {
         notification: {
           clickAction: 'FLUTTER_NOTIFICATION_CLICK', // Standard for React Native
           channelId: 'high_importance_channel',
+          priority: 'high',
+          defaultSound: true,
+          visibility: 'public',
+          importance: 'high',
         }
       },
       apns: {
@@ -63,7 +70,8 @@ class NotificationService extends Service {
           aps: {
             // Include content-available for background delivery
             'content-available': 1,
-            sound: 'default'
+            sound: 'default',
+            badge: 1
           }
         }
       },
