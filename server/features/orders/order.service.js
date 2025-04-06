@@ -125,7 +125,8 @@ class OrderService extends Service {
         status: status,
         timestamp: new Date().toISOString(),
         screen: 'OrderDetailView',
-        tab: 'Orders'
+        tab: 'Orders',
+        channelId: 'orders_channel' // Specify the channel ID for order notifications
       };
 
       // Plain text message as fallback for email
@@ -150,7 +151,18 @@ class OrderService extends Service {
           deviceToken: user.fcmToken,
           title,
           body: plainTextMessage,
-          data: notificationData, // Also include as data for platforms that support it
+          data: notificationData, // Include channel info in data payload
+          priority: 'high',
+          options: {
+            // Specify Android configuration to use orders channel
+            android: {
+              notification: {
+                channelId: 'orders_channel',
+                priority: 'high',
+                defaultSound: true
+              }
+            }
+          }
         });
       }
 

@@ -47,6 +47,8 @@ async function processRemoteMessage(remoteMessage) {
                     pressAction: {
                         id: 'view_order',
                     },
+                    // Auto-dismiss the notification when this action is pressed
+                    androidAutoCancel: true,
                 }
             ] : undefined
         },
@@ -200,6 +202,7 @@ export default function useFirebaseMessaging() {
     useEffect(() => {
         // Set up Notifee notification press listener
         const unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
+            // Handle notification presses
             if (type === notifee.ForegroundEventType.PRESS) {
                 console.log('User pressed notification in foreground', detail.notification);
 
@@ -230,10 +233,46 @@ export default function useFirebaseMessaging() {
                     }
                 }
             }
+
+            // Handle action button presses
+            if (type === notifee.ForegroundEventType.ACTION_PRESS) {
+                console.log('User pressed an action button', detail.pressAction.id);
+
+                // Check which action was pressed
+                if (detail.pressAction.id === 'view_order') {
+                    const data = detail.notification?.data || {};
+
+                    // If we have a stored FCM message, parse and handle it
+                    if (data.fcmMessage) {
+                        try {
+                            const fcmMessage = JSON.parse(data.fcmMessage);
+                            const messageData = fcmMessage.data || {};
+
+                            // Create navigation data specific for the order
+                            const notificationData = {
+                                type: 'order',
+                                id: messageData.id,
+                                status: messageData.status,
+                                screen: 'OrderDetailView',
+                                tab: 'Orders',
+                                isAdmin: isAdmin
+                            };
+
+                            // Navigate to the order details screen
+                            setTimeout(() => {
+                                navigateFromNotification(navigation, notificationData, isAdmin);
+                            }, 300);
+                        } catch (e) {
+                            console.error('Error parsing FCM message', e);
+                        }
+                    }
+                }
+            }
         });
 
-        // Setup notification press handling for background/quit state
+        // Setup background event handler
         notifee.onBackgroundEvent(async ({ type, detail }) => {
+            // Handle notification presses in background
             if (type === notifee.BackgroundEventType.PRESS) {
                 console.log('User pressed notification in background', detail.notification);
 
@@ -247,6 +286,31 @@ export default function useFirebaseMessaging() {
                                 {
                                     id: 'open',
                                     title: 'Open App',
+                                }
+                            ]
+                        }
+                    ]);
+                }
+            }
+
+            // Handle action button presses in background
+            if (type === notifee.BackgroundEventType.ACTION_PRESS) {
+                console.log('User pressed an action button in background', detail.pressAction.id);
+
+                if (detail.pressAction.id === 'view_order') {
+                    // For background actions, we need to set up an indicator that
+                    // the order screen should be opened when the app is launched
+                    const data = detail.notification?.data || {};
+
+                    // We can't navigate directly from a background event handler
+                    // Store the action intent for handling when the app opens
+                    await notifee.setNotificationCategories([
+                        {
+                            id: 'view_order_intent',
+                            actions: [
+                                {
+                                    id: 'open_order',
+                                    title: 'Open Order',
                                 }
                             ]
                         }
