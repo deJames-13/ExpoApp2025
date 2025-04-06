@@ -25,6 +25,7 @@ const StatsCards = ({ stats, loading }) => {
         );
     }
 
+    // Use cached data, even if values are 0
     return (
         <View style={styles.statsContainer}>
             <View style={styles.cardsRow}>

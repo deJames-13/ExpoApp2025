@@ -13,14 +13,16 @@ const validationSchema = Yup.object().shape({
     title: Yup.string().required('Title is required'),
     body: Yup.string().required('Message body is required'),
     type: Yup.string().required('Type is required'),
-    customType: Yup.string().when('useCustomType', {
-        is: true,
-        then: Yup.string().required('Custom type is required'),
+    customType: Yup.string().when(['useCustomType'], {
+        is: (useCustomType) => useCustomType === true,
+        then: () => Yup.string().required('Custom type is required'),
+        otherwise: () => Yup.string()
     }),
     status: Yup.string().required('Status is required'),
-    userIds: Yup.string().when('isBroadcast', {
-        is: false,
-        then: Yup.string().required('At least one user ID is required')
+    userIds: Yup.string().when(['isBroadcast'], {
+        is: (isBroadcast) => isBroadcast === false,
+        then: () => Yup.string().required('At least one user ID is required'),
+        otherwise: () => Yup.string()
     }),
     data: Yup.string().test(
         'is-valid-json',
