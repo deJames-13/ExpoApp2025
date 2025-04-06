@@ -1,18 +1,47 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Card } from 'react-native-paper';
+import { useSelector, useDispatch } from 'react-redux';
 import { adminColors } from '~/styles/adminTheme';
+import {
+    selectDashboardStats,
+    fetchStatsWithCache
+} from '~/states/slices/dashboard';
 
-export function ProfileStats({ stats = [] }) {
+export function ProfileStats({ customStats }) {
+    const dispatch = useDispatch();
+    const { data: stats, isLoading } = useSelector(selectDashboardStats);
+
+    useEffect(() => {
+        dispatch(fetchStatsWithCache());
+    }, [dispatch]);
+
+    // Use custom stats if provided, otherwise use the dashboard stats
+    const adminStats = customStats || [
+        { label: 'Users', value: stats.totalUsers || 0 },
+        { label: 'Orders', value: stats.totalOrders || 0 },
+        { label: 'Products', value: stats.totalProducts || 0 }
+    ];
+
+    if (isLoading && !customStats) {
+        return (
+            <Card style={styles.statsCard}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color={adminColors.primary} />
+                </View>
+            </Card>
+        );
+    }
+
     return (
         <Card style={styles.statsCard}>
             <View style={styles.statsContainer}>
-                {stats.map((stat, index) => (
+                {adminStats.map((stat, index) => (
                     <View 
                         key={stat.label} 
                         style={[
                             styles.statItem,
-                            index < stats.length - 1 && styles.statItemWithBorder
+                            index < adminStats.length - 1 && styles.statItemWithBorder
                         ]}
                     >
                         <Text style={styles.statValue}>{stat.value}</Text>
@@ -53,4 +82,9 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: adminColors.text.secondary,
     },
+    loadingContainer: {
+        padding: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+    }
 });
