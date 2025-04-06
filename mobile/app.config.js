@@ -40,6 +40,7 @@ module.exports = {
             tsconfigPaths: true
         },
         plugins: [
+            "@notifee/react-native",
             "expo-dev-client",
             "expo-secure-store",
             [

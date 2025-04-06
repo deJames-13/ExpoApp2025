@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
-import notifee, { AndroidImportance, AndroidVisibility } from '@notifee/react-native';
+import notifee from '@notifee/react-native';
 
 export const setupNotificationChannels = async () => {
     if (Platform.OS === 'android') {
@@ -9,8 +9,8 @@ export const setupNotificationChannels = async () => {
             id: 'high_importance_channel',
             name: 'Important Notifications',
             description: 'Channel for important notifications',
-            importance: AndroidImportance.HIGH,
-            visibility: AndroidVisibility.PUBLIC,
+            importance: 4,
+            visibility: 1,
             vibration: true,
             sound: 'default',
         });
@@ -20,7 +20,7 @@ export const setupNotificationChannels = async () => {
             id: 'orders_channel',
             name: 'Orders',
             description: 'Order updates and notifications',
-            importance: AndroidImportance.HIGH,
+            importance: 4,
         });
     }
 };
