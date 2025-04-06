@@ -5,6 +5,7 @@ const initialState = {
         data: {
             totalUsers: 0,
             totalOrders: 0,
+            totalProducts: 0,
             pendingOrders: 0,
             totalRevenue: 0,
             newFeedbacks: 0

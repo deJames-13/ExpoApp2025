@@ -53,7 +53,7 @@ const CustomAdminHeader = ({ navigation }) => {
 
                 <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={() => navigation.navigate('AdminTabsRoute', { screen: 'Account' })}
+                    onPress={() => navigation.navigate('AdminRoutesStack', { screen: 'Account' })}
                 >
                     {adminProfileImage ? (
                         <Image

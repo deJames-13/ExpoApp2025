@@ -70,7 +70,7 @@ export function Profile() {
                 <ProfileHeader user={userData} onEditProfile={handleEditProfile} />
 
                 <View className="px-4 flex-1">
-                    <ProfileStats stats={statsData} />
+                    {/* <ProfileStats stats={statsData} /> */}
 
                     <Text className="text-lg font-bold mb-2">Account</Text>
 
