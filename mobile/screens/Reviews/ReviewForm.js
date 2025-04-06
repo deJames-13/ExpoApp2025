@@ -259,7 +259,7 @@ const ReviewForm = ({ route, navigation }) => {
                                 <View style={styles.productImageContainer}>
                                     {product.images && product.images[0] ? (
                                         <Image
-                                            source={{ uri: product.images[0]?.url }}
+                                            source={{ uri: product.images?.length && product.images[0]?.url }}
                                             style={styles.productImage}
                                         />
                                     ) : (

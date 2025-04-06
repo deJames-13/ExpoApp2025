@@ -149,7 +149,7 @@ class OrderService extends Service {
         NotificationService.sendNotification({
           deviceToken: user.fcmToken,
           title,
-          body: message,
+          body: plainTextMessage,
           data: notificationData, // Also include as data for platforms that support it
         });
       }

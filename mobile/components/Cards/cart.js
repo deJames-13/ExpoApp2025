@@ -7,7 +7,7 @@ const CartCard = ({ item, onViewDetails, onDeleteItem, isSelected, onToggleSelec
     const productPrice = item.price || 0;
     const quantity = item.quantity || 0;
     const total = item.total || 0;
-    const imageUrl = item.product?.images[0]?.url || process.env.EXPO_PUBLIC_APP_LOGO;
+    const imageUrl = item.product?.images?.length && item.product?.images[0]?.url || process.env.EXPO_PUBLIC_APP_LOGO;
     const status = item.product?.stock > 0 ? 'In Stock' : 'Out of Stock';
 
     return (
