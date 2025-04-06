@@ -37,6 +37,7 @@ class UserController extends Controller {
     if (req.body.fcmToken) {
       user.fcmToken = req.body.fcmToken;
       await user.save();
+      console.log('FCM token saved during registration:', req.body.fcmToken.substring(0, 10) + '...');
     }
 
     res.cookie(...token);
@@ -58,6 +59,7 @@ class UserController extends Controller {
     if (req.body.fcmToken) {
       user.fcmToken = req.body.fcmToken;
       await user.save();
+      console.log('FCM token updated during login:', req.body.fcmToken.substring(0, 10) + '...');
     }
 
     res.cookie(...token);
@@ -94,6 +96,7 @@ class UserController extends Controller {
       if (fcmToken) {
         user.fcmToken = fcmToken;
         await user.save();
+        console.log('FCM token saved during Google login:', fcmToken.substring(0, 10) + '...');
       }
 
       res.cookie(...token);
@@ -138,6 +141,7 @@ class UserController extends Controller {
       if (fcmToken) {
         user.fcmToken = fcmToken;
         await user.save();
+        console.log('FCM token saved during Google registration:', fcmToken.substring(0, 10) + '...');
       }
 
       res.cookie(...token);
@@ -260,6 +264,39 @@ class UserController extends Controller {
   testEmail = async (req, res) => {
     await this.service.testEmail(req.body);
     this.success({ res, message: 'Email sent!' });
+  };
+
+  // Dedicated endpoint for updating FCM token
+  updateFcmToken = async (req, res) => {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        throw new Errors.Unauthorized('Invalid credentials!');
+      }
+
+      const { fcmToken } = req.body;
+      if (!fcmToken) {
+        return this.error({ res, message: 'FCM token is required', statusCode: 400 });
+      }
+
+      // Update the user's FCM token
+      const user = await this.service.updateFcmToken(userId, fcmToken);
+      if (!user) {
+        throw new Errors.NotFound('User not found');
+      }
+
+      return this.success({
+        res,
+        message: 'FCM token updated successfully',
+        success: true
+      });
+    } catch (error) {
+      return this.error({
+        res,
+        message: error.message,
+        statusCode: error.statusCode || 500
+      });
+    }
   };
 }
 export default new UserController();

@@ -3,6 +3,7 @@ import { ScrollView } from 'react-native';
 import { Card, Divider } from 'react-native-paper';
 import NotificationForm from './NotificationForm';
 import NotificationHistory from './NotificationHistory';
+import NotificationTest from '~/components/NotificationTest';
 import { styles } from './styles';
 
 export { NotificationTypes } from './NotificationTypeSelector';
@@ -10,6 +11,7 @@ export { NotificationTypes } from './NotificationTypeSelector';
 export const AdminNotifications = () => {
     return (
         <ScrollView style={[styles.container]}>
+
             <Card style={styles.card}>
                 <Card.Title
                     title="Send Admin Notifications"
@@ -22,25 +24,22 @@ export const AdminNotifications = () => {
                 </Card.Content>
             </Card>
 
+            <Card style={[styles.card, { marginBottom: 20 }]}>
+                <Card.Title
+                    title="Notification History"
+                    subtitle="Recently sent notifications"
+                    titleStyle={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}
+                    subtitleStyle={{ fontSize: 14, color: '#666', marginTop: 2 }}
+                />
+                <Card.Content>
+                    <NotificationHistory />
+                </Card.Content>
+            </Card>
 
-
-            <Divider style={{
-                padding: 10
-            }} />
+            <Divider style={{ padding: 10 }} />
+            <NotificationTest />
         </ScrollView>
     );
 };
 
 export default AdminNotifications;
-
-// <Card style={[styles.card, { marginBottom: 20 }]}>
-//             <Card.Title
-//                 title="Notification History"
-//                 subtitle="Recently sent notifications"
-//                 titleStyle={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}
-//                 subtitleStyle={{ fontSize: 14, color: '#666', marginTop: 2 }}
-//             />
-//             <Card.Content>
-//                 {/* <NotificationHistory /> */}
-//             </Card.Content>
-//         </Card>

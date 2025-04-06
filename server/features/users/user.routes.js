@@ -107,6 +107,12 @@ export default [
         method: METHODS.POST,
         controller: controller.testEmail,
       },
+      // Add new route for FCM token updates
+      {
+        path: '/fcm-token',
+        method: METHODS.POST,
+        controller: [protectAndPermit(), controller.updateFcmToken],
+      },
     ],
   },
 ];

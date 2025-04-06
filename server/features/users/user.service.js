@@ -262,6 +262,30 @@ class UserService extends Service {
     console.log("User: ", { user, token, isNewUser })
     return { user, token, isNewUser };
   };
+
+  async updateFcmToken(userId, fcmToken) {
+    try {
+      // Validate that token is a non-empty string
+      if (!fcmToken || typeof fcmToken !== 'string' || fcmToken.length < 10) {
+        throw new Error('Invalid FCM token format');
+      }
+
+      const user = await this.model.findById(userId);
+      if (!user) return null;
+
+      // Only update if token has changed
+      if (user.fcmToken !== fcmToken) {
+        user.fcmToken = fcmToken;
+        await user.save();
+        console.log(`FCM token updated for user ${userId}`);
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error updating FCM token:', error);
+      throw error;
+    }
+  }
 }
 
 export default new UserService();

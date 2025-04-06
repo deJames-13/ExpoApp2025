@@ -1,6 +1,7 @@
 import { Controller } from '#lib';
 import NotificationResource from './notification.resource.js';
 import NotificationService from './notification.service.js';
+import { UserModel } from '#features'; // Add this import for debugNotifications
 
 class NotificationController extends Controller {
   service = NotificationService;

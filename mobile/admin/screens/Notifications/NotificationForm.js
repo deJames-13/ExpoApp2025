@@ -78,23 +78,28 @@ const NotificationForm = () => {
         try {
             const notificationType = values.useCustomType ? values.customType : values.type;
 
-            // Prepare base payload
+            // Enhanced data with proper navigation information
+            const dataObj = values.data && values.data.trim() !== ''
+                ? JSON.parse(values.data)
+                : {};
+
+            // Prepare base payload with proper structure
             const payload = {
                 title: values.title,
                 body: values.body,
                 type: notificationType,
                 status: values.status,
-                data: values.data && values.data.trim() !== '' ? JSON.parse(values.data) : {},
+                data: {
+                    ...dataObj,
+                    type: notificationType, // Include type in data for client-side channel mapping
+                    screen: dataObj.screen || 'Notifications',
+                    tab: dataObj.tab || 'Notifications',
+                    timestamp: new Date().toISOString()
+                },
                 sendPush: values.sendPush
             };
 
-            // Add screen and tab navigation info if not present
-            if (!payload.data.screen) {
-                payload.data.screen = 'Notifications';
-            }
-            if (!payload.data.tab) {
-                payload.data.tab = 'Notifications';
-            }
+            console.log('Sending notification with payload:', JSON.stringify(payload));
 
             let result;
             if (values.isBroadcast) {

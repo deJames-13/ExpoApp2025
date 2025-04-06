@@ -39,61 +39,102 @@ class NotificationService extends Service {
       return null;
     }
 
-    // Convert any non-string values in data to strings (FCM requirement)
-    const processedData = Object.keys(data).reduce((result, key) => {
-      result[key] = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
-      return result;
-    }, {});
-
-    // Always add click_action for Android
-    processedData.click_action = 'FLUTTER_NOTIFICATION_CLICK';
-
-    const message = {
-      notification: {
-        title,
-        body
-      },
-      token: deviceToken,
-      data: processedData,
-      android: {
-        priority,
-        ttl: timeToLive * 1000, // timeToLive is in seconds
-        notification: {
-          clickAction: 'FLUTTER_NOTIFICATION_CLICK', // Standard for React Native
-          channelId: 'high_importance_channel',
-          priority: 'high',
-          defaultSound: true,
-          visibility: 'public',
-          importance: 'high',
-        }
-      },
-      apns: {
-        headers: {
-          'apns-priority': priority === 'high' ? '10' : '5',
-          'apns-expiration': (Math.floor(Date.now() / 1000) + timeToLive).toString()
-        },
-        payload: {
-          aps: {
-            // Include content-available for background delivery
-            'content-available': 1,
-            sound: 'default',
-            badge: 1
-          }
-        }
-      },
-      ...options // Merge custom options
-    };
-
     try {
+      // Convert any non-string values in data to strings (FCM requirement)
+      const processedData = Object.keys(data).reduce((result, key) => {
+        result[key] = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
+        return result;
+      }, {});
+
+      // Set channelId based on notification type
+      const type = data.type || 'info';
+      let channelId;
+
+      switch (type.toLowerCase()) {
+        case 'order':
+          channelId = 'orders_channel';
+          break;
+        case 'warning':
+          channelId = 'warning_channel';
+          break;
+        case 'alert':
+        case 'error':
+          channelId = 'alert_channel';
+          break;
+        case 'promotion':
+        case 'promo':
+        case 'discount':
+        case 'sale':
+          channelId = 'promotions_channel';
+          break;
+        case 'info':
+          channelId = 'info_channel';
+          break;
+        default:
+          channelId = 'high_importance_channel';
+      }
+
+      // Add channelId to data
+      processedData.channelId = channelId;
+
+      // Always add click_action for Android
+      processedData.click_action = 'FLUTTER_NOTIFICATION_CLICK';
+
+      // Add screen and tab if not present
+      if (!processedData.screen) {
+        processedData.screen = 'Notifications';
+      }
+      if (!processedData.tab) {
+        processedData.tab = 'Notifications';
+      }
+
+      // Create the message object
+      const message = {
+        notification: {
+          title,
+          body
+        },
+        token: deviceToken,
+        data: processedData,
+        android: {
+          priority,
+          ttl: timeToLive * 1000, // timeToLive is in seconds
+          notification: {
+            clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+            channelId,
+            priority: 'high',
+            defaultSound: true,
+            visibility: 'public',
+          }
+        },
+        apns: {
+          headers: {
+            'apns-priority': priority === 'high' ? '10' : '5',
+            'apns-expiration': (Math.floor(Date.now() / 1000) + timeToLive).toString()
+          },
+          payload: {
+            aps: {
+              'content-available': 1,
+              sound: 'default',
+              badge: 1
+            }
+          }
+        },
+        ...options
+      };
+
+      console.log(`Sending notification to token: ${deviceToken.substring(0, 10)}... on channel: ${channelId}`);
+
       const response = await admin.messaging().send(message);
       console.log('Successfully sent message:', response);
       return response;
     } catch (error) {
       // Handle specific FCM errors
-      if (error.code === 'messaging/registration-token-not-registered') {
+      if (error.code === 'messaging/registration-token-not-registered' ||
+        error.errorInfo?.code === 'messaging/registration-token-not-registered') {
         console.warn(`Invalid FCM token: ${deviceToken.substring(0, 10)}... - Removing from user`);
         // Remove invalid token from user (don't await to avoid blocking)
-        this.removeInvalidToken(deviceToken).catch(e =>
+        this.removeInvalidToken(deviceToken).catch(e => 
           console.error('Error removing invalid token:', e)
         );
         // Return null instead of throwing
@@ -101,8 +142,8 @@ class NotificationService extends Service {
       }
 
       console.error('Error sending message:', error);
-      // For other errors, we still throw
-      throw error;
+      // For other errors, we still return null to prevent batch operations from failing
+      return null;
     }
   }
 
@@ -183,18 +224,23 @@ class NotificationService extends Service {
 
         const pushPromises = users.map(user => {
           if (user.fcmToken) {
+            // Enhanced notification data
+            const enhancedData = {
+              ...data,
+              type,
+              notificationType: type,
+              screen: data.screen || 'Notifications',
+              tab: data.tab || 'Notifications',
+              timestamp: new Date().toISOString(),
+              userId: user._id.toString() // Include userId for tracking
+            };
+
             return this.sendNotification({
               deviceToken: user.fcmToken,
               title,
               // Send plain body text for better compatibility
               body: body,
-              data: {
-                ...data,
-                type,
-                notificationType: type,
-                screen: data.screen || 'Notifications',
-                tab: data.tab || 'Notifications'
-              },
+              data: enhancedData,
               priority,
               timeToLive,
               options

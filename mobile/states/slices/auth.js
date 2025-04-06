@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { STORAGE_KEYS, persistCredentials, clearCredentials } from '../utils/authUtils';
+import { STORAGE_KEYS, persistCredentials, clearCredentials, getStorageItem, storeFcmToken } from '../utils/authUtils';
+import { fcmApi } from '~/axios.config';
 
 // Initial state with empty values
 const initialState = {
@@ -52,6 +53,10 @@ export const authSlice = createSlice({
         },
         setFcmToken: (state, action) => {
             state.fcmToken = action.payload;
+            // When FCM token is set or updated, sync with server if authenticated
+            if (state.isAuthenticated && state.token && action.payload) {
+                updateFcmTokenOnServer(state.token, action.payload);
+            }
         },
         logout: (state) => {
             state.user = null;
@@ -106,6 +111,42 @@ export const authSlice = createSlice({
         }
     },
 });
+
+// Async function to update FCM token on server
+async function updateFcmTokenOnServer(authToken, fcmToken) {
+    try {
+        // Store token locally first
+        await storeFcmToken(fcmToken);
+
+        // Then update on server
+        if (authToken) {
+            const response = await fcmApi.post('/api/v1/users/fcm-token', {
+                fcmToken
+            });
+            console.log('FCM token updated on server:', response.status === 200);
+        }
+    } catch (error) {
+        console.error('Failed to update FCM token on server:', error);
+    }
+}
+
+// Add a new thunk for token updates
+export const updateFcmToken = (fcmToken) => async (dispatch, getState) => {
+    const currentState = getState();
+    const isAuthenticated = currentState.auth.isAuthenticated;
+
+    // Update token in redux state
+    dispatch(setFcmToken(fcmToken));
+
+    // If authenticated, also ensure token is saved on server
+    if (isAuthenticated && fcmToken) {
+        try {
+            await fcmApi.post('/api/v1/users/fcm-token', { fcmToken });
+        } catch (error) {
+            console.error('Failed to update FCM token on server:', error);
+        }
+    }
+};
 
 export const {
     setCredentials,
