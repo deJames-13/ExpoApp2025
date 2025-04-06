@@ -29,13 +29,14 @@ export function NotificationScreen() {
     const [selectionMode, setSelectionMode] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [page, setPage] = useState(1);
 
-    // API queries and mutations
-    const { refetch, isFetching, data } = useGetUserNotificationsQuery();
-    const [markNotificationAsRead] = useMarkNotificationAsReadMutation();
-    const [markAllNotificationsAsRead] = useMarkAllNotificationsAsReadMutation();
-    const [clearAllNotificationsMutation] = useClearAllNotificationsMutation();
-    const [deleteSelectedNotificationsMutation] = useDeleteSelectedNotificationsMutation();
+    // API queries with pagination parameters
+    const { refetch, isFetching, data } = useGetUserNotificationsQuery({
+        page: page,
+        limit: 10,
+        sort: '-createdAt'
+    });
 
     // Handle refresh state
     useEffect(() => {
@@ -47,7 +48,13 @@ export function NotificationScreen() {
     // Function to handle pull-to-refresh
     const handleRefresh = async () => {
         setIsRefreshing(true);
+        setPage(1); // Reset to first page on refresh
         await refetch();
+    };
+
+    // Function to load more notifications (pagination)
+    const handleLoadMore = () => {
+        setPage(prevPage => prevPage + 1);
     };
 
     // Function to clear all notifications
@@ -192,6 +199,8 @@ export function NotificationScreen() {
                 onViewDetails={viewNotificationDetails}
                 refreshing={isRefreshing}
                 onRefresh={handleRefresh}
+                onLoadMore={handleLoadMore}
+                hasMoreData={data?.meta?.page < data?.meta?.pages}
             />
 
             <Modal

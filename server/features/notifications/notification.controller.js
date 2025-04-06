@@ -30,14 +30,46 @@ class NotificationController extends Controller {
         });
       }
 
-      const notifications = await this.service.model.find({ user: userId })
-        .sort({ createdAt: -1 })
-        .limit(50);
+      // Parse pagination parameters
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
 
+      // Parse sort parameter
+      const sort = req.query.sort || '-createdAt'; // Default to newest first
+      const sortObj = {};
+
+      // Handle sort prefix (- means descending)
+      if (sort.startsWith('-')) {
+        sortObj[sort.substring(1)] = -1;
+      } else {
+        sortObj[sort] = 1;
+      }
+
+      // Query with pagination and sorting
+      const query = { user: userId };
+      const notifications = await this.service.model.find(query)
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit);
+
+      // Get total count for pagination
+      const totalCount = await this.service.model.countDocuments(query);
+
+      // Build pagination metadata
+      const meta = {
+        page,
+        limit,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit)
+      };
+
+      // Transform and return data
       return this.success({
         res,
         data: (await this.resource.collection(notifications)) || notifications,
-        message: "Notifications retrieved successfully"
+        message: "Notifications retrieved successfully",
+        meta
       });
     } catch (error) {
       return this.error({
@@ -46,7 +78,7 @@ class NotificationController extends Controller {
         error
       });
     }
-  }
+  };
 
   saveDevice = async (req, res) => {
     try {

@@ -3,9 +3,24 @@ import { setNotifications, addNotification, setLoading, setError, markAsRead, ma
 
 const notificationApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
-        // Get notifications for the current user
+        // Get notifications for the current user with pagination
         getUserNotifications: builder.query({
-            query: () => 'notifications',
+            query: (params = {}) => {
+                // Default to first page, 10 items per page, sorted by newest first
+                const queryParams = {
+                    page: params.page || 1,
+                    limit: params.limit || 10,
+                    sort: params.sort || '-createdAt',
+                    ...params
+                };
+
+                // Convert to query string
+                const queryString = Object.entries(queryParams)
+                    .map(([key, value]) => `${key}=${value}`)
+                    .join('&');
+
+                return `notifications?${queryString}`;
+            },
             providesTags: ['NOTIFICATIONS'],
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
                 try {
