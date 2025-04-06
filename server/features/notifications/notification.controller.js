@@ -353,6 +353,43 @@ class NotificationController extends Controller {
       });
     }
   }
+
+  // Debug method for notifications
+  debugNotifications = async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return this.error({
+          res,
+          message: "User not authenticated",
+          statusCode: 401
+        });
+      }
+
+      // Get user info
+      const user = await UserModel.findById(userId).select('fcmToken').lean();
+
+      const diagnosticInfo = {
+        userId,
+        hasFcmToken: !!user?.fcmToken,
+        tokenLength: user?.fcmToken?.length || 0,
+        notificationCount: await this.service.model.countDocuments({ user: userId }),
+        channels: await this.service.getChannelsInfo()
+      };
+
+      return this.success({
+        res,
+        data: diagnosticInfo,
+        message: "Notification diagnostic info retrieved"
+      });
+    } catch (error) {
+      return this.error({
+        res,
+        message: error.message,
+        error
+      });
+    }
+  }
 }
 
 export default new NotificationController();

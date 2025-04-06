@@ -53,6 +53,12 @@ export default [
         method: METHODS.POST,
         controller: [protectAndPermit(READ_WRITE), controller.broadcastNotification],
       },
+      // Debug endpoint
+      {
+        path: '/debug',
+        method: METHODS.GET,
+        controller: [protectAndPermit(READ_WRITE), controller.debugNotifications],
+      },
     ],
   },
 ];

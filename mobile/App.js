@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import "~/global.css";
 import Toast from 'react-native-toast-message';
 
@@ -17,6 +17,10 @@ import { navigationRef } from './navigation/navigationService';
 
 // Import toast configuration from the separate file
 import toastConfig from './toast.config';
+import { setupNotificationChannels } from './firebase/notificationChannels';
+
+// Initialize notification channels early
+setupNotificationChannels();
 
 function AppContent() {
   const { isHydrated } = useLoadUser();

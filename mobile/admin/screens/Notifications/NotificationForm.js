@@ -78,6 +78,7 @@ const NotificationForm = () => {
         try {
             const notificationType = values.useCustomType ? values.customType : values.type;
 
+            // Prepare base payload
             const payload = {
                 title: values.title,
                 body: values.body,
@@ -87,6 +88,14 @@ const NotificationForm = () => {
                 sendPush: values.sendPush
             };
 
+            // Add screen and tab navigation info if not present
+            if (!payload.data.screen) {
+                payload.data.screen = 'Notifications';
+            }
+            if (!payload.data.tab) {
+                payload.data.tab = 'Notifications';
+            }
+
             let result;
             if (values.isBroadcast) {
                 result = await broadcastNotification({
@@ -94,10 +103,17 @@ const NotificationForm = () => {
                     filter: values.filter && values.filter.trim() !== '' ? JSON.parse(values.filter) : {}
                 }).unwrap();
             } else {
+                // Properly parse and clean user IDs
                 const userIds = values.userIds
                     .split(',')
                     .map(id => id.trim())
                     .filter(Boolean);
+
+                if (userIds.length === 0) {
+                    throw new Error('At least one valid user ID is required');
+                }
+
+                console.log('Sending to user IDs:', userIds);
 
                 result = await sendBatchNotifications({
                     ...payload,

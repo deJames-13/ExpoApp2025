@@ -33,6 +33,12 @@ class NotificationService extends Service {
   }
 
   async sendNotification({ deviceToken, title = '', body = '', data = {}, priority = 'high', timeToLive = 3600, options = {} }) {
+    // Validate token before attempting to send
+    if (!deviceToken || typeof deviceToken !== 'string' || deviceToken.length < 10) {
+      console.warn('Invalid FCM token format, skipping send');
+      return null;
+    }
+
     // Convert any non-string values in data to strings (FCM requirement)
     const processedData = Object.keys(data).reduce((result, key) => {
       result[key] = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
@@ -78,13 +84,45 @@ class NotificationService extends Service {
       ...options // Merge custom options
     };
 
-    return admin.messaging().send(message).then((response) => {
+    try {
+      const response = await admin.messaging().send(message);
       console.log('Successfully sent message:', response);
       return response;
-    }).catch((e) => {
-      console.error('Error sending message:', e);
-      throw e;
-    });
+    } catch (error) {
+      // Handle specific FCM errors
+      if (error.code === 'messaging/registration-token-not-registered') {
+        console.warn(`Invalid FCM token: ${deviceToken.substring(0, 10)}... - Removing from user`);
+        // Remove invalid token from user (don't await to avoid blocking)
+        this.removeInvalidToken(deviceToken).catch(e =>
+          console.error('Error removing invalid token:', e)
+        );
+        // Return null instead of throwing
+        return null;
+      }
+
+      console.error('Error sending message:', error);
+      // For other errors, we still throw
+      throw error;
+    }
+  }
+
+  // Add new method to remove invalid tokens
+  async removeInvalidToken(invalidToken) {
+    if (!invalidToken) return;
+
+    try {
+      // Find any users with this token and remove it
+      const result = await UserModel.updateMany(
+        { fcmToken: invalidToken },
+        { $set: { fcmToken: '' } }
+      );
+
+      console.log(`Removed invalid token from ${result.modifiedCount} users`);
+      return result;
+    } catch (error) {
+      console.error('Error removing invalid token:', error);
+      throw error;
+    }
   }
 
   async saveNotification({ user, title, body, data = {}, status = 'active', type = 'info' }) {
@@ -116,8 +154,11 @@ class NotificationService extends Service {
         throw new Error('User IDs are required');
       }
 
+      // Ensure userIds are strings
+      const validUserIds = userIds.map(id => id.toString());
+
       // Create a notification for each user
-      const notificationPromises = userIds.map(userId =>
+      const notificationPromises = validUserIds.map(userId =>
         this.saveNotification({
           user: userId,
           title,
@@ -134,34 +175,47 @@ class NotificationService extends Service {
       // If sendPush is true, get users with FCM tokens and send push notifications
       if (sendPush) {
         const users = await UserModel.find({
-          _id: { $in: userIds },
+          _id: { $in: validUserIds },
           fcmToken: { $exists: true, $ne: '' }
         }).select('_id fcmToken').lean();
+
+        console.log(`Found ${users.length} users with FCM tokens out of ${validUserIds.length} requested`);
 
         const pushPromises = users.map(user => {
           if (user.fcmToken) {
             return this.sendNotification({
               deviceToken: user.fcmToken,
               title,
-              // Prefix body with JSON: for special handling
-              body: type === 'order' ? `JSON:${JSON.stringify(data)}` : body,
+              // Send plain body text for better compatibility
+              body: body,
               data: {
                 ...data,
                 type,
                 notificationType: type,
-                screen: data.screen || 'OrderDetailView',
-                tab: data.tab || 'Orders'
+                screen: data.screen || 'Notifications',
+                tab: data.tab || 'Notifications'
               },
               priority,
               timeToLive,
               options
+            }).catch(err => {
+              console.error(`Error sending push to ${user._id}:`, err);
+              return null;
             });
           }
           return null;
         });
 
-        // Send push notifications asynchronously
-        await Promise.allSettled(pushPromises);
+        // Filter out null promises before awaiting
+        const validPushPromises = pushPromises.filter(Boolean);
+
+        if (validPushPromises.length > 0) {
+          // Send push notifications asynchronously and capture results
+          const pushResults = await Promise.allSettled(validPushPromises);
+          console.log(`Push notification results: ${pushResults.filter(r => r.status === 'fulfilled').length} successful, ${pushResults.filter(r => r.status === 'rejected').length} failed`);
+        } else {
+          console.log('No valid FCM tokens found, skipping push notifications');
+        }
       }
 
       return savedNotifications;
@@ -248,6 +302,19 @@ class NotificationService extends Service {
     } catch (error) {
       console.error('Error deleting selected notifications:', error);
       throw error;
+    }
+  }
+
+  // Helper method to get notification channels info for debugging
+  async getChannelsInfo() {
+    try {
+      return {
+        firebaseInitialized: !!admin.messaging,
+        availableServices: Object.keys(admin),
+      };
+    } catch (error) {
+      console.error('Error getting channels info:', error);
+      return { error: error.message };
     }
   }
 }

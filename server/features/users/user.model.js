@@ -50,7 +50,14 @@ const User = new Schema({
       },
       fcmToken: {
         type: String,
-        default: null,
+        validate: {
+          validator: function (v) {
+            // FCM tokens are either empty or fairly long strings
+            return v === '' || (typeof v === 'string' && v.length >= 10);
+          },
+          message: props => `${props.value} is not a valid FCM token!`
+        },
+        default: ''
       },
       provider: {
         type: String,
@@ -104,6 +111,20 @@ User.methods.getOTP = function () {
   this.otp.code = Math.floor(100000 + Math.random() * 900000);
   this.otp.expire = Date.now() + 10 * 60 * 1000; // 10 minutes
   return this.otp;
+};
+
+User.statics.cleanInvalidTokens = async function () {
+  try {
+    // Find users with very short tokens that are likely invalid
+    const result = await this.updateMany(
+      { fcmToken: { $ne: '', $exists: true, $expr: { $lt: [{ $strLenCP: "$fcmToken" }, 10] } } },
+      { $set: { fcmToken: '' } }
+    );
+    return result;
+  } catch (error) {
+    console.error('Error cleaning invalid tokens:', error);
+    throw error;
+  }
 };
 
 User.pre('save', async function (next) {

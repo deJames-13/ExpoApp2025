@@ -13,7 +13,7 @@ import {
     setBackgroundMessageHandler,
     onBackgroundMessage
 } from '@react-native-firebase/messaging';
-import notifee from '@notifee/react-native';
+import notifee, { EventType } from '@notifee/react-native';
 import Toast from 'react-native-toast-message';
 import { setIsChanging, storeFcmToken as reduxStoreFcmToken, setNotification } from "~/states/slices/firebase";
 import { setFcmToken } from "~/states/slices/auth";
@@ -214,7 +214,7 @@ export default function useFirebaseMessaging() {
         // Set up Notifee notification press listener
         const unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
             // Handle notification presses
-            if (type === notifee.ForegroundEventType.PRESS) {
+            if (type === EventType.PRESS) {
                 console.log('User pressed notification in foreground', detail.notification);
 
                 const data = detail.notification?.data || {};
@@ -246,7 +246,7 @@ export default function useFirebaseMessaging() {
             }
 
             // Handle action button presses
-            if (type === notifee.ForegroundEventType.ACTION_PRESS) {
+            if (type === EventType.ACTION_PRESS) {
                 console.log('User pressed an action button', detail.pressAction.id);
 
                 // Check which action was pressed
@@ -284,7 +284,7 @@ export default function useFirebaseMessaging() {
         // Setup background event handler
         notifee.onBackgroundEvent(async ({ type, detail }) => {
             // Handle notification presses in background
-            if (type === notifee.BackgroundEventType.PRESS) {
+            if (type === EventType.PRESS) {
                 console.log('User pressed notification in background', detail.notification);
 
                 // We can't navigate here since we're in a background event handler
@@ -305,7 +305,7 @@ export default function useFirebaseMessaging() {
             }
 
             // Handle action button presses in background
-            if (type === notifee.BackgroundEventType.ACTION_PRESS) {
+            if (type === EventType.ACTION_PRESS) {
                 console.log('User pressed an action button in background', detail.pressAction.id);
 
                 if (detail.pressAction.id === 'view_order') {
@@ -392,73 +392,77 @@ export default function useFirebaseMessaging() {
                 console.log('Permission granted. Getting token...');
                 const messaging = getMessaging(getApp());
 
-                // Existing token
-                const existingToken = await getToken(messaging);
-                if (existingToken) {
-                    // Store in both firebase and auth slices
-                    dispatch(reduxStoreFcmToken({ fcmToken: existingToken }));
-                    dispatch(setFcmToken(existingToken));
+                try {
+                    // Force token refresh to ensure valid token
+                    await messaging.deleteToken().catch(err => console.log('Error deleting token:', err));
 
-                    // Store in SecureStore
-                    await storeFcmToken(existingToken);
-                    console.log('Existing token:', existingToken);
-                }
+                    // Get the initial token
+                    const token = await getToken(messaging);
+                    if (token) {
+                // Store in both firebase and auth slices
+                        dispatch(reduxStoreFcmToken({ fcmToken: token }));
+                        dispatch(setFcmToken(token));
 
-                // Register for token refresh
-                const tokenUnsubscribe = onTokenRefresh(messaging, async (token) => {
-                    console.log('Token refreshed:', token);
-                    // Update in both firebase and auth slices
-                    dispatch(reduxStoreFcmToken({ fcmToken: token }));
-                    dispatch(setFcmToken(token));
+                        // Store in SecureStore
+                        await storeFcmToken(token);
+                        console.log('FCM token:', token.substring(0, 10) + '...');
 
-                    // Update in SecureStore
-                    await storeFcmToken(token);
-                });
-
-                // Get the initial token
-                const token = await getToken(messaging);
-                if (token) {
-                    // Store in both firebase and auth slices
-                    dispatch(reduxStoreFcmToken({ fcmToken: token }));
-                    dispatch(setFcmToken(token));
-
-                    // Store in SecureStore
-                    await storeFcmToken(token);
-                }
-
-                // Handle incoming messages when app is in foreground
-                const messageUnsubscribe = onMessage(messaging, async (remoteMessage) => {
-                    // Process with Notifee
-                    await processRemoteMessage(remoteMessage);
-
-                    // Also handle with our standard handler
-                    handleNotification(remoteMessage);
-                });
-
-                // Register the device for remote messages on iOS
-                if (Platform.OS === 'ios') {
-                    await registerDeviceForRemoteMessages(messaging);
-                }
-
-                // Handle notification opened app (from background state)
-                const notificationOpenedUnsubscribe = onNotificationOpenedApp(messaging, (remoteMessage) => {
-                    console.log('Notification caused app to open from background state:', remoteMessage);
-
-                    // Mark this message as opened from notification
-                    if (remoteMessage.data) {
-                        remoteMessage.data._notificationOpened = true;
+                        // Register device with your server (register even if token hasn't changed)
+                        try {
+                            // Implement your API call to register the device
+                            // This will update the token on your server
+                        } catch (apiError) {
+                            console.error('Error registering device with server:', apiError);
+                        }
                     }
 
-                    handleNotification(remoteMessage);
-                });
+                    // Register for token refresh
+                    const tokenUnsubscribe = onTokenRefresh(messaging, async (token) => {
+                        console.log('Token refreshed:', token);
+                        // Update in both firebase and auth slices
+                        dispatch(reduxStoreFcmToken({ fcmToken: token }));
+                        dispatch(setFcmToken(token));
 
-                dispatch(setIsChanging({ isChanging: false }));
+                        // Update in SecureStore
+                        await storeFcmToken(token);
+                    });
 
-                return () => {
-                    messageUnsubscribe();
-                    tokenUnsubscribe();
-                    notificationOpenedUnsubscribe();
-                };
+                    // Handle incoming messages when app is in foreground
+                    const messageUnsubscribe = onMessage(messaging, async (remoteMessage) => {
+                        // Process with Notifee
+                        await processRemoteMessage(remoteMessage);
+
+                        // Also handle with our standard handler
+                        handleNotification(remoteMessage);
+                    });
+
+                    // Register the device for remote messages on iOS
+                    if (Platform.OS === 'ios') {
+                        await registerDeviceForRemoteMessages(messaging);
+                    }
+
+                    // Handle notification opened app (from background state)
+                    const notificationOpenedUnsubscribe = onNotificationOpenedApp(messaging, (remoteMessage) => {
+                        console.log('Notification caused app to open from background state:', remoteMessage);
+
+                        // Mark this message as opened from notification
+                        if (remoteMessage.data) {
+                            remoteMessage.data._notificationOpened = true;
+                        }
+
+                        handleNotification(remoteMessage);
+                    });
+
+                    dispatch(setIsChanging({ isChanging: false }));
+
+                    return () => {
+                        messageUnsubscribe();
+                        tokenUnsubscribe();
+                        notificationOpenedUnsubscribe();
+                    };
+                } catch (error) {
+                    console.error('Error setting up messaging:', error);
+                }
             } else {
                 console.log('Permission denied');
                 dispatch(setIsChanging({ isChanging: false }));
