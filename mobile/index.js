@@ -1,4 +1,4 @@
-import 'expo-assets'
+import 'expo-asset'
 
 import { registerRootComponent } from 'expo';
 import notifee, { EventType } from '@notifee/react-native';
