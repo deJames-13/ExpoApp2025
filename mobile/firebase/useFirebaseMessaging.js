@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApp } from '@react-native-firebase/app';
 import {
     getMessaging,
@@ -40,6 +41,28 @@ export async function processRemoteMessage(message) {
     // Convert boolean to string since Notifee requires all data values to be strings
     if (data) {
         data._notificationOpened = 'true';
+
+        // Store order data for when app is opened from background
+        if (data.type === 'order' && data.id) {
+            try {
+                const orderData = {
+                    id: data.id,
+                    status: data.status,
+                    time: Date.now(),
+                    orderTitle: data.orderTitle || `Order #${data.id.substring(0, 8)}`,
+                    statusText: data.statusText || (data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : 'updated')
+                };
+
+                // Use Notifee's AndroidCategory.ALARM for higher priority
+                if (Platform.OS === 'android') {
+                    data.android_category = 'alarm';
+                }
+
+                await AsyncStorage.setItem('LAST_ORDER_NOTIFICATION', JSON.stringify(orderData));
+            } catch (err) {
+                process.env.EXPO_DEBUG && console.error('[FCM] Error storing order data:', err);
+            }
+        }
     }
 
     // Get the appropriate channel for this notification type
@@ -119,7 +142,6 @@ export default function useFirebaseMessaging() {
 
             if (enabled) {
                 console.log('[FCM] Authorization status:', authStatus);
-
                 // Also request notification permissions through Notifee
                 await notifee.requestPermission({
                     android: {
@@ -184,7 +206,6 @@ export default function useFirebaseMessaging() {
             let statusText = data.status
                 ? data.status.charAt(0).toUpperCase() + data.status.slice(1)
                 : 'updated';
-
             const orderText = `Order #${data.id.substring(0, 8)}`;
 
             Toast.show({
@@ -246,7 +267,6 @@ export default function useFirebaseMessaging() {
                             navigateFromNotification(navigation, jsonData, isAdmin);
                         }, 300);
                     }
-
                     return;
                 }
             }
@@ -293,7 +313,6 @@ export default function useFirebaseMessaging() {
             // Handle notification presses in foreground
             if (type === EventType.PRESS) {
                 const data = detail.notification?.data || {};
-
                 // If we have a stored FCM message, parse and handle it
                 if (data.fcmMessage) {
                     try {
@@ -406,6 +425,40 @@ export default function useFirebaseMessaging() {
                         } catch (e) {
                             console.error('[Notifee] Error parsing FCM message', e);
                         }
+                    }
+                }
+
+                // Check for stored order notifications from background state
+                const storedOrderData = await AsyncStorage.getItem('LAST_ORDER_NOTIFICATION');
+                if (storedOrderData) {
+                    try {
+                        const orderData = JSON.parse(storedOrderData);
+
+                        // Only show if it's recent (last 5 minutes)
+                        const isRecent = Date.now() - orderData.time < 5 * 60 * 1000;
+
+                        if (isRecent) {
+                            // Show toast for the stored order notification
+                            Toast.show({
+                                type: 'actionable',
+                                text1: `${orderData.orderTitle} ${orderData.statusText}`,
+                                text2: 'Tap to view details',
+                                onPress: () => navigateFromNotification(navigation, {
+                                    type: 'order',
+                                    id: orderData.id,
+                                    status: orderData.status,
+                                    screen: 'OrderDetailView',
+                                    tab: 'Orders',
+                                    isAdmin: isAdmin
+                                }, isAdmin),
+                                visibilityTime: 5000,
+                            });
+                        }
+
+                        // Clear the stored notification
+                        await AsyncStorage.removeItem('LAST_ORDER_NOTIFICATION');
+                    } catch (e) {
+                        console.error('[FCM] Error processing stored order notification:', e);
                     }
                 }
             } catch (error) {

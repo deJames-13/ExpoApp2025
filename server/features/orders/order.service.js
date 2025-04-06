@@ -126,11 +126,14 @@ class OrderService extends Service {
         timestamp: new Date().toISOString(),
         screen: 'OrderDetailView',
         tab: 'Orders',
-        channelId: 'orders_channel' // Specify the channel ID for order notifications
+        channelId: 'orders_channel',
+        // Add essential display information for consistent rendering
+        orderTitle: `Order #${id.substring(0, 8)}`,
+        statusText: status.charAt(0).toUpperCase() + status.slice(1)
       };
 
-      // Plain text message as fallback for email
-      const plainTextMessage = `[${status.toUpperCase()}] Your order has been updated! Ref: ${id}`;
+      // Plain text message without JSON prefix
+      const plainTextMessage = `Your order ${id.substring(0, 8)} has been ${status}`;
 
       // Save notification to database
       await NotificationService.saveNotification({
@@ -144,17 +147,13 @@ class OrderService extends Service {
 
       // Send push notification if FCM token exists
       if (user.fcmToken) {
-        // Format message with JSON prefix for special handling
-        const message = `JSON:${JSON.stringify(notificationData)}`;
-
         NotificationService.sendNotification({
           deviceToken: user.fcmToken,
           title,
           body: plainTextMessage,
-          data: notificationData, // Include channel info in data payload
+          data: notificationData,
           priority: 'high',
           options: {
-            // Specify Android configuration to use orders channel
             android: {
               notification: {
                 channelId: 'orders_channel',

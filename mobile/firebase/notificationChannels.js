@@ -55,18 +55,21 @@ export const setupNotificationChannels = async () => {
             vibration: true,
         });
 
-        // Create orders channel
+        // Create orders channel with maximum importance
         await notifee.createChannel({
             id: NOTIFICATION_CHANNELS.ORDERS,
             name: 'Orders',
             description: 'Order updates and notifications',
-          importance: AndroidImportance.HIGH,
-          visibility: AndroidVisibility.PUBLIC,
-          vibration: true,
-          sound: 'default',
-          lights: true,
-          lightColor: '#0000FF',
-      });
+            importance: AndroidImportance.HIGH,
+            visibility: AndroidVisibility.PUBLIC,
+            vibration: true,
+            sound: 'default',
+            lights: true,
+            lightColor: '#0000FF',
+            // Add these settings for better visibility
+            vibrationPattern: [300, 500, 300, 500],
+            badge: true
+        });
 
         // Create promotions channel
         await notifee.createChannel({
