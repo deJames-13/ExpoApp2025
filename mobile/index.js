@@ -8,6 +8,7 @@ import App from './App';
 setupNotificationChannels();
 
 // Register the app
-AppRegistry.registerComponent(process.env.EXPO_APP_NAME, () => App);
+// AppRegistry.registerComponent(process.env.EXPO_APP_NAME ?? "EyeZone", () => App);
+registerRootComponent(App)
 
 

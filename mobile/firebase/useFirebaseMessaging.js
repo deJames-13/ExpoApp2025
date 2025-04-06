@@ -1,8 +1,18 @@
 import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { getApp } from '@react-native-firebase/app';
-import messaging from '@react-native-firebase/messaging';
-import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission as requestMessagingPermission, getInitialNotification, onNotificationOpenedApp, registerDeviceForRemoteMessages } from '@react-native-firebase/messaging';
+import {
+    getMessaging,
+    onMessage,
+    getToken,
+    onTokenRefresh,
+    requestPermission as requestMessagingPermission,
+    getInitialNotification,
+    onNotificationOpenedApp,
+    registerDeviceForRemoteMessages,
+    setBackgroundMessageHandler,
+    onBackgroundMessage
+} from '@react-native-firebase/messaging';
 import notifee from '@notifee/react-native';
 import Toast from 'react-native-toast-message';
 import { setIsChanging, storeFcmToken as reduxStoreFcmToken, setNotification } from "~/states/slices/firebase";
@@ -68,7 +78,7 @@ async function processRemoteMessage(remoteMessage) {
 
 // Setup background message handler - this must be outside of the component
 // This ensures it works when app is in background or killed state
-messaging().setBackgroundMessageHandler(processRemoteMessage);
+getMessaging(getApp()).setBackgroundMessageHandler(processRemoteMessage);
 
 export default function useFirebaseMessaging() {
     const dispatch = useDispatch();
