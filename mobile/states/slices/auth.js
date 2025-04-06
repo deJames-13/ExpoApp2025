@@ -124,4 +124,7 @@ export const selectHasBasicInfo = (state) => state.auth.onboarding.hasBasicInfo;
 export const selectHasAddressInfo = (state) => state.auth.onboarding.hasAddressInfo;
 export const selectIsEmailVerified = (state) => state.auth.onboarding.isEmailVerified;
 
+// Add this selector if it doesn't exist
+export const selectToken = (state) => state.auth?.token;
+
 export default authSlice.reducer;

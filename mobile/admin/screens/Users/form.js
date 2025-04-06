@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import { ResourceForm } from '~/components/ResourceForm';
-import {
-    getUserValidationSchema,
-    initialUserValues,
-} from './validation';
+import { getUserValidationSchema, initialUserValues } from './validation';
 import { getUserFields } from './form-config';
+import { updateUserRole } from './data';
+// Import auth selectors and hooks (same as products form)
+import { useSelector } from 'react-redux';
+import { selectToken } from '~/states/slices/auth'; // Adjust path as needed
 
 /**
  * Helper function to ensure URI is a valid string or an object with URI properties
@@ -104,6 +105,9 @@ export function UserForm({ user, mode = 'create', onSubmit, formRef }) {
     const [loading, setLoading] = useState(true);
     const [flattenedFields, setFlattenedFields] = useState([]);
     
+    // Get auth token from Redux store (same pattern as products form)
+    const authToken = useSelector(selectToken);
+    
     // Force form recalculation
     const formKey = useMemo(() => `user-form-${user?._id || 'new'}-${Date.now()}`, [user]);
 
@@ -126,8 +130,44 @@ export function UserForm({ user, mode = 'create', onSubmit, formRef }) {
     const handleSubmit = (values) => {
         // Convert flat data back to nested structure
         const processedData = unflattenData(values);
-        console.log("Form submission values:", JSON.stringify(processedData, null, 2));
-        onSubmit(processedData);
+        
+        // If we're in edit mode and the role is changing, handle role update
+        if (mode === 'edit' && user && user.role !== processedData.role) {
+            const userId = user._id || user.id;
+            const normalizedRole = processedData.role.toLowerCase();
+            
+            console.log(`Initiating role update: ${user.role} → ${normalizedRole}`);
+            
+            // First submission triggers role update only
+            updateUserRole(userId, normalizedRole, authToken)
+                .then(response => {
+                    console.log("Role update completed successfully");
+                    
+                    // Show success message
+                    alert(`User role updated to ${processedData.role}`);
+                    
+                    // Submit the full form data (without waiting for user to dismiss alert)
+                    onSubmit({
+                        ...processedData,
+                        role: normalizedRole // Ensure role is updated in form data
+                    });
+                })
+                .catch(error => {
+                    console.error("Role update failed:", error);
+                    alert(`Error updating role: ${error.message}`);
+                    
+                    // Continue with form submission anyway, with original role
+                    if (confirm("Would you like to submit the form without changing the role?")) {
+                        onSubmit({
+                            ...processedData,
+                            role: user.role // Revert to original role
+                        });
+                    }
+                });
+        } else {
+            // Regular submission for non-role updates or new users
+            onSubmit(processedData);
+        }
     };
 
     // Generate field configuration
