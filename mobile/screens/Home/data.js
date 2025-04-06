@@ -1,7 +1,8 @@
 export const banners = [
-    { id: '1', image: process.env.EXPO_PUBLIC_APP_LOGO },
-    { id: '2', image: process.env.EXPO_PUBLIC_APP_LOGO },
-    { id: '3', image: process.env.EXPO_PUBLIC_APP_LOGO },
+    { id: '1', image: process.env.EXPO_PUBLIC_BANNER_1 },
+    { id: '2', image: process.env.EXPO_PUBLIC_BANNER_2 },
+    { id: '3', image: process.env.EXPO_PUBLIC_BANNER_3 },
+    { id: '4', image: process.env.EXPO_PUBLIC_BANNER_4 },
 ];
 
 export const categories = [
