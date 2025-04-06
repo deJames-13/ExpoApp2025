@@ -17,23 +17,18 @@ const StatsCards = ({ stats, loading }) => {
     if (loading) {
         return (
             <View style={styles.statsContainer}>
-                {/* Top row loading state */}
-                <View style={styles.topRow}>
-                    {renderLoadingCard(styles.topRowCard)}
-                    {renderLoadingCard(styles.topRowCard)}
+                <View style={styles.cardsRow}>
+                    {renderLoadingCard(styles.statsCardItem)}
+                    {renderLoadingCard(styles.statsCardItem)}
                 </View>
-
-                {/* Bottom row loading state */}
-                {renderLoadingCard(styles.revenueCard)}
             </View>
         );
     }
 
     return (
         <View style={styles.statsContainer}>
-            {/* Top row: Users - Orders - Pending */}
-            <View style={styles.topRow}>
-                <Card style={[adminStyles.statsCard, styles.topRowCard, { backgroundColor: adminColors.card.stats.users }]}>
+            <View style={styles.cardsRow}>
+                <Card style={[adminStyles.statsCard, styles.statsCardItem, { backgroundColor: adminColors.card.stats.users }]}>
                     <Card.Content style={styles.cardContent}>
                         <MaterialCommunityIcons name="account-group" size={28} color="#000" style={styles.icon} />
                         <View>
@@ -43,7 +38,7 @@ const StatsCards = ({ stats, loading }) => {
                     </Card.Content>
                 </Card>
 
-                <Card style={[adminStyles.statsCard, styles.topRowCard, { backgroundColor: adminColors.card.stats.orders }]}>
+                <Card style={[adminStyles.statsCard, styles.statsCardItem, { backgroundColor: adminColors.card.stats.orders }]}>
                     <Card.Content style={styles.cardContent}>
                         <MaterialCommunityIcons name="shopping" size={28} color="#000" style={styles.icon} />
                         <View>
@@ -53,17 +48,6 @@ const StatsCards = ({ stats, loading }) => {
                     </Card.Content>
                 </Card>
             </View>
-
-            {/* Bottom row: Revenue (full width) */}
-            <Card style={[adminStyles.statsCard, styles.revenueCard, { backgroundColor: adminColors.card.stats.revenue }]}>
-                <Card.Content style={styles.cardContent}>
-                    <MaterialCommunityIcons name="currency-usd" size={32} color="#000" style={styles.icon} />
-                    <View>
-                        <Text style={styles.cardLabel}>Revenue</Text>
-                        <Text style={styles.cardValue}>{process.env.EXPO_PUBLIC_APP_CURRENCY} {stats.totalRevenue.toLocaleString()}</Text>
-                    </View>
-                </Card.Content>
-            </Card>
         </View>
     );
 };
@@ -73,19 +57,14 @@ const styles = StyleSheet.create({
         width: '100%',
         marginVertical: 10,
     },
-    topRow: {
+    cardsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 10,
     },
-    topRowCard: {
+    statsCardItem: {
         flex: 1,
         marginHorizontal: 5,
         minHeight: 90,
-    },
-    revenueCard: {
-        width: '100%',
-        minHeight: 100,
     },
     cardContent: {
         flexDirection: 'row',
