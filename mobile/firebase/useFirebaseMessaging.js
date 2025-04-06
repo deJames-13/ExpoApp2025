@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { getApp } from '@react-native-firebase/app';
 import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission as requestMessagingPermission, getInitialNotification, onNotificationOpenedApp, registerDeviceForRemoteMessages } from '@react-native-firebase/messaging';
+import notifee from '@notifee/react-native';
 import Toast from 'react-native-toast-message';
 import { setIsChanging, storeFcmToken as reduxStoreFcmToken, setNotification } from "~/states/slices/firebase";
 import { setFcmToken } from "~/states/slices/auth";
@@ -9,6 +11,61 @@ import { STORAGE_KEYS, storeFcmToken } from '~/states/utils/authUtils';
 import { useNavigation } from '@react-navigation/native';
 import { isJsonMessage, parseJsonMessage, navigateFromNotification } from '~/utils/notificationUtils';
 import useAuth from '~/hooks/useAuth';
+
+// Process messages consistently regardless of app state
+async function processRemoteMessage(remoteMessage) {
+    console.log('Processing remote message:', remoteMessage);
+
+    if (!remoteMessage) return;
+
+    const title = remoteMessage.notification?.title || 'New Notification';
+    const body = remoteMessage.notification?.body || '';
+    const data = remoteMessage.data || {};
+
+    // Mark as opened from notification for handling later
+    if (data && !data._notificationOpened) {
+        data._notificationOpened = true;
+    }
+
+    // Use Notifee to display the notification
+    await notifee.displayNotification({
+        title,
+        body,
+        data: {
+            ...data,
+            fcmMessage: JSON.stringify(remoteMessage)
+        },
+        android: {
+            channelId: data.type === 'order' ? 'orders_channel' : 'high_importance_channel',
+            pressAction: {
+                id: 'default',
+                launchActivity: 'default'
+            },
+            actions: data.type === 'order' ? [
+                {
+                    title: 'View Order',
+                    pressAction: {
+                        id: 'view_order',
+                    },
+                }
+            ] : undefined
+        },
+        ios: {
+            foregroundPresentationOptions: {
+                badge: true,
+                sound: true,
+                banner: true,
+                list: true,
+            },
+        }
+    });
+
+    return Promise.resolve();
+}
+
+// Setup background message handler - this must be outside of the component
+// This ensures it works when app is in background or killed state
+messaging().setBackgroundMessageHandler(processRemoteMessage);
 
 export default function useFirebaseMessaging() {
     const dispatch = useDispatch();
@@ -26,6 +83,23 @@ export default function useFirebaseMessaging() {
 
             if (enabled) {
                 console.log('Authorization status:', authStatus);
+                // Also request notification permissions through Notifee
+                await notifee.requestPermission({
+                    android: {
+                        importance: 4, // HIGH importance
+                        lightColor: '#ff79c6',
+                        channelId: 'high_importance_channel',
+                        pressAction: {
+                            id: 'default',
+                        },
+                    },
+                    ios: {
+                        allowAlert: true,
+                        allowBadge: true,
+                        allowSound: true,
+                        allowAnnouncements: true,
+                    },
+                });
             }
 
             return enabled;
@@ -122,6 +196,68 @@ export default function useFirebaseMessaging() {
         });
     };
 
+    // Handle notification press through Notifee
+    useEffect(() => {
+        // Set up Notifee notification press listener
+        const unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
+            if (type === notifee.ForegroundEventType.PRESS) {
+                console.log('User pressed notification in foreground', detail.notification);
+
+                const data = detail.notification?.data || {};
+
+                // If we have a stored FCM message, parse and handle it
+                if (data.fcmMessage) {
+                    try {
+                        const fcmMessage = JSON.parse(data.fcmMessage);
+                        const messageData = fcmMessage.data || {};
+
+                        // Create navigation data
+                        const notificationData = {
+                            type: messageData.type,
+                            id: messageData.id,
+                            status: messageData.status,
+                            screen: messageData.screen || 'OrderDetailView',
+                            tab: messageData.tab || 'Orders',
+                            isAdmin: isAdmin
+                        };
+
+                        // Navigate to the appropriate screen
+                        setTimeout(() => {
+                            navigateFromNotification(navigation, notificationData, isAdmin);
+                        }, 300);
+                    } catch (e) {
+                        console.error('Error parsing FCM message', e);
+                    }
+                }
+            }
+        });
+
+        // Setup notification press handling for background/quit state
+        notifee.onBackgroundEvent(async ({ type, detail }) => {
+            if (type === notifee.BackgroundEventType.PRESS) {
+                console.log('User pressed notification in background', detail.notification);
+
+                // We can't navigate here since we're in a background event handler
+                // Store the notification so we can handle it when the app opens
+                if (detail.notification?.data) {
+                    await notifee.setNotificationCategories([
+                        {
+                            id: 'open_app',
+                            actions: [
+                                {
+                                    id: 'open',
+                                    title: 'Open App',
+                                }
+                            ]
+                        }
+                    ]);
+                }
+            }
+        });
+
+        return () => unsubscribe();
+    }, [navigation, isAdmin]);
+
     // Process initial notification on app cold start
     useEffect(() => {
         const processInitialNotification = async () => {
@@ -141,6 +277,28 @@ export default function useFirebaseMessaging() {
                     setTimeout(() => {
                         handleNotification(initialMsg);
                     }, 1000);
+                }
+
+                // Also check Notifee for initial notification
+                const initialNotifee = await notifee.getInitialNotification();
+                if (initialNotifee) {
+                    console.log('App opened from notification (Notifee):', initialNotifee);
+
+                    // If we have stored FCM message data, parse and use it
+                    if (initialNotifee.notification?.data?.fcmMessage) {
+                        try {
+                            const fcmMessage = JSON.parse(initialNotifee.notification.data.fcmMessage);
+                            fcmMessage.data = fcmMessage.data || {};
+                            fcmMessage.data._notificationOpened = true;
+
+                            // Handle with the standard handler
+                            setTimeout(() => {
+                                handleNotification(fcmMessage);
+                            }, 1000);
+                        } catch (e) {
+                            console.error('Error parsing FCM message from Notifee', e);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error processing initial notification:', error);
@@ -195,11 +353,17 @@ export default function useFirebaseMessaging() {
 
                 // Handle incoming messages when app is in foreground
                 const messageUnsubscribe = onMessage(messaging, async (remoteMessage) => {
+                    // Process with Notifee
+                    await processRemoteMessage(remoteMessage);
+
+                    // Also handle with our standard handler
                     handleNotification(remoteMessage);
                 });
 
-                // Register the device for remote messages
-                await registerDeviceForRemoteMessages(messaging);
+                // Register the device for remote messages on iOS
+                if (Platform.OS === 'ios') {
+                    await registerDeviceForRemoteMessages(messaging);
+                }
 
                 // Handle notification opened app (from background state)
                 const notificationOpenedUnsubscribe = onNotificationOpenedApp(messaging, (remoteMessage) => {
