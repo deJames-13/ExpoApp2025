@@ -41,6 +41,16 @@ module.exports = {
         },
         plugins: [
             "expo-dev-client",
+            [
+                "expo-build-properties",
+                {
+                    "android": {
+                    "extraMavenRepos": [
+                    "../../node_modules/@notifee/react-native/android/libs"
+                    ]
+                    }
+                }
+            ],
             "expo-secure-store",
             [
                 "@react-native-google-signin/google-signin",
