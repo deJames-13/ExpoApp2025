@@ -67,7 +67,7 @@ class UserService extends Service {
 
     const data = this.model?.filterFillables(body);
     const user = await this.model?.findByIdAndUpdate(id, data, { new: true });
-    if (role && req.user.role === ROLES.ADMIN) await this.setRole(user, role);
+    if (role && user.role === ROLES.ADMIN) await this.setRole(user, role);
 
     return user;
   }
