@@ -1,4 +1,4 @@
-import api from "~/screens/Home/api";
+import api from "~/axios.config";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const getAuthConfig = async () => {
