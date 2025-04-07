@@ -69,14 +69,25 @@ export const SelectField = ({
                     visible={visible}
                     onDismiss={closeModal}
                     contentContainerStyle={{
-                        backgroundColor: 'white',
+                        backgroundColor: adminColors.cardBackground,
                         marginHorizontal: 20,
                         borderRadius: 8,
                         maxHeight: '80%',
+                        // Enhanced shadow for consistency with admin cards
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 8,
+                        elevation: 4,
                     }}
                 >
                     <View style={{ padding: 16 }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>
+                        <Text style={{ 
+                            fontSize: 18, 
+                            fontWeight: 'bold', 
+                            marginBottom: 16,
+                            color: adminColors.text.primary 
+                        }}>
                             {label || 'Select an option'}
                         </Text>
 
@@ -95,7 +106,7 @@ export const SelectField = ({
                                             paddingHorizontal: 16,
                                             flexDirection: 'row',
                                             alignItems: 'center',
-                                            backgroundColor: isSelected ? adminColors.background.light : 'transparent',
+                                            backgroundColor: isSelected ? adminColors.primary + '10' : 'transparent',
                                             borderRadius: 4,
                                         }}
                                     >
@@ -104,7 +115,8 @@ export const SelectField = ({
                                                 <Text style={{ marginRight: 8, color: adminColors.primary }}>✓</Text>
                                             )}
                                             <Text style={{
-                                                color: isSelected ? adminColors.primary : adminColors.text.primary
+                                                color: isSelected ? adminColors.primary : adminColors.text.primary,
+                                                fontWeight: isSelected ? '500' : 'normal'
                                             }}>
                                                 {optionLabel}
                                             </Text>
@@ -123,6 +135,7 @@ export const SelectField = ({
                             mode="text"
                             onPress={closeModal}
                             style={{ marginTop: 16 }}
+                            textColor={adminColors.primary}
                         >
                             Cancel
                         </Button>

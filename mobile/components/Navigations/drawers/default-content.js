@@ -213,6 +213,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         borderWidth: 2,
         borderColor: '#e0e0e0',
+        resizeMode: 'contain'
     },
     avatarFallback: {
         backgroundColor: '#007aff',

@@ -107,6 +107,7 @@ const styles = StyleSheet.create({
         height: 28,
         borderRadius: 14,
         borderWidth: 1,
+        resizeMode: 'contain',
         borderColor: '#e0e0e0',
     },
 });
