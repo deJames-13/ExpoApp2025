@@ -1,10 +1,40 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, FlatList } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import api from '~/axios.config';
 import HttpErrorView from '~/components/Errors/HttpErrorView';
 import Carousel from '~/components/Carousel';
 import useResource from '~/hooks/useResource';
 import Toast from 'react-native-toast-message';
+
+// Add a new component for review images
+const ReviewImages = ({ images }) => {
+    if (!images || !Array.isArray(images) || images.length === 0) {
+        return null;
+    }
+
+    return (
+        <View style={styles.reviewImagesContainer}>
+            <FlatList
+                horizontal
+                data={images}
+                keyExtractor={(item, index) => item.public_id || `image-${index}`}
+                renderItem={({ item }) => (
+                    <TouchableOpacity 
+                        style={styles.reviewImageWrapper}
+                        // Optional: add onPress to view full image
+                    >
+                        <Image
+                            source={{ uri: item.secure_url || item.url }}
+                            style={styles.reviewImage}
+                            resizeMode="cover"
+                        />
+                    </TouchableOpacity>
+                )}
+                showsHorizontalScrollIndicator={false}
+            />
+        </View>
+    );
+};
 
 const ProductDetailView = ({ route, navigation }) => {
     // Extract productId safely
@@ -15,12 +45,22 @@ const ProductDetailView = ({ route, navigation }) => {
     const [quantity, setQuantity] = useState(1);
     const [statusCode, setStatusCode] = useState(404);
     const [addingToCart, setAddingToCart] = useState(false);
+    // Add state variables for reviews
+    const [reviews, setReviews] = useState([]);
+    const [loadingReviews, setLoadingReviews] = useState(true);
+    const [reviewError, setReviewError] = useState(null);
 
     const { actions: { doStore: addToCart } } = useResource({ resourceName: 'cart' });
 
     useEffect(() => {
         fetchProductDetails();
     }, [productId]);
+
+    useEffect(() => {
+        if (product) {
+            fetchProductReviews();
+        }
+    }, [product]);
 
     const fetchProductDetails = async () => {
         if (!productId) {
@@ -48,6 +88,87 @@ const ProductDetailView = ({ route, navigation }) => {
             setStatusCode(err.response?.status || 'network');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchProductReviews = async () => {
+        if (!productId) {
+            setLoadingReviews(false);
+            return;
+        }
+
+        try {
+            setLoadingReviews(true);
+            
+            // Option 1: Use a different endpoint that will correctly return reviews for a product
+            const response = await api.get(`/api/v1/products/${productId}/reviews`);
+            
+            if (response.data && response.data.resource) {
+                setReviews(response.data.resource);
+            } else {
+                // Option 2: If the first call fails, try to get the product's reviews directly 
+                // from the product object that we already have
+                if (product && Array.isArray(product.reviews)) {
+                    // If reviews are just IDs, we need to fetch each review
+                    if (product.reviews.length > 0 && typeof product.reviews[0] !== 'object') {
+                        // Fetch each review by ID
+                        try {
+                            const reviewPromises = product.reviews.map(reviewId => 
+                                api.get(`/api/v1/reviews/${reviewId}`)
+                            );
+                            
+                            const reviewResponses = await Promise.all(reviewPromises);
+                            const fetchedReviews = reviewResponses
+                                .filter(res => res.data && res.data.resource)
+                                .map(res => res.data.resource);
+                                
+                            setReviews(fetchedReviews);
+                        } catch (err) {
+                            console.error('Failed to fetch individual reviews:', err);
+                            setReviewError('Could not load reviews');
+                            setReviews([]);
+                        }
+                    } else {
+                        // Reviews are already complete objects
+                        setReviews(product.reviews);
+                    }
+                } else {
+                    setReviews([]);
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load reviews:', err);
+            
+            // Fallback to try getting reviews from product object if we already have it
+            if (product && Array.isArray(product.reviews) && product.reviews.length > 0) {
+                try {
+                    // If reviews are populated objects, use them directly
+                    if (typeof product.reviews[0] === 'object' && product.reviews[0].rating) {
+                        setReviews(product.reviews);
+                    } else {
+                        // Otherwise, fetch each review
+                        const reviewPromises = product.reviews.map(reviewId => 
+                            api.get(`/api/v1/reviews/${reviewId}`)
+                        );
+                        
+                        const reviewResponses = await Promise.all(reviewPromises);
+                        const fetchedReviews = reviewResponses
+                            .filter(res => res.data && res.data.resource)
+                            .map(res => res.data.resource);
+                            
+                        setReviews(fetchedReviews);
+                    }
+                } catch (fetchErr) {
+                    console.error('Failed to fetch individual reviews:', fetchErr);
+                    setReviewError('Could not load reviews');
+                    setReviews([]);
+                }
+            } else {
+                setReviewError(`Error loading reviews: ${err.message}`);
+                setReviews([]);
+            }
+        } finally {
+            setLoadingReviews(false);
         }
     };
 
@@ -312,6 +433,47 @@ const ProductDetailView = ({ route, navigation }) => {
                         )}
                     </TouchableOpacity>
                 </View>
+                
+                {/* Reviews Section */}
+                <View style={styles.divider} />
+                <Text style={styles.sectionTitle}>Customer Reviews</Text>
+                
+                {loadingReviews ? (
+                    <View style={styles.reviewsLoading}>
+                        <ActivityIndicator size="small" color="#2196F3" />
+                        <Text style={styles.reviewsLoadingText}>Loading reviews...</Text>
+                    </View>
+                ) : reviewError ? (
+                    <Text style={styles.reviewErrorText}>{reviewError}</Text>
+                ) : reviews.length === 0 ? (
+                    <Text style={styles.noReviewsText}>No reviews yet for this product</Text>
+                ) : (
+                    <View style={styles.reviewsContainer}>
+                        {reviews.map((review, index) => (
+                            <View key={review._id || index} style={styles.reviewItem}>
+                                <View style={styles.reviewHeader}>
+                                    <Text style={styles.reviewAuthor}>
+                                        {review.isAnonymous ? 'Anonymous User' : (review.user?.name || 'Anonymous User')}
+                                    </Text>
+                                    <View style={styles.ratingStars}>
+                                        <Text style={styles.reviewRating}>
+                                            {review.rating} ★
+                                        </Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.reviewTitle}>{review.title}</Text>
+                                <Text style={styles.reviewDescription}>{review.description}</Text>
+                                
+                                {/* Display review images if they exist */}
+                                <ReviewImages images={review.images} />
+                                
+                                <Text style={styles.reviewDate}>
+                                    {new Date(review.createdAt).toLocaleDateString()}
+                                </Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
             </View>
         </ScrollView>
     );
@@ -459,7 +621,82 @@ const styles = StyleSheet.create({
     },
     disabledButton: {
         backgroundColor: '#cccccc',
-    }
+    },
+    // Review section styles
+    reviewsContainer: {
+        marginTop: 8,
+    },
+    reviewItem: {
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
+        padding: 16,
+        marginBottom: 12,
+    },
+    reviewHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    reviewAuthor: {
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    ratingStars: {
+        flexDirection: 'row',
+    },
+    reviewRating: {
+        color: '#FFA000',
+        fontSize: 16,
+    },
+    reviewTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    reviewDescription: {
+        fontSize: 14,
+        color: '#424242',
+        marginBottom: 8,
+        lineHeight: 20,
+    },
+    reviewDate: {
+        fontSize: 12,
+        color: '#757575',
+        textAlign: 'right',
+    },
+    reviewErrorText: {
+        color: '#F44336',
+        marginVertical: 8,
+    },
+    noReviewsText: {
+        fontStyle: 'italic',
+        color: '#757575',
+        marginVertical: 8,
+    },
+    reviewsLoading: {
+        alignItems: 'center',
+        padding: 16,
+    },
+    reviewsLoadingText: {
+        marginTop: 8,
+        color: '#757575',
+    },
+    // Review image styles
+    reviewImagesContainer: {
+        marginVertical: 10,
+    },
+    reviewImageWrapper: {
+        marginRight: 10,
+        borderRadius: 8,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+    reviewImage: {
+        width: 80,
+        height: 80,
+    },
 });
 
 export default ProductDetailView;
