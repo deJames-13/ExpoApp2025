@@ -14,7 +14,7 @@ const commonrules = {
       .isLength({ min: 6, max: 20 })
       .withMessage('Password must be between 6 and 20 characters')
       .custom(matchPassword),
-  role: () => check('role').optional().isIn(Object.values(ROLES)).withMessage('Role is invalid'),
+  role: () => check('role').optional().withMessage('Role is invalid'),
 };
 
 const userinforules = {
