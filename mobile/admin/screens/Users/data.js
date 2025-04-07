@@ -76,6 +76,7 @@ export const createUser = async (userData) => {
 // Function to update a user
 export const updateUser = async (userId, userData) => {
     try {
+        console.log(userData);
         const response = await api.put(`/api/v1/users/edit/${userId}`, userData);
         return response.data;
     } catch (error) {
@@ -104,8 +105,8 @@ export const updateUserRole = async (userId, role, token) => {
         
         console.log(`Mapped client role "${role}" to server role key "${serverRole}"`);
         
-        // Use the standard PATCH endpoint that was working before
-        const response = await api.patch(`/api/v1/users/${userId}`, 
+        // Use the new dedicated endpoint for role updates
+        const response = await api.patch(`/api/v1/users/${userId}/update-role`, 
             { role: serverRole },
             token ? {
                 headers: {

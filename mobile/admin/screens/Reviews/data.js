@@ -1,4 +1,4 @@
-import api from "~/screens/Home/api";
+import api from "~/axios.config";
 
 // Initial empty array for reviews
 export const reviewsData = [];

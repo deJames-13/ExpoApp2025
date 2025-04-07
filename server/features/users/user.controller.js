@@ -298,5 +298,49 @@ class UserController extends Controller {
       });
     }
   };
+
+  // Dedicated endpoint for updating user role
+  updateRole = async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const { role } = req.body;
+      
+      if (!userId || !role) {
+        throw new Errors.BadRequest('User ID and role are required!');
+      }
+      
+      // Map client-side role names to server-side ROLES keys
+      const roleMap = {
+        'admin': 'ADMIN',
+        'customer': 'CUSTOMER'
+      };
+      
+      // Get the server-side role key
+      const serverRole = roleMap[role.toLowerCase()];
+      
+      if (!serverRole) {
+        throw new Errors.BadRequest(`Invalid role: ${role}. Must be one of: ${Object.keys(roleMap).join(', ')}`);
+      }
+      
+      // Update user role using service
+      const user = await this.service.updateUser(userId, { role: serverRole });
+      
+      if (!user) {
+        throw new Errors.NotFound('User not found');
+      }
+      
+      this.success({
+        res,
+        message: 'User role updated successfully',
+        user: await this.resource.make(user),
+      });
+    } catch (error) {
+      return this.error({
+        res,
+        message: error.message,
+        statusCode: error.statusCode || 500
+      });
+    }
+  };
 }
 export default new UserController();

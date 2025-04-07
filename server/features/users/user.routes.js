@@ -113,6 +113,11 @@ export default [
         method: METHODS.POST,
         controller: [protectAndPermit(), controller.updateFcmToken],
       },
+      {
+        path: '/:id/update-role',
+        method: METHODS.PATCH,
+        controller: [protectAndPermit(READ_WRITE), controller.updateRole],
+      },
     ],
   },
 ];
